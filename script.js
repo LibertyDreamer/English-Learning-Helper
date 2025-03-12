@@ -4,7 +4,7 @@ async function askAI() {
     let response = await fetch("https://api.github.com/repos/LibertyDreamer/quizzes/actions/workflows/openai.yml/dispatches", {
         method: "POST",
         headers: {
-            "Authorization": "Bearer "+ $GITHUB_TOKEN,
+            "Authorization": "Bearer "+ ${GITHUB_TOKEN},
             "Accept": "application/vnd.github.v3+json",
             "Content-Type": "application/json"
         },
@@ -26,7 +26,7 @@ async function askAI() {
 async function checkWorkflowOutput() {
     let response = await fetch("https://api.github.com/repos/LibertyDreamer/quizzes/actions/runs", {
         headers: {
-            "Authorization": "Bearer " + $GITHUB_TOKEN,
+            "Authorization": "Bearer " + ${GITHUB_TOKEN},
             "Accept": "application/vnd.github.v3+json"
         }
     });
@@ -38,7 +38,7 @@ async function checkWorkflowOutput() {
 
         let outputResponse = await fetch(`https://api.github.com/repos/LibertyDreamer/quizzes/actions/runs/${runId}`, {
             headers: {
-                "Authorization": "Bearer " + $GITHUB_TOKEN,
+                "Authorization": "Bearer " + ${GITHUB_TOKEN},
                 "Accept": "application/vnd.github.v3+json"
             }
         });

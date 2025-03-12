@@ -2,9 +2,9 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Somebody vs Anybody Quiz 📝</title>
+  <title>Somebody vs Anybody – Ultimate Quiz 🤩</title>
   <style>
-    /* Basic styles */
+    /* Basic reset & layout */
     body {
       margin: 0;
       padding: 0;
@@ -16,12 +16,12 @@
       min-height: 100vh;
     }
     .container {
-      background: white;
+      background: #fff;
       padding: 20px 30px;
       border-radius: 10px;
       box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-      width: 90%;
-      max-width: 900px;
+      width: 95%;
+      max-width: 1000px;
       margin: 20px;
     }
     h1 {
@@ -40,16 +40,37 @@
       font-size: 16px;
       color: #444;
     }
-    .question input[type="text"],
-    .question select {
+    input[type="text"],
+    input[type="number"],
+    input[type="date"],
+    input[type="time"],
+    input[type="color"],
+    select,
+    textarea {
       padding: 8px;
       font-size: 16px;
-      width: 60%;
       margin-right: 10px;
       border: 1px solid #ccc;
       border-radius: 4px;
     }
-    .question button {
+    textarea {
+      width: 80%;
+      height: 60px;
+      vertical-align: middle;
+    }
+    .options-group {
+      margin: 5px 0;
+    }
+    .options-group label {
+      margin-right: 15px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+    .rangeValue {
+      font-weight: bold;
+      margin-left: 8px;
+    }
+    button {
       padding: 8px 12px;
       font-size: 16px;
       background: #2196F3;
@@ -57,8 +78,9 @@
       border: none;
       border-radius: 4px;
       cursor: pointer;
+      margin-top: 5px;
     }
-    .question button:hover {
+    button:hover {
       background: #1976D2;
     }
     .feedback {
@@ -92,292 +114,526 @@
 </head>
 <body>
   <div class="container">
-    <h1>Somebody vs Anybody Quiz 📝</h1>
-    <p style="text-align:center;">For each sentence, either type the word or select it from the dropdown, then click "Check Answer" for immediate feedback with an explanation if you're wrong.</p>
+    <h1>Somebody vs Anybody – Ultimate Quiz 🤩</h1>
+    <p style="text-align:center;">Answer the questions using various input types. Click “Check Answer” on each question for immediate, detailed feedback (or a model answer), and then use “Submit All Answers” to see your overall score (graded only for the objective questions).</p>
     <div id="quizContainer">
-      <!-- Quiz questions will be generated here -->
+      <!-- Questions will be generated here by JavaScript -->
     </div>
     <button id="submitAll">Submit All Answers</button>
     <div id="result"></div>
   </div>
+  
   <script>
-    // Array of 30 questions with detailed explanations and designated input type.
-    // We'll alternate input types: even indexes use free text, odd indexes use a dropdown.
+    // Array of 30 questions with 10 different input types.
+    // For subjective (textarea) questions, graded is set to false.
     const questions = [
+      // Type 1: Text input (3 questions)
       { 
-        question: "1. I'm gonna kill _______.", 
+        question: "1. Complete the sentence: 'I need _______ to fix my computer urgently.'", 
         correct: "somebody", 
-        explanation: "In this sentence, the speaker implies they have a specific person in mind. 'Somebody' indicates a particular, though unnamed, target. Using 'anybody' would suggest indiscriminate action.", 
-        inputType: "text" 
+        explanation: "A specific technician is implied—thus, 'somebody' is needed.", 
+        inputType: "text", 
+        graded: true 
       },
       { 
-        question: "2. I'm gonna kill _______. (implying chaos and lack of a specific target)", 
+        question: "2. Complete the sentence: 'Is there _______ who can recommend a good movie?'", 
         correct: "anybody", 
-        explanation: "Here, the speaker means they will kill any person without a specific target. 'Anybody' correctly conveys the idea of indiscriminate action.", 
-        inputType: "dropdown" 
+        explanation: "This open question asks for help from any person; 'anybody' is correct.", 
+        inputType: "text", 
+        graded: true 
       },
       { 
-        question: "3. I need _______ to fix my car.", 
+        question: "3. Fill in the blank: '______ called me unexpectedly last night.'", 
         correct: "somebody", 
-        explanation: "This sentence implies that a particular person with the required skills is needed—even if unnamed. 'Somebody' is the right choice.", 
-        inputType: "text" 
+        explanation: "The sentence implies a specific, though unnamed, caller.", 
+        inputType: "text", 
+        graded: true 
       },
+      // Type 2: Dropdown (3 questions)
       { 
-        question: "4. Is there _______ who can help me with this math problem?", 
-        correct: "anybody", 
-        explanation: "The speaker is asking if any person can help, with no specific individual in mind. 'Anybody' is appropriate here.", 
-        inputType: "dropdown" 
-      },
-      { 
-        question: "5. I didn't see _______ at the party.", 
-        correct: "anybody", 
-        explanation: "The sentence suggests that no person was seen, so 'anybody' fits better than 'somebody', which would imply a known presence.", 
-        inputType: "text" 
-      },
-      { 
-        question: "6. _______ left their bag in the classroom.", 
+        question: "4. Choose the correct word: '______ left their umbrella here.'", 
         correct: "somebody", 
-        explanation: "This indicates that a specific person left the bag behind. 'Somebody' is used to denote a particular, though unnamed, individual.", 
-        inputType: "dropdown" 
+        explanation: "It implies that a particular person forgot their umbrella.", 
+        inputType: "dropdown", 
+        options: ["somebody", "anybody"], 
+        graded: true 
       },
       { 
-        question: "7. Can _______ tell me what time it is?", 
+        question: "5. Select the right option: 'I can't find ______ to explain this problem.'", 
         correct: "anybody", 
-        explanation: "The question is open to any person who might know the time. 'Anybody' is correct since no specific person is targeted.", 
-        inputType: "text" 
+        explanation: "The speaker indicates that no one available can explain the problem.", 
+        inputType: "dropdown", 
+        options: ["somebody", "anybody"], 
+        graded: true 
       },
       { 
-        question: "8. I want _______ to join my team.", 
+        question: "6. Pick the correct word: '______ is waiting outside for you.'", 
         correct: "somebody", 
-        explanation: "The speaker has a particular candidate in mind for the team. 'Somebody' indicates a specific individual, even if not named.", 
-        inputType: "dropdown" 
+        explanation: "A specific person is implied to be waiting.", 
+        inputType: "dropdown", 
+        options: ["somebody", "anybody"], 
+        graded: true 
       },
+      // Type 3: Radio buttons (3 questions)
       { 
-        question: "9. I can't find _______ who understands this joke.", 
+        question: "7. Which word best fits: 'Did ______ leave a voicemail for you?'", 
         correct: "anybody", 
-        explanation: "This sentence implies that no one in particular understands the joke. 'Anybody' is the suitable choice.", 
-        inputType: "text" 
+        explanation: "A general inquiry about any caller is intended.", 
+        inputType: "radio", 
+        options: ["somebody", "anybody"], 
+        graded: true 
       },
       { 
-        question: "10. _______ called me while I was sleeping.", 
+        question: "8. Choose the right option: 'I think ______ will help if you ask.'", 
         correct: "somebody", 
-        explanation: "The sentence implies that a specific person made the call, even if their identity isn’t revealed. 'Somebody' is the correct word.", 
-        inputType: "dropdown" 
+        explanation: "It suggests that a specific helper is expected.", 
+        inputType: "radio", 
+        options: ["somebody", "anybody"], 
+        graded: true 
       },
       { 
-        question: "11. Did _______ leave a message for you?", 
-        correct: "anybody", 
-        explanation: "This question asks if any person left a message without indicating a specific individual. 'Anybody' is the appropriate word.", 
-        inputType: "text" 
-      },
-      { 
-        question: "12. There's _______ at the door.", 
+        question: "9. In the sentence 'There's ______ at the door, but I can't see who it is,' which word fits best?", 
         correct: "somebody", 
-        explanation: "This implies that a specific person is at the door. 'Somebody' indicates a particular individual, even if not identified.", 
-        inputType: "dropdown" 
+        explanation: "Although the identity is unknown, the presence is specific.", 
+        inputType: "radio", 
+        options: ["somebody", "anybody"], 
+        graded: true 
+      },
+      // Type 4: Checkboxes (3 questions)
+      { 
+        question: "10. Select the word that correctly completes the sentence: 'I didn't see ______ at the party.'", 
+        correct: ["anybody"], 
+        explanation: "'Anybody' indicates the absence of any person.", 
+        inputType: "checkbox", 
+        options: ["somebody", "anybody", "everyone"], 
+        graded: true 
       },
       { 
-        question: "13. I don't think _______ will believe your story.", 
-        correct: "anybody", 
-        explanation: "The sentence suggests that no particular person is expected to believe the story. 'Anybody' is used for a general, non‑specific reference.", 
-        inputType: "text" 
+        question: "11. Choose the word that fits: '______ told me the secret, but I forgot who it was.'", 
+        correct: ["somebody"], 
+        explanation: "It implies a specific person shared the secret.", 
+        inputType: "checkbox", 
+        options: ["somebody", "anybody", "everyone"], 
+        graded: true 
       },
       { 
-        question: "14. We need _______ to sign the contract immediately.", 
-        correct: "somebody", 
-        explanation: "A specific person is required to sign the contract, even if their name isn’t mentioned. 'Somebody' fits this context.", 
-        inputType: "dropdown" 
+        question: "12. Select the appropriate word: 'Is ______ available to help me move these boxes?'", 
+        correct: ["anybody"], 
+        explanation: "The inquiry is general, asking if any person can help.", 
+        inputType: "checkbox", 
+        options: ["somebody", "anybody", "everyone"], 
+        graded: true 
+      },
+      // Type 5: Range (slider) (3 questions)
+      { 
+        question: "13. Use the slider to rate the specificity of the term 'somebody' (0 = not specific, 10 = extremely specific).", 
+        correctRange: { min: 7, max: 10 },
+        explanation: "'Somebody' implies a fairly specific person.", 
+        inputType: "range", 
+        min: 0, 
+        max: 10, 
+        step: 1,
+        graded: true 
       },
       { 
-        question: "15. Has _______ seen my phone?", 
-        correct: "anybody", 
-        explanation: "The question implies that the speaker is asking if any person has seen the phone. 'Anybody' is the correct choice.", 
-        inputType: "text" 
+        question: "14. Use the slider to rate the generality of 'anybody' (0 = not general, 10 = extremely general).", 
+        correctRange: { min: 7, max: 10 },
+        explanation: "'Anybody' is used in a very general sense.", 
+        inputType: "range", 
+        min: 0, 
+        max: 10, 
+        step: 1,
+        graded: true 
       },
       { 
-        question: "16. I met _______ interesting at the conference.", 
-        correct: "somebody", 
-        explanation: "This indicates that the speaker met a particular, noteworthy person. 'Somebody' is the right word to use.", 
-        inputType: "dropdown" 
+        question: "15. On a scale from 0 (no difference) to 10 (maximum difference), rate the distinction between 'somebody' and 'anybody'.", 
+        correct: 5,
+        explanation: "A rating of 5 reflects a moderate, balanced nuance.", 
+        inputType: "range", 
+        min: 0, 
+        max: 10, 
+        step: 1,
+        graded: true 
+      },
+      // Type 6: Date input (3 questions)
+      { 
+        question: "16. Select the date when the mysterious call from 'somebody' was received. (Hint: 2025-03-01)", 
+        correct: "2025-03-01",
+        explanation: "This is the predetermined date for the call.", 
+        inputType: "date", 
+        graded: true 
       },
       { 
-        question: "17. I haven't met _______ as kind as her.", 
-        correct: "anybody", 
-        explanation: "The sentence implies that no one else matches her level of kindness. 'Anybody' is appropriate for expressing this.", 
-        inputType: "text" 
+        question: "17. Choose the date that marks the beginning of the 'anybody' era in the story. (Hint: 2025-04-15)", 
+        correct: "2025-04-15",
+        explanation: "This date signifies the start of general action.", 
+        inputType: "date", 
+        graded: true 
       },
       { 
-        question: "18. _______ is knocking on the window.", 
-        correct: "somebody", 
-        explanation: "The context suggests a specific person is knocking—even if unidentified. 'Somebody' is used to indicate a particular individual.", 
-        inputType: "dropdown" 
+        question: "18. Pick the date on which the report mentioned 'somebody' arriving. (Hint: 2025-02-20)", 
+        correct: "2025-02-20",
+        explanation: "This is the date provided in the scenario.", 
+        inputType: "date", 
+        graded: true 
+      },
+      // Type 7: Time input (3 questions)
+      { 
+        question: "19. Select the time when the important call from 'somebody' was made. (Hint: 14:30)", 
+        correct: "14:30",
+        explanation: "The call was made at 14:30.", 
+        inputType: "time", 
+        graded: true 
       },
       { 
-        question: "19. Is _______ home?", 
-        correct: "anybody", 
-        explanation: "The question asks if any person is home, without specifying who. 'Anybody' is the correct term.", 
-        inputType: "text" 
+        question: "20. Choose the time that best represents the vague moment when 'anybody' was seen. (Hint: 09:00)", 
+        correct: "09:00",
+        explanation: "The ambiguous time is set at 09:00.", 
+        inputType: "time", 
+        graded: true 
       },
       { 
-        question: "20. I wish _______ could help me with my homework.", 
-        correct: "somebody", 
-        explanation: "The sentence expresses a desire for a specific person to help with homework. 'Somebody' is the correct choice.", 
-        inputType: "dropdown" 
+        question: "21. Pick the time that corresponds to the moment of realization in the story. (Hint: 18:45)", 
+        correct: "18:45",
+        explanation: "The moment of realization is at 18:45.", 
+        inputType: "time", 
+        graded: true 
+      },
+      // Type 8: Number input (3 questions)
+      { 
+        question: "22. Enter the number of letters in the word 'somebody'.", 
+        correct: 8,
+        explanation: "'Somebody' contains 8 letters.", 
+        inputType: "number", 
+        graded: true 
       },
       { 
-        question: "21. I don't know _______ who can solve this problem.", 
-        correct: "anybody", 
-        explanation: "This implies that no particular person is known to be capable of solving the problem. 'Anybody' fits best.", 
-        inputType: "text" 
+        question: "23. What is the numeric value associated with the clarity of 'somebody'? (Rate from 1 to 10, correct is 8)", 
+        correct: 8,
+        explanation: "A rating of 8 reflects the specificity of 'somebody'.", 
+        inputType: "number", 
+        graded: true 
       },
       { 
-        question: "22. _______ must have forgotten to lock the door.", 
-        correct: "somebody", 
-        explanation: "This suggests that a specific person is responsible for forgetting to lock the door. 'Somebody' is the appropriate word.", 
-        inputType: "dropdown" 
+        question: "24. How many vowels are there in the word 'anybody'?", 
+        correct: 2,
+        explanation: "Counting only a and o as vowels, there are 2.", 
+        inputType: "number", 
+        graded: true 
+      },
+      // Type 9: Color input (3 questions)
+      { 
+        question: "25. Choose a color that represents the specific nature of 'somebody'. (Select #ff1493)", 
+        correct: "#ff1493",
+        explanation: "The color #ff1493 symbolizes specificity.", 
+        inputType: "color", 
+        graded: true 
       },
       { 
-        question: "23. Can _______ explain how this works?", 
-        correct: "anybody", 
-        explanation: "The question is open‑ended—asking if any person can explain how it works. 'Anybody' is correct.", 
-        inputType: "text" 
+        question: "26. Pick a color that you feel symbolizes the generality of 'anybody'. (Select #808080)", 
+        correct: "#808080",
+        explanation: "Gray (#808080) represents generality and ambiguity.", 
+        inputType: "color", 
+        graded: true 
       },
       { 
-        question: "24. I want _______ to listen to my new song.", 
-        correct: "somebody", 
-        explanation: "The speaker has a particular person in mind to listen to the song. 'Somebody' is the right choice.", 
-        inputType: "dropdown" 
+        question: "27. Select the color that best captures the contrast between a defined person and an undefined one. (Select #0000ff)", 
+        correct: "#0000ff",
+        explanation: "Blue (#0000ff) illustrates a clear distinction.", 
+        inputType: "color", 
+        graded: true 
+      },
+      // Type 10: Textarea (free response – not graded) (3 questions)
+      { 
+        question: "28. In your own words, explain the difference between 'somebody' and 'anybody'.", 
+        modelAnswer: "A correct explanation is: 'Somebody' refers to a specific, though unnamed, individual, while 'anybody' refers to any person without specification.", 
+        explanation: "Compare your answer with the model answer.", 
+        inputType: "textarea", 
+        graded: false 
       },
       { 
-        question: "25. I didn't hear _______ at the meeting.", 
-        correct: "anybody", 
-        explanation: "The sentence indicates that no person was heard during the meeting, so 'anybody' is used.", 
-        inputType: "text" 
+        question: "29. Describe a scenario where using 'anybody' is more appropriate than 'somebody'.", 
+        modelAnswer: "For example, when asking for help in a public place, 'anybody' is preferred because it invites assistance from whoever is available.", 
+        explanation: "Your response can be compared to the model scenario.", 
+        inputType: "textarea", 
+        graded: false 
       },
       { 
-        question: "26. There is _______ at the door waiting for you.", 
-        correct: "somebody", 
-        explanation: "This implies that a specific person is waiting at the door. 'Somebody' denotes a particular individual.", 
-        inputType: "dropdown" 
-      },
-      { 
-        question: "27. Does _______ have any experience with coding?", 
-        correct: "anybody", 
-        explanation: "The question asks if any person with coding experience is available. 'Anybody' is appropriate here.", 
-        inputType: "text" 
-      },
-      { 
-        question: "28. I hope _______ appreciates your hard work.", 
-        correct: "somebody", 
-        explanation: "The sentence implies that a particular person will appreciate the hard work. 'Somebody' is the correct word.", 
-        inputType: "dropdown" 
-      },
-      { 
-        question: "29. I don't think _______ will mind if we join them.", 
-        correct: "anybody", 
-        explanation: "This implies that no specific person will object to us joining them. 'Anybody' is the right choice.", 
-        inputType: "text" 
-      },
-      { 
-        question: "30. _______ told me a secret yesterday.", 
-        correct: "somebody", 
-        explanation: "The sentence implies that a specific person shared a secret, even if not named. 'Somebody' is correct.", 
-        inputType: "dropdown" 
+        question: "30. Describe a situation where 'somebody' would be the preferred choice over 'anybody'.", 
+        modelAnswer: "When referring to a specific expert or person known to have a particular quality—even if unnamed—'somebody' is the correct choice.", 
+        explanation: "Compare your answer with the provided explanation.", 
+        inputType: "textarea", 
+        graded: false 
       }
     ];
     
-    // Generate the quiz dynamically based on each question’s input type.
+    // Generate quiz elements dynamically
     function generateQuiz() {
-      const quizContainer = document.getElementById('quizContainer');
+      const container = document.getElementById('quizContainer');
       questions.forEach((q, index) => {
         const div = document.createElement('div');
         div.className = 'question';
         
+        // Question text
         const p = document.createElement('p');
         p.innerText = q.question;
         div.appendChild(p);
         
+        // Create input element based on type
         let inputElement;
-        if (q.inputType === "text") {
-          inputElement = document.createElement('input');
-          inputElement.type = 'text';
-          inputElement.id = 'answer' + index;
-          inputElement.placeholder = 'Type your answer here...';
-        } else if (q.inputType === "dropdown") {
-          inputElement = document.createElement('select');
-          inputElement.id = 'answer' + index;
-          const defaultOption = document.createElement('option');
-          defaultOption.value = "";
-          defaultOption.innerText = "Choose an answer";
-          inputElement.appendChild(defaultOption);
-          const optionSomebody = document.createElement('option');
-          optionSomebody.value = "somebody";
-          optionSomebody.innerText = "somebody";
-          inputElement.appendChild(optionSomebody);
-          const optionAnybody = document.createElement('option');
-          optionAnybody.value = "anybody";
-          optionAnybody.innerText = "anybody";
-          inputElement.appendChild(optionAnybody);
+        switch(q.inputType) {
+          case "text":
+            inputElement = document.createElement('input');
+            inputElement.type = "text";
+            inputElement.id = "answer" + index;
+            inputElement.placeholder = "Type your answer...";
+            break;
+          case "dropdown":
+            inputElement = document.createElement('select');
+            inputElement.id = "answer" + index;
+            const defaultOpt = document.createElement('option');
+            defaultOpt.value = "";
+            defaultOpt.innerText = "Choose an answer";
+            inputElement.appendChild(defaultOpt);
+            q.options.forEach(opt => {
+              const option = document.createElement('option');
+              option.value = opt.toLowerCase();
+              option.innerText = opt;
+              inputElement.appendChild(option);
+            });
+            break;
+          case "radio":
+            inputElement = document.createElement('div');
+            inputElement.className = "options-group";
+            q.options.forEach((opt, i) => {
+              const radioLabel = document.createElement('label');
+              const radioInput = document.createElement('input');
+              radioInput.type = "radio";
+              radioInput.name = "question" + index;
+              radioInput.value = opt.toLowerCase();
+              radioLabel.appendChild(radioInput);
+              radioLabel.appendChild(document.createTextNode(" " + opt));
+              inputElement.appendChild(radioLabel);
+            });
+            break;
+          case "checkbox":
+            inputElement = document.createElement('div');
+            inputElement.className = "options-group";
+            q.options.forEach((opt, i) => {
+              const checkboxLabel = document.createElement('label');
+              const checkboxInput = document.createElement('input');
+              checkboxInput.type = "checkbox";
+              checkboxInput.name = "question" + index;
+              checkboxInput.value = opt.toLowerCase();
+              checkboxLabel.appendChild(checkboxInput);
+              checkboxLabel.appendChild(document.createTextNode(" " + opt));
+              inputElement.appendChild(checkboxLabel);
+            });
+            break;
+          case "range":
+            inputElement = document.createElement('input');
+            inputElement.type = "range";
+            inputElement.id = "answer" + index;
+            inputElement.min = q.min;
+            inputElement.max = q.max;
+            inputElement.step = q.step;
+            inputElement.value = Math.floor((Number(q.min) + Number(q.max)) / 2);
+            // Display current value
+            const rangeVal = document.createElement('span');
+            rangeVal.id = "rangeVal" + index;
+            rangeVal.className = "rangeValue";
+            rangeVal.innerText = inputElement.value;
+            inputElement.addEventListener('input', function() {
+              rangeVal.innerText = this.value;
+            });
+            div.appendChild(inputElement);
+            div.appendChild(rangeVal);
+            inputElement = null; // Already appended, so set to null
+            break;
+          case "date":
+            inputElement = document.createElement('input');
+            inputElement.type = "date";
+            inputElement.id = "answer" + index;
+            break;
+          case "time":
+            inputElement = document.createElement('input');
+            inputElement.type = "time";
+            inputElement.id = "answer" + index;
+            break;
+          case "number":
+            inputElement = document.createElement('input');
+            inputElement.type = "number";
+            inputElement.id = "answer" + index;
+            break;
+          case "color":
+            inputElement = document.createElement('input');
+            inputElement.type = "color";
+            inputElement.id = "answer" + index;
+            break;
+          case "textarea":
+            inputElement = document.createElement('textarea');
+            inputElement.id = "answer" + index;
+            inputElement.placeholder = "Type your explanation here...";
+            break;
+          default:
+            inputElement = document.createElement('input');
+            inputElement.type = "text";
+            inputElement.id = "answer" + index;
         }
-        div.appendChild(inputElement);
+        if(inputElement) {
+          div.appendChild(inputElement);
+        }
         
-        // "Check Answer" button for immediate feedback
+        // "Check Answer" button
         const checkBtn = document.createElement('button');
-        checkBtn.innerText = 'Check Answer';
-        checkBtn.onclick = function() { checkAnswer(index); };
+        checkBtn.innerText = "Check Answer";
+        checkBtn.addEventListener("click", function() {
+          checkAnswer(index);
+        });
         div.appendChild(checkBtn);
         
-        // Span for feedback and detailed explanation
-        const feedback = document.createElement('span');
-        feedback.id = 'feedback' + index;
-        feedback.className = 'feedback';
-        div.appendChild(feedback);
+        // Feedback span
+        const feedbackSpan = document.createElement('span');
+        feedbackSpan.id = "feedback" + index;
+        feedbackSpan.className = "feedback";
+        div.appendChild(feedbackSpan);
         
-        quizContainer.appendChild(div);
+        container.appendChild(div);
       });
     }
     
-    // Check the individual answer and show explanation if incorrect.
+    // Function to check an individual answer and show explanation/model answer.
     function checkAnswer(index) {
-      let userAnswer;
-      const question = questions[index];
-      if (question.inputType === "text") {
-        userAnswer = document.getElementById('answer' + index).value.trim().toLowerCase();
-      } else if (question.inputType === "dropdown") {
-        userAnswer = document.getElementById('answer' + index).value;
-      }
-      const feedback = document.getElementById('feedback' + index);
-      const correctAnswer = question.correct.toLowerCase();
+      const q = questions[index];
+      let userAnswer, isCorrect = false;
+      const feedback = document.getElementById("feedback" + index);
       
-      if (userAnswer === correctAnswer) {
-        feedback.style.color = 'green';
-        feedback.innerText = ' Correct 😊';
+      // Determine input value based on type
+      if(q.inputType === "text" || q.inputType === "number" || q.inputType === "date" || q.inputType === "time" || q.inputType === "color") {
+        userAnswer = document.getElementById("answer" + index).value.trim().toLowerCase();
+        if(typeof q.correct === "number") {
+          isCorrect = Number(userAnswer) === q.correct;
+        } else {
+          isCorrect = (userAnswer === q.correct.toLowerCase());
+        }
+      } else if(q.inputType === "dropdown") {
+        userAnswer = document.getElementById("answer" + index).value;
+        isCorrect = (userAnswer === q.correct.toLowerCase());
+      } else if(q.inputType === "radio") {
+        const radios = document.getElementsByName("question" + index);
+        radios.forEach(radio => {
+          if(radio.checked) {
+            userAnswer = radio.value;
+          }
+        });
+        isCorrect = (userAnswer === q.correct.toLowerCase());
+      } else if(q.inputType === "checkbox") {
+        const checkboxes = document.getElementsByName("question" + index);
+        let selected = [];
+        checkboxes.forEach(box => {
+          if(box.checked) {
+            selected.push(box.value);
+          }
+        });
+        // For checkbox, compare arrays (order doesn't matter)
+        isCorrect = (selected.length === q.correct.length && selected.every(val => q.correct.includes(val)));
+      } else if(q.inputType === "range") {
+        // For range, retrieve value from the corresponding span element if not appended already.
+        const rangeInput = document.getElementById("answer" + index);
+        // If range input was appended inline above, its value is still accessible.
+        if(rangeInput) {
+          userAnswer = Number(rangeInput.value);
+        } else {
+          // Alternatively, get from the displayed span
+          userAnswer = Number(document.getElementById("rangeVal" + index).innerText);
+        }
+        // Check for range conditions if provided
+        if(q.correctRange) {
+          isCorrect = (userAnswer >= q.correctRange.min && userAnswer <= q.correctRange.max);
+        } else {
+          isCorrect = (userAnswer === q.correct);
+        }
+      } else if(q.inputType === "textarea") {
+        userAnswer = document.getElementById("answer" + index).value.trim();
+        // For textarea, we do not grade; just show the model answer.
+        feedback.style.color = "blue";
+        feedback.innerText = " Model Answer: " + q.modelAnswer;
+        return;
+      }
+      
+      // Display feedback with detailed explanation
+      if(isCorrect) {
+        feedback.style.color = "green";
+        feedback.innerText = " Correct 😊";
       } else {
-        feedback.style.color = 'red';
-        feedback.innerText = ' Incorrect. ' + question.explanation;
+        feedback.style.color = "red";
+        // For range questions, show the acceptable answer range if applicable.
+        if(q.inputType === "range" && q.correctRange) {
+          feedback.innerText = " Incorrect. " + q.explanation + " (Acceptable: " + q.correctRange.min + "–" + q.correctRange.max + ")";
+        } else {
+          feedback.innerText = " Incorrect. " + q.explanation;
+        }
       }
     }
     
-    // Global submission: tally the overall score.
+    // Global submission: Tally score for graded (objective) questions.
     function submitAll() {
       let score = 0;
+      let total = 0;
       questions.forEach((q, index) => {
-        let userAnswer;
-        if (q.inputType === "text") {
-          userAnswer = document.getElementById('answer' + index).value.trim().toLowerCase();
-        } else if (q.inputType === "dropdown") {
-          userAnswer = document.getElementById('answer' + index).value;
-        }
-        if (userAnswer === q.correct.toLowerCase()) {
-          score++;
+        if(q.graded) {
+          total++;
+          let isCorrect = false;
+          let userAnswer;
+          if(q.inputType === "text" || q.inputType === "number" || q.inputType === "date" || q.inputType === "time" || q.inputType === "color") {
+            userAnswer = document.getElementById("answer" + index).value.trim().toLowerCase();
+            if(typeof q.correct === "number") {
+              isCorrect = Number(userAnswer) === q.correct;
+            } else {
+              isCorrect = (userAnswer === q.correct.toLowerCase());
+            }
+          } else if(q.inputType === "dropdown") {
+            userAnswer = document.getElementById("answer" + index).value;
+            isCorrect = (userAnswer === q.correct.toLowerCase());
+          } else if(q.inputType === "radio") {
+            const radios = document.getElementsByName("question" + index);
+            radios.forEach(radio => {
+              if(radio.checked) {
+                userAnswer = radio.value;
+              }
+            });
+            isCorrect = (userAnswer === q.correct.toLowerCase());
+          } else if(q.inputType === "checkbox") {
+            const checkboxes = document.getElementsByName("question" + index);
+            let selected = [];
+            checkboxes.forEach(box => {
+              if(box.checked) {
+                selected.push(box.value);
+              }
+            });
+            isCorrect = (selected.length === q.correct.length && selected.every(val => q.correct.includes(val)));
+          } else if(q.inputType === "range") {
+            const rangeInput = document.getElementById("answer" + index);
+            let value;
+            if(rangeInput) {
+              value = Number(rangeInput.value);
+            } else {
+              value = Number(document.getElementById("rangeVal" + index).innerText);
+            }
+            if(q.correctRange) {
+              isCorrect = (value >= q.correctRange.min && value <= q.correctRange.max);
+            } else {
+              isCorrect = (value === q.correct);
+            }
+          }
+          if(isCorrect) score++;
         }
       });
-      const resultDiv = document.getElementById('result');
-      resultDiv.innerText = "You got " + score + " out of " + questions.length + " correct!";
+      const resultDiv = document.getElementById("result");
+      resultDiv.innerText = "You got " + score + " out of " + total + " correct!";
     }
     
-    // Set up the global submission event and generate the quiz on load.
-    document.getElementById('submitAll').addEventListener('click', submitAll);
+    document.getElementById("submitAll").addEventListener("click", submitAll);
     generateQuiz();
   </script>
 </body>

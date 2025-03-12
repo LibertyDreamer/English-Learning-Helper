@@ -19,7 +19,7 @@
       padding: 20px;
       border: 2px solid #00ff00;
     }
-    h1, h2, h3 {
+    h1, h2 {
       color: #00ff00;
       margin: 0 0 10px;
     }
@@ -57,13 +57,20 @@
       padding: 10px;
       min-height: 150px;
     }
-    /* Make every token clickable for definitions */
+    /* Make every token clickable for definitions, but without heavy underline */
     .word {
       cursor: pointer;
-      text-decoration: underline;
+      text-decoration: none;
+      color: #00ff00;
+      /* No highlight by default; subtle change on hover */
     }
     .word:hover {
       background-color: #003300;
+    }
+    /* Add a little emoji after each word so it's clear it's clickable */
+    .word::after {
+      content: '❓';
+      margin-left: 4px;
     }
   </style>
 </head>
@@ -74,20 +81,21 @@
 
     <div id="intro">
       <p>
-        Enter your Azure OpenAI PAT (or API key) and click "Start Game" to begin.<br>
+        Enter your Azure OpenAI PAT (API key) and click <strong>Start Game 🚀</strong> to begin.<br>
         Each time, type a sentence containing <strong>“somebody”</strong> or <strong>“anybody”</strong>.<br>
-        <strong>Click any word</strong> in the story to see a short, kid-friendly definition from the AI!
+        <strong>Click any word</strong> in the story to see a short, kid-friendly definition from the AI.<br>
+        The game is comedic and extremely dark <em>(with ultraviolence!)</em>—enjoy!
       </p>
       <input id="pat" placeholder="Enter your Azure OpenAI PAT" />
       <br>
-      <button class="green-btn" onclick="startGame()">Start Game</button>
+      <button class="green-btn" onclick="startGame()">Start Game 🚀</button>
     </div>
 
     <div id="game-area" style="display:none;">
       <div id="story"></div>
       <div style="margin-top:10px;">
-        <input type="text" id="player-input" placeholder="Type a sentence using 'somebody' or 'anybody'">
-        <button class="green-btn" onclick="sendPlayerInput()">Send</button>
+        <input type="text" id="player-input" placeholder="Type a sentence with 'somebody' or 'anybody'">
+        <button class="green-btn" onclick="sendPlayerInput()">Send 🛸</button>
       </div>
     </div>
   </div>
@@ -102,7 +110,7 @@
     const modelHeader = { 'x-ms-model-mesh-model-name': 'gpt-4o' };
 
     // We'll store the conversation with the AI in this array of messages.
-    // This is the "game" memory so the AI remembers the story.
+    // This is the "game" memory so the AI remembers the story in one session.
     let messages = [];
     let pat = ''; // We'll store the user's PAT
 
@@ -118,7 +126,7 @@
 
       document.getElementById('game-area').style.display = 'block';
 
-      // Set up the system instruction with your custom request
+      // The system prompt with your new instructions:
       messages = [
         {
           role: 'system',
@@ -133,7 +141,8 @@ and include it inside story like it's a part of that story.
 - If they use the correct usage in context, continue the story in a fun, light-hearted way.
 - If they use the wrong usage, continue the story in a dark, creepy way, possibly leading to their dead.
 - Always end your response with a prompt asking them to type another sentence with learning words" unless the game is over.
-- Keep track of the storyline in one session.`
+- Keep track of the storyline in one session.
+- Don't talk about grammar at all!`
         },
         {
           role: 'user',
@@ -181,7 +190,7 @@ and include it inside story like it's a part of that story.
     }
 
     /********************************************************
-     * 4) CLICK-TO-DEFINE (ON ANY WORD)
+     * 4) CLICK-TO-DEFINE (ANY WORD)
      ********************************************************/
     document.addEventListener('click', (e) => {
       if (e.target.classList.contains('word')) {
@@ -196,11 +205,11 @@ and include it inside story like it's a part of that story.
         const definitionConversation = [
           {
             role: 'system',
-            content: 'You are a dictionary. Provide a short, kid-friendly definition for the given word.'
+            content: 'You are a dictionary. Provide a short, kid-friendly definition for the given word. Use simple words.'
           },
           {
             role: 'user',
-            content: `Define: "${word}" for a 4-year-old.`
+            content: `Define: "${word}" for a 3-year-old.`
           }
         ];
         const defText = await callOpenAI(definitionConversation);
@@ -241,7 +250,7 @@ and include it inside story like it's a part of that story.
       }
 
       const aiMessage = data.choices[0].message.content;
-      // Add AI's response to the conversation if it's the main game conversation
+      // Add AI's response to the main conversation if it's the main "messages"
       if (convArray === messages) {
         messages.push({
           role: 'assistant',
@@ -256,20 +265,18 @@ and include it inside story like it's a part of that story.
      ********************************************************/
     function updateStory(aiText) {
       // We'll wrap each token in <span class="word" data-word="...">
-      // This is a naive approach to split on whitespace. Punctuation may attach to words.
-      // For a quick example, it's fine. Real usage might need more robust tokenization.
+      // with a subtle ❓ after each word
       const wrapped = parseAndWrapWords(aiText);
       const storyDiv = document.getElementById('story');
-      storyDiv.innerHTML = wrapped; // Insert as HTML
+      storyDiv.innerHTML = wrapped;
     }
 
     function parseAndWrapWords(text) {
       // Simple split on spaces
       const tokens = text.split(/\s+/);
       const wrappedTokens = tokens.map(token => {
-        // We'll remove punctuation from the data-word, but keep it in display
-        // So that clicking "dark..." => data-word="dark"
-        const cleanToken = token.replace(/[.,!?]+$/, '');
+        // We'll remove trailing punctuation from the data-word
+        const cleanToken = token.replace(/[.,!?;:]+$/, '');
         return `<span class="word" data-word="${cleanToken}">${token}</span>`;
       });
       return wrappedTokens.join(" ");

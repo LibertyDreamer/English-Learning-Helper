@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Quiz 2</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body { font-family: sans-serif; }
+    .question { margin-bottom: 20px; }
+    input.answer { margin-left: 5px; }
+  </style>
+</head>
+<body>
+  <h1>Quiz 2</h1>
+  
+  <div class="question">
+    <p>
+      The capital of France is 
+      <input type="text" class="answer" data-answer="Paris">.
+    </p>
+  </div>
+  
+  <div class="question">
+    <p>
+      The color of the sky is 
+      <input type="text" class="answer" data-answer="blue">.
+    </p>
+  </div>
+  
+  <button id="checkBtn">Check Answers</button>
+  <button id="showBtn">Show Answers</button>
+  <br><br>
+  <a href="index.html">Back to Index</a>
+  
+  <script src="common.js"></script>
+  <script>
+    document.getElementById('checkBtn').addEventListener('click', checkAnswers);
+    document.getElementById('showBtn').addEventListener('click', showAnswers);
+  </script>
+</body>
+</html>

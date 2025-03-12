@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Somebody or Anybody? - AI Powered</title>
+  <title>Somebody or Anybody?</title>
   <style>
     /* Old PC / Terminal styling */
     body {
@@ -63,12 +63,11 @@
 <body>
   <div id="container">
     <h1>Somebody or Anybody?</h1>
-    <h2>AI-Powered Space Text Adventure</h2>
+    <h2>Space Adventure</h2>
 
     <div id="intro">
-      <p>Enter your Azure OpenAI PAT (or API key) and click "Start Game" to begin.  
-      The AI will generate the entire storyline about choosing <strong>somebody</strong> or <strong>anybody</strong>.</p>
-      <input id="pat" placeholder="Enter your Azure OpenAI PAT" />
+      <p>Enter your key and click "Start Game" to begin. </p>
+      <input id="pat" placeholder="Enter your key" />
       <br>
       <button class="green-btn" onclick="startGame()">Start Game</button>
     </div>
@@ -112,9 +111,11 @@
           role: 'system',
           content: `You are a text-based game engine for learning the difference between "somebody" and "anybody" in English. 
 - The setting is a space adventure.
+- Don't create fealing that it's learners material, make it feels more like real game.
+- For A0-A2 learners. Keep it simple.
 - The user can only answer "somebody" or "anybody".
 - If the user chooses correctly, the story remains comedic/fun. 
-- If the user chooses incorrectly, the story becomes dark/creepy, possibly leading to the user's demise.
+- If the user chooses incorrectly, the story becomes dark/creepy, possibly leading to the user's dead.
 - At each step, you must continue the story and ask the user for the next choice.
 - The game ends if the user dies or if the story concludes successfully. 
 Let's begin. Provide the first scenario now.`

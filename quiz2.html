@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Somebody or Anybody? - Space Text Adventure</title>
+  <title>Somebody or Anybody? - AI Powered</title>
   <style>
     /* Old PC / Terminal styling */
     body {
@@ -23,48 +23,33 @@
       color: #00ff00;
       margin: 0 0 10px;
     }
-    /* Text-based game styles */
-    #game-container {
-      margin-bottom: 30px;
+    #intro, #game-area {
+      margin-bottom: 20px;
     }
+    /* Buttons */
+    .green-btn {
+      background-color: black;
+      color: #00ff00;
+      font-family: monospace;
+      border: 1px solid #00ff00;
+      padding: 8px 16px;
+      margin: 5px;
+      cursor: pointer;
+    }
+    .green-btn:hover {
+      background-color: #003300;
+    }
+    /* Text display area */
     #story {
       white-space: pre-line;
       margin-top: 20px;
       line-height: 1.4;
+      border: 1px dashed #00ff00;
+      padding: 10px;
+      min-height: 150px;
     }
-    .choice-button {
-      background-color: black;
-      color: #00ff00;
-      font-family: monospace;
-      border: 1px solid #00ff00;
-      padding: 6px 12px;
-      margin: 10px;
-      cursor: pointer;
-    }
-    .choice-button:hover {
-      background-color: #003300;
-    }
-    #restart-btn {
-      display: none;
-      background-color: black;
-      color: #00ff00;
-      font-family: monospace;
-      border: 1px solid #00ff00;
-      padding: 6px 12px;
-      margin: 20px 0 0 0;
-      cursor: pointer;
-    }
-    #restart-btn:hover {
-      background-color: #003300;
-    }
-
-    /* Azure OpenAI call area */
-    #openai-container {
-      border-top: 1px dashed #00ff00;
-      padding-top: 20px;
-      margin-top: 20px;
-    }
-    #openai-container input {
+    /* Input fields */
+    input {
       background-color: black;
       color: #00ff00;
       border: 1px solid #00ff00;
@@ -73,219 +58,134 @@
       margin: 5px 0;
       width: 400px;
     }
-    #openai-container button {
-      background-color: black;
-      color: #00ff00;
-      font-family: monospace;
-      border: 1px solid #00ff00;
-      padding: 6px 12px;
-      margin: 10px 0;
-      cursor: pointer;
-    }
-    #openai-container button:hover {
-      background-color: #003300;
-    }
-    #result {
-      white-space: pre-wrap;
-      margin-top: 10px;
-    }
   </style>
 </head>
 <body>
   <div id="container">
-    <div id="game-container">
-      <h1>Somebody or Anybody?</h1>
-      <h2>Space Text Adventure</h2>
-      <div id="story"></div>
-      <div id="choices"></div>
-      <button id="restart-btn" onclick="startGame()">Restart Game</button>
+    <h1>Somebody or Anybody?</h1>
+    <h2>AI-Powered Space Text Adventure</h2>
+
+    <div id="intro">
+      <p>Enter your Azure OpenAI PAT (or API key) and click "Start Game" to begin.  
+      The AI will generate the entire storyline about choosing <strong>somebody</strong> or <strong>anybody</strong>.</p>
+      <input id="pat" placeholder="Enter your Azure OpenAI PAT" />
+      <br>
+      <button class="green-btn" onclick="startGame()">Start Game</button>
     </div>
 
-    <!-- Azure OpenAI Call Section (optional) -->
-    <div id="openai-container">
-      <h3>Ask Azure OpenAI (Optional)</h3>
-      <p>Enter your Azure OpenAI Personal Access Token (PAT) and ask a question.</p>
-      <input id="pat" placeholder="Enter your PAT" />
-      <br>
-      <input id="question" placeholder="Ask something..." />
-      <br>
-      <button onclick="callOpenAI()">Ask OpenAI</button>
-      <pre id="result"></pre>
+    <div id="game-area" style="display:none;">
+      <div id="story"></div>
+      <div>
+        <button class="green-btn" onclick="playerChoice('somebody')">somebody</button>
+        <button class="green-btn" onclick="playerChoice('anybody')">anybody</button>
+      </div>
     </div>
   </div>
 
   <script>
-    /********************************************************
-     * PART 1: TEXT-BASED GAME (Somebody vs. Anybody)
-     ********************************************************/
+    // We'll store the conversation with the AI in this array of messages.
+    // The system prompt instructs the AI to act as a text-based game about
+    // "somebody" vs. "anybody".
+    let messages = [];
 
-    // Scenes for the text-based game
-    const scenes = [
-      {
-        text: 
-`You awake in a dimly lit spaceship corridor. 
-An ominous voice crackles over the intercom:
-"I’m gonna kill ________!"
+    // Replace with your actual endpoint & model details if different:
+    const endpoint = 'https://models.inference.ai.azure.com/openai/deployments/gpt-4o/chat/completions?api-version=2024-02-15-preview';
+    // The model name is also required in the header for Azure.
+    const modelHeader = { 'x-ms-model-mesh-model-name': 'gpt-4o' };
 
-Do you think the voice said "somebody" or "anybody"?`,
-        correctChoice: "somebody",
-        onCorrect: `Correct!
-He has a specific target in mind. 
-You feel a bit safer... maybe it’s not you.`,
-        onWrong: `Wrong!
-He’ll kill literally anyone—he’s out of control!
-You shudder in fear, realizing you might be next...`,
-        nextScene: 1,
-        altScene: 1
-      },
-      {
-        text:
-`You tiptoe deeper into the spaceship. 
-Another radio message:
-"I can’t find ________ in the cargo bay."
-
-Choose: "somebody" or "anybody"?`,
-        correctChoice: "anybody",
-        onCorrect: `Nice job!
-He doesn't care who specifically—he's just complaining that no one is around.`,
-        onWrong: `Uh oh!
-He was referring to a specific person, meaning there's a definite target.
-Now the confusion grows...`,
-        nextScene: 2,
-        altScene: 2
-      },
-      {
-        text:
-`Suddenly, you see a shadowy figure in front of you. 
-He snarls: "I swear, I’m gonna kill ________ right now!"
-
-Choose: "somebody" or "anybody"?`,
-        correctChoice: "somebody",
-        onCorrect: `Exactly! He has a specific target in mind. 
-You dodge aside, hoping it's not you.`,
-        onWrong: `Wrong choice.
-He’s gone berserk and will kill literally anyone who crosses his path... including you.`,
-        nextScene: 3,
-        altScene: 3
-      },
-      {
-        text:
-`You reach the escape pod. 
-The console flickers, asking you for the final passcode: "I’m not going to harm ________."
-
-Which do you enter: "somebody" or "anybody"?`,
-        correctChoice: "anybody",
-        onCorrect: 
-`You got it!
-"I’m not going to harm anybody." 
-Meaning he won't harm any person at all.
-You safely launch away from the spaceship—mission complete!
-You've survived and learned the difference between "somebody" and "anybody"!`,
-        onWrong: 
-`"I’m not going to harm somebody." 
-But that implies you might still harm everyone else!
-The system rejects your passcode, the shadowy figure corners you...
-Game Over!`,
-        nextScene: -1,
-        altScene: -1
-      }
-    ];
-
-    let currentScene = 0;
+    let pat = '';
 
     function startGame() {
-      currentScene = 0;
-      document.getElementById("restart-btn").style.display = "none";
-      showScene();
-    }
-
-    function showScene() {
-      const scene = scenes[currentScene];
-      document.getElementById("story").textContent = scene.text;
-      document.getElementById("choices").innerHTML = `
-        <button class="choice-button" onclick="choose('somebody')">somebody</button>
-        <button class="choice-button" onclick="choose('anybody')">anybody</button>
-      `;
-    }
-
-    function choose(choice) {
-      const scene = scenes[currentScene];
-      let resultText = "";
-
-      if (choice === scene.correctChoice) {
-        resultText = "\n" + scene.onCorrect;
-      } else {
-        resultText = "\n" + scene.onWrong;
-      }
-
-      const storyElement = document.getElementById("story");
-      storyElement.textContent += resultText;
-
-      // Move to next scene
-      const next = (choice === scene.correctChoice) ? scene.nextScene : scene.altScene;
-
-      if (next === -1) {
-        endGame();
-      } else {
-        currentScene = next;
-        // small delay to mimic old text-based flow
-        setTimeout(showScene, 2000);
-      }
-    }
-
-    function endGame() {
-      document.getElementById("choices").innerHTML = "";
-      document.getElementById("restart-btn").style.display = "inline-block";
-    }
-
-    // Start on load
-    window.onload = startGame;
-
-    /********************************************************
-     * PART 2: AZURE OPENAI CALL (OPTIONAL)
-     ********************************************************/
-    async function callOpenAI() {
-      const pat = document.getElementById('pat').value.trim();
-      const question = document.getElementById('question').value.trim();
-
+      // Get the user's PAT from the input field
+      pat = document.getElementById('pat').value.trim();
       if (!pat) {
-        alert("Enter your PAT first!");
-        return;
-      }
-      if (!question) {
-        alert("Enter a question!");
+        alert("Please enter your Azure OpenAI PAT!");
         return;
       }
 
-      const endpoint = 'https://models.inference.ai.azure.com/openai/deployments/gpt-4o/chat/completions?api-version=2024-02-15-preview';
+      // Show the game area
+      document.getElementById('game-area').style.display = 'block';
 
-      try {
-        const response = await fetch(endpoint, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': 'Bearer ' + pat,
-            'x-ms-model-mesh-model-name': 'gpt-4o'
-          },
-          body: JSON.stringify({
-            messages: [
-              { role: 'user', content: question }
-            ],
-            temperature: 1,
-            max_tokens: 4096,
-            top_p: 1
-          })
-        });
-
-        const data = await response.json();
-        if (data.choices && data.choices[0].message.content) {
-          document.getElementById('result').textContent = data.choices[0].message.content;
-        } else {
-          document.getElementById('result').textContent = "Error: " + JSON.stringify(data);
+      // Initialize messages with a system instruction
+      messages = [
+        {
+          role: 'system',
+          content: `You are a text-based game engine for learning the difference between "somebody" and "anybody" in English. 
+- The setting is a space adventure.
+- The user can only answer "somebody" or "anybody".
+- If the user chooses correctly, the story remains comedic/fun. 
+- If the user chooses incorrectly, the story becomes dark/creepy, possibly leading to the user's demise.
+- At each step, you must continue the story and ask the user for the next choice.
+- The game ends if the user dies or if the story concludes successfully. 
+Let's begin. Provide the first scenario now.`
         }
+      ];
+
+      // Call AI for the first scenario
+      callOpenAI()
+        .then(responseText => {
+          document.getElementById('story').textContent = responseText;
+        })
+        .catch(err => {
+          document.getElementById('story').textContent = "Error starting game: " + err;
+        });
+    }
+
+    async function playerChoice(choice) {
+      // Add the user's choice to the conversation
+      messages.push({
+        role: 'user',
+        content: choice
+      });
+
+      // Call the AI to get the next part of the story
+      try {
+        const responseText = await callOpenAI();
+        // Display AI's new response
+        document.getElementById('story').textContent = responseText;
       } catch (err) {
-        document.getElementById('result').textContent = "Request failed: " + err;
+        document.getElementById('story').textContent = "Error continuing game: " + err;
       }
+    }
+
+    async function callOpenAI() {
+      // Make a call to Azure OpenAI with the current conversation
+      const bodyData = {
+        messages: messages,
+        temperature: 1,
+        max_tokens: 1024,
+        top_p: 1
+      };
+
+      const response = await fetch(endpoint, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ' + pat,
+          ...modelHeader
+        },
+        body: JSON.stringify(bodyData)
+      });
+
+      const data = await response.json();
+
+      if (data.error) {
+        throw new Error(JSON.stringify(data.error));
+      }
+
+      if (!data.choices || data.choices.length === 0) {
+        throw new Error("No response from AI");
+      }
+
+      const aiMessage = data.choices[0].message.content;
+
+      // Add AI response to the conversation
+      messages.push({
+        role: 'assistant',
+        content: aiMessage
+      });
+
+      return aiMessage;
     }
   </script>
 </body>

@@ -1,40 +1,48 @@
-name: OpenAI Query
+name: Call OpenAI API
 
 on:
   workflow_dispatch:
     inputs:
       question:
-        description: "User's question"
+        description: 'Question for OpenAI'
         required: true
+        default: 'What is the capital of France?'
 
 jobs:
   ask_openai:
     runs-on: ubuntu-latest
     outputs:
-      ai_response: ${{ steps.openai_step.outputs.ai_response }}  # ✅ Store response as output
-
+      answer: ${{ steps.get_answer.outputs.response }}
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
 
-      - name: Ask OpenAI
-        id: openai_step  # ✅ Assign an ID so we can reference the output
+      - name: Install dependencies
+        run: npm install openai
+
+      - name: Get answer from OpenAI
+        id: get_answer
         env:
           GITHUB_TOKEN: ${{ secrets.TOKEN_AI }}
         run: |
-          RESPONSE=$(curl -X POST "https://models.inference.ai.azure.com/chat/completions" \
-          -H "Authorization: Bearer $GITHUB_TOKEN" \
-          -H "Content-Type: application/json" \
-          -d '{
-            "model": "gpt-4o",
-            "messages": [
-              { "role": "system", "content": "You are a helpful AI assistant." },
-              { "role": "user", "content": "${{ github.event.inputs.question }}" }
-            ],
-            "temperature": 1,
-            "max_tokens": 4096,
-            "top_p": 1
-          }')  # ✅ Extract response text
+          node -e "
+          const OpenAI = require('openai');
+          const openai = new OpenAI({
+            baseURL: 'https://models.inference.ai.azure.com',
+            apiKey: process.env.GITHUB_TOKEN
+          });
 
-          echo "ai_response=$RESPONSE" >> "$GITHUB_OUTPUT"  # ✅ Store response using Environment File
-          echo "$RESPONSE"
+          (async () => {
+            const response = await openai.chat.completions.create({
+              messages: [{role:'user', content:'${{ github.event.inputs.question }}'}],
+              model: 'gpt-4o',
+              temperature: 1,
+              max_tokens: 4096,
+              top_p: 1
+            });
+            const answer = response.choices[0].message.content;
+            console.log('answer=' + JSON.stringify(answer));
+          })();
+          " >> $GITHUB_OUTPUT

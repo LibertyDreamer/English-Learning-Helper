@@ -1,10 +1,10 @@
 async function askAI() {
     let userInput = document.getElementById("question").value;
 
-    let response = await fetch("https://api.github.com/repos/LibertyDreamer/quizzes/actions/workflows/openai.yml/dispatches", {
+    let response = await fetch("https://api.github.com/repos/**YOUR_GITHUB_USERNAME**/openai-github-actions/actions/workflows/openai.yml/dispatches", {
         method: "POST",
         headers: {
-            "Authorization": "Bearer" + TOKEN_AI,
+            "Authorization": "Bearer **ghp_EXAMPLETOKEN1234567890FAKE**",  // Change this to your real token!
             "Accept": "application/vnd.github.v3+json",
             "Content-Type": "application/json"
         },
@@ -17,6 +17,7 @@ async function askAI() {
     if (response.ok) {
         document.getElementById("response").innerText = "Processing...";
     } else {
-        document.getElementById("response").innerText = "Error starting request.";
+        let errorText = await response.text();
+        document.getElementById("response").innerText = "Error: " + errorText;
     }
 }

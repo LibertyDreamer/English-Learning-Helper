@@ -20,7 +20,7 @@ jobs:
       - name: Ask OpenAI
         id: openai_step  # ✅ Assign an ID so we can reference the output
         env:
-          GITHUB_TOKEN: ${{ secrets.Test }}
+          GITHUB_TOKEN: ${{ secrets.TOKEN_AI }}
         run: |
           RESPONSE=$(curl -X POST "https://models.inference.ai.azure.com/chat/completions" \
           -H "Authorization: Bearer $GITHUB_TOKEN" \

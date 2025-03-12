@@ -2,14 +2,14 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Somebody vs Anybody – Ultimate Quiz 🤩</title>
+  <title>Mission: Somebody vs Anybody – Gamified Quiz 🚀</title>
   <style>
-    /* Basic reset & layout */
+    /* Basic styling */
     body {
       margin: 0;
       padding: 0;
       font-family: Arial, sans-serif;
-      background: linear-gradient(135deg, #e0f7fa, #ffe0b2);
+      background: linear-gradient(135deg, #d0eaff, #ffe0f0);
       display: flex;
       justify-content: center;
       align-items: center;
@@ -21,17 +21,23 @@
       border-radius: 10px;
       box-shadow: 0 2px 10px rgba(0,0,0,0.1);
       width: 95%;
-      max-width: 1000px;
+      max-width: 1100px;
       margin: 20px;
     }
     h1 {
       text-align: center;
       color: #333;
     }
+    p.intro {
+      text-align: center;
+      font-size: 18px;
+      margin-bottom: 20px;
+      color: #555;
+    }
     .question {
       margin-bottom: 20px;
       padding: 15px;
-      border: 1px solid #ddd;
+      border: 2px solid #ddd;
       border-radius: 5px;
       background: #f9f9f9;
     }
@@ -43,8 +49,6 @@
     input[type="text"],
     input[type="number"],
     input[type="date"],
-    input[type="time"],
-    input[type="color"],
     select,
     textarea {
       padding: 8px;
@@ -110,276 +114,353 @@
       font-weight: bold;
       color: #333;
     }
+    /* Styles for drag & drop puzzles */
+    .drag-container {
+      border: 1px dashed #999;
+      padding: 10px;
+      min-height: 40px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .draggable {
+      padding: 6px 10px;
+      background: #e0e0e0;
+      border: 1px solid #bbb;
+      border-radius: 4px;
+      cursor: move;
+    }
+    /* Styles for image choices */
+    .image-choice-container {
+      display: flex;
+      gap: 20px;
+    }
+    .image-choice {
+      font-size: 40px;
+      cursor: pointer;
+      padding: 10px;
+      border: 2px solid transparent;
+      border-radius: 8px;
+      transition: border 0.3s;
+    }
+    .image-choice.selected {
+      border: 2px solid #2196F3;
+    }
   </style>
 </head>
 <body>
   <div class="container">
-    <h1>Somebody vs Anybody – Ultimate Quiz 🤩</h1>
-    <p style="text-align:center;">Answer the questions using various input types. Click “Check Answer” on each question for immediate, detailed feedback (or a model answer), and then use “Submit All Answers” to see your overall score (graded only for the objective questions).</p>
+    <h1>Mission: Somebody vs Anybody – Gamified Quiz 🚀</h1>
+    <p class="intro">
+      Agent, your mission is to decode secret clues using various interactive methods.
+      Complete each task to uncover the truth behind "somebody" vs "anybody" and secure our operation!
+    </p>
     <div id="quizContainer">
-      <!-- Questions will be generated here by JavaScript -->
+      <!-- Quiz questions will be generated here -->
     </div>
     <button id="submitAll">Submit All Answers</button>
     <div id="result"></div>
   </div>
   
   <script>
-    // Array of 30 questions with 10 different input types.
-    // For subjective (textarea) questions, graded is set to false.
+    // --- Drag & Drop Handlers ---
+    let dragSrcEl = null;
+    function handleDragStart(e) {
+      dragSrcEl = this;
+      e.dataTransfer.effectAllowed = 'move';
+      e.dataTransfer.setData('text/plain', this.innerText);
+      this.style.opacity = '0.4';
+    }
+    function handleDragOver(e) {
+      if (e.preventDefault) e.preventDefault();
+      e.dataTransfer.dropEffect = 'move';
+      return false;
+    }
+    function handleDragEnter(e) { this.classList.add('over'); }
+    function handleDragLeave(e) { this.classList.remove('over'); }
+    function handleDrop(e) {
+      if (e.stopPropagation) e.stopPropagation();
+      if (dragSrcEl !== this) {
+        // Swap text content of the two elements.
+        let temp = dragSrcEl.innerText;
+        dragSrcEl.innerText = this.innerText;
+        this.innerText = temp;
+      }
+      return false;
+    }
+    function handleDragEnd(e) {
+      this.style.opacity = '1';
+      document.querySelectorAll('.draggable').forEach(item => item.classList.remove('over'));
+    }
+    
+    // --- Questions Array ---
     const questions = [
-      // Type 1: Text input (3 questions)
-      { 
-        question: "1. Complete the sentence: 'I need _______ to fix my computer urgently.'", 
-        correct: "somebody", 
-        explanation: "A specific technician is implied—thus, 'somebody' is needed.", 
-        inputType: "text", 
-        graded: true 
+      /* Type 1: Text input (3 questions) */
+      {
+        question: "1. Agent, complete the message: 'I need _______ to infiltrate the enemy base.'",
+        correct: "somebody",
+        explanation: "A specific, skilled operative is implied.",
+        inputType: "text",
+        graded: true
       },
-      { 
-        question: "2. Complete the sentence: 'Is there _______ who can recommend a good movie?'", 
-        correct: "anybody", 
-        explanation: "This open question asks for help from any person; 'anybody' is correct.", 
-        inputType: "text", 
-        graded: true 
+      {
+        question: "2. In the secret note, it reads: 'Is there _______ available to decode this cipher?'",
+        correct: "anybody",
+        explanation: "An open call for assistance is intended.",
+        inputType: "text",
+        graded: true
       },
-      { 
-        question: "3. Fill in the blank: '______ called me unexpectedly last night.'", 
-        correct: "somebody", 
-        explanation: "The sentence implies a specific, though unnamed, caller.", 
-        inputType: "text", 
-        graded: true 
+      {
+        question: "3. Finish the sentence: '______ has left a trace in the abandoned building.'",
+        correct: "somebody",
+        explanation: "It implies a specific suspect.",
+        inputType: "text",
+        graded: true
       },
-      // Type 2: Dropdown (3 questions)
-      { 
-        question: "4. Choose the correct word: '______ left their umbrella here.'", 
-        correct: "somebody", 
-        explanation: "It implies that a particular person forgot their umbrella.", 
-        inputType: "dropdown", 
-        options: ["somebody", "anybody"], 
-        graded: true 
+      /* Type 2: Dropdown (3 questions) */
+      {
+        question: "4. Select the correct word: '______ hacked into the system last night.'",
+        correct: "somebody",
+        explanation: "A specific hacker is implied.",
+        inputType: "dropdown",
+        options: ["somebody", "anybody"],
+        graded: true
       },
-      { 
-        question: "5. Select the right option: 'I can't find ______ to explain this problem.'", 
-        correct: "anybody", 
-        explanation: "The speaker indicates that no one available can explain the problem.", 
-        inputType: "dropdown", 
-        options: ["somebody", "anybody"], 
-        graded: true 
+      {
+        question: "5. Choose the correct word: 'We haven't found ______ to explain the breach.'",
+        correct: "anybody",
+        explanation: "It’s an open inquiry for any suspect.",
+        inputType: "dropdown",
+        options: ["somebody", "anybody"],
+        graded: true
       },
-      { 
-        question: "6. Pick the correct word: '______ is waiting outside for you.'", 
-        correct: "somebody", 
-        explanation: "A specific person is implied to be waiting.", 
-        inputType: "dropdown", 
-        options: ["somebody", "anybody"], 
-        graded: true 
+      {
+        question: "6. Select the correct word: '______ left behind a mysterious note.'",
+        correct: "somebody",
+        explanation: "A specific individual left the note.",
+        inputType: "dropdown",
+        options: ["somebody", "anybody"],
+        graded: true
       },
-      // Type 3: Radio buttons (3 questions)
-      { 
-        question: "7. Which word best fits: 'Did ______ leave a voicemail for you?'", 
-        correct: "anybody", 
-        explanation: "A general inquiry about any caller is intended.", 
-        inputType: "radio", 
-        options: ["somebody", "anybody"], 
-        graded: true 
+      /* Type 3: Radio buttons (3 questions) */
+      {
+        question: "7. Which word completes the alert: 'Did ______ call the command center?'",
+        correct: "anybody",
+        explanation: "The alert is non-specific.",
+        inputType: "radio",
+        options: ["somebody", "anybody"],
+        graded: true
       },
-      { 
-        question: "8. Choose the right option: 'I think ______ will help if you ask.'", 
-        correct: "somebody", 
-        explanation: "It suggests that a specific helper is expected.", 
-        inputType: "radio", 
-        options: ["somebody", "anybody"], 
-        graded: true 
+      {
+        question: "8. Choose the correct word: 'I believe ______ is watching our moves.'",
+        correct: "somebody",
+        explanation: "It implies a specific observer.",
+        inputType: "radio",
+        options: ["somebody", "anybody"],
+        graded: true
       },
-      { 
-        question: "9. In the sentence 'There's ______ at the door, but I can't see who it is,' which word fits best?", 
-        correct: "somebody", 
-        explanation: "Although the identity is unknown, the presence is specific.", 
-        inputType: "radio", 
-        options: ["somebody", "anybody"], 
-        graded: true 
+      {
+        question: "9. Fill in: 'There's ______ at the gate, but I can't identify them.'",
+        correct: "somebody",
+        explanation: "Although unidentified, it's a specific person.",
+        inputType: "radio",
+        options: ["somebody", "anybody"],
+        graded: true
       },
-      // Type 4: Checkboxes (3 questions)
-      { 
-        question: "10. Select the word that correctly completes the sentence: 'I didn't see ______ at the party.'", 
-        correct: ["anybody"], 
-        explanation: "'Anybody' indicates the absence of any person.", 
-        inputType: "checkbox", 
-        options: ["somebody", "anybody", "everyone"], 
-        graded: true 
+      /* Type 4: Checkbox (3 questions) */
+      {
+        question: "10. Select the word that completes the message: 'I didn't see ______ at the rendezvous point.'",
+        correct: ["anybody"],
+        explanation: "No one was seen at the meeting point.",
+        inputType: "checkbox",
+        options: ["somebody", "anybody", "nobody"],
+        graded: true
       },
-      { 
-        question: "11. Choose the word that fits: '______ told me the secret, but I forgot who it was.'", 
-        correct: ["somebody"], 
-        explanation: "It implies a specific person shared the secret.", 
-        inputType: "checkbox", 
-        options: ["somebody", "anybody", "everyone"], 
-        graded: true 
+      {
+        question: "11. Choose the word that fits: '______ leaked the confidential files.'",
+        correct: ["somebody"],
+        explanation: "A specific insider is implied.",
+        inputType: "checkbox",
+        options: ["somebody", "anybody", "everyone"],
+        graded: true
       },
-      { 
-        question: "12. Select the appropriate word: 'Is ______ available to help me move these boxes?'", 
-        correct: ["anybody"], 
-        explanation: "The inquiry is general, asking if any person can help.", 
-        inputType: "checkbox", 
-        options: ["somebody", "anybody", "everyone"], 
-        graded: true 
+      {
+        question: "12. Pick the correct word: 'Is ______ able to decrypt this code?'",
+        correct: ["anybody"],
+        explanation: "It’s an open call for code decryption assistance.",
+        inputType: "checkbox",
+        options: ["somebody", "anybody", "no one"],
+        graded: true
       },
-      // Type 5: Range (slider) (3 questions)
-      { 
-        question: "13. Use the slider to rate the specificity of the term 'somebody' (0 = not specific, 10 = extremely specific).", 
+      /* Type 5: Range (slider) (3 questions) */
+      {
+        question: "13. Using the slider, rate the specificity when you hear 'somebody' (0 = not specific, 10 = extremely specific).",
         correctRange: { min: 7, max: 10 },
-        explanation: "'Somebody' implies a fairly specific person.", 
-        inputType: "range", 
-        min: 0, 
-        max: 10, 
+        explanation: "'Somebody' typically implies a fairly specific individual.",
+        inputType: "range",
+        min: 0,
+        max: 10,
         step: 1,
-        graded: true 
+        graded: true
       },
-      { 
-        question: "14. Use the slider to rate the generality of 'anybody' (0 = not general, 10 = extremely general).", 
+      {
+        question: "14. Rate the generality of 'anybody' on a scale from 0 (not general) to 10 (very general).",
         correctRange: { min: 7, max: 10 },
-        explanation: "'Anybody' is used in a very general sense.", 
-        inputType: "range", 
-        min: 0, 
-        max: 10, 
+        explanation: "'Anybody' is used in a broad, general sense.",
+        inputType: "range",
+        min: 0,
+        max: 10,
         step: 1,
-        graded: true 
+        graded: true
       },
-      { 
-        question: "15. On a scale from 0 (no difference) to 10 (maximum difference), rate the distinction between 'somebody' and 'anybody'.", 
+      {
+        question: "15. On a scale from 0 to 10, rate how ambiguous the sentence 'I need somebody to help' sounds (0 = clear, 10 = ambiguous).",
+        correctRange: { min: 4, max: 6 },
+        explanation: "The sentence has moderate ambiguity.",
+        inputType: "range",
+        min: 0,
+        max: 10,
+        step: 1,
+        graded: true
+      },
+      /* Type 6: Date (3 questions) */
+      {
+        question: "16. Agent, select the date when the secret meeting occurred. (Hint: 2025-05-20)",
+        correct: "2025-05-20",
+        explanation: "The meeting was scheduled on May 20, 2025.",
+        inputType: "date",
+        graded: true
+      },
+      {
+        question: "17. Choose the date mentioned in the intercepted message. (Hint: 2025-06-10)",
+        correct: "2025-06-10",
+        explanation: "The informant provided that specific date.",
+        inputType: "date",
+        graded: true
+      },
+      {
+        question: "18. Pick the date when the operation was compromised. (Hint: 2025-04-01)",
+        correct: "2025-04-01",
+        explanation: "The breach occurred on April 1, 2025.",
+        inputType: "date",
+        graded: true
+      },
+      /* Type 7: Drag & Drop (3 questions) */
+      {
+        question: "19. Rearrange the words to form the sentence: 'I need somebody to infiltrate the base.'",
+        correctOrder: ["I", "need", "somebody", "to", "infiltrate", "the", "base"],
+        explanation: "The correct order conveys the intended message.",
+        inputType: "dragdrop",
+        items: ["base.", "need", "to", "infiltrate", "the", "I", "somebody"],
+        graded: true
+      },
+      {
+        question: "20. Drag and drop to arrange: 'Anybody can be a spy if they train hard.'",
+        correctOrder: ["Anybody", "can", "be", "a", "spy", "if", "they", "train", "hard"],
+        explanation: "This order emphasizes that anyone can become a spy.",
+        inputType: "dragdrop",
+        items: ["if", "hard", "they", "train", "spy", "a", "can", "Anybody", "be"],
+        graded: true
+      },
+      {
+        question: "21. Arrange the words to complete: 'Somebody must secure the perimeter immediately.'",
+        correctOrder: ["Somebody", "must", "secure", "the", "perimeter", "immediately"],
+        explanation: "It indicates that a specific person must act.",
+        inputType: "dragdrop",
+        items: ["secure", "must", "the", "immediately", "Somebody", "perimeter"],
+        graded: true
+      },
+      /* Type 8: Image Choice (clickable images) (3 questions) */
+      {
+        question: "22. Select the icon that best represents a specific operative ('somebody') in our mission.",
+        correct: "somebody",
+        explanation: "The single operative icon (👤) represents 'somebody'.",
+        inputType: "imagechoice",
+        options: [
+          { value: "somebody", image: "👤" },
+          { value: "anybody", image: "👥" }
+        ],
+        graded: true
+      },
+      {
+        question: "23. Choose the icon that symbolizes an open call for assistance ('anybody') in our intel.",
+        correct: "anybody",
+        explanation: "The group icon (👥) stands for 'anybody'.",
+        inputType: "imagechoice",
+        options: [
+          { value: "somebody", image: "👤" },
+          { value: "anybody", image: "👥" }
+        ],
+        graded: true
+      },
+      {
+        question: "24. Pick the image that best fits: The message reads 'Somebody is on the move.'",
+        correct: "somebody",
+        explanation: "A single operative icon (👤) signifies a specific individual.",
+        inputType: "imagechoice",
+        options: [
+          { value: "somebody", image: "👤" },
+          { value: "anybody", image: "👥" }
+        ],
+        graded: true
+      },
+      /* Type 9: Number (3 questions) */
+      {
+        question: "25. Enter the number of letters in the word 'somebody'.",
+        correct: 8,
+        explanation: "'Somebody' has 8 letters.",
+        inputType: "number",
+        graded: true
+      },
+      {
+        question: "26. What is the numeric clue level for 'anybody'? (Hint: 5)",
         correct: 5,
-        explanation: "A rating of 5 reflects a moderate, balanced nuance.", 
-        inputType: "range", 
-        min: 0, 
-        max: 10, 
-        step: 1,
-        graded: true 
+        explanation: "The clue level is rated 5.",
+        inputType: "number",
+        graded: true
       },
-      // Type 6: Date input (3 questions)
-      { 
-        question: "16. Select the date when the mysterious call from 'somebody' was received. (Hint: 2025-03-01)", 
-        correct: "2025-03-01",
-        explanation: "This is the predetermined date for the call.", 
-        inputType: "date", 
-        graded: true 
+      {
+        question: "27. Enter the code number for the secret file labeled 'Somebody'.",
+        correct: 101,
+        explanation: "The file code for 'Somebody' is 101.",
+        inputType: "number",
+        graded: true
       },
-      { 
-        question: "17. Choose the date that marks the beginning of the 'anybody' era in the story. (Hint: 2025-04-15)", 
-        correct: "2025-04-15",
-        explanation: "This date signifies the start of general action.", 
-        inputType: "date", 
-        graded: true 
+      /* Type 10: Textarea (free response – not graded) (3 questions) */
+      {
+        question: "28. In your own words, describe the significance of the difference between 'somebody' and 'anybody' in our operation.",
+        modelAnswer: "The difference lies in specificity: 'somebody' implies a particular individual, whereas 'anybody' opens up to any potential helper.",
+        explanation: "Reflect on how specificity affects decision-making in the mission.",
+        inputType: "textarea",
+        graded: false
       },
-      { 
-        question: "18. Pick the date on which the report mentioned 'somebody' arriving. (Hint: 2025-02-20)", 
-        correct: "2025-02-20",
-        explanation: "This is the date provided in the scenario.", 
-        inputType: "date", 
-        graded: true 
+      {
+        question: "29. Explain how ambiguity in language can impact espionage operations.",
+        modelAnswer: "Ambiguity may cause misinterpretations and delays, making it critical to use precise language.",
+        explanation: "Highlight the operational risks of ambiguous communication.",
+        inputType: "textarea",
+        graded: false
       },
-      // Type 7: Time input (3 questions)
-      { 
-        question: "19. Select the time when the important call from 'somebody' was made. (Hint: 14:30)", 
-        correct: "14:30",
-        explanation: "The call was made at 14:30.", 
-        inputType: "time", 
-        graded: true 
-      },
-      { 
-        question: "20. Choose the time that best represents the vague moment when 'anybody' was seen. (Hint: 09:00)", 
-        correct: "09:00",
-        explanation: "The ambiguous time is set at 09:00.", 
-        inputType: "time", 
-        graded: true 
-      },
-      { 
-        question: "21. Pick the time that corresponds to the moment of realization in the story. (Hint: 18:45)", 
-        correct: "18:45",
-        explanation: "The moment of realization is at 18:45.", 
-        inputType: "time", 
-        graded: true 
-      },
-      // Type 8: Number input (3 questions)
-      { 
-        question: "22. Enter the number of letters in the word 'somebody'.", 
-        correct: 8,
-        explanation: "'Somebody' contains 8 letters.", 
-        inputType: "number", 
-        graded: true 
-      },
-      { 
-        question: "23. What is the numeric value associated with the clarity of 'somebody'? (Rate from 1 to 10, correct is 8)", 
-        correct: 8,
-        explanation: "A rating of 8 reflects the specificity of 'somebody'.", 
-        inputType: "number", 
-        graded: true 
-      },
-      { 
-        question: "24. How many vowels are there in the word 'anybody'?", 
-        correct: 2,
-        explanation: "Counting only a and o as vowels, there are 2.", 
-        inputType: "number", 
-        graded: true 
-      },
-      // Type 9: Color input (3 questions)
-      { 
-        question: "25. Choose a color that represents the specific nature of 'somebody'. (Select #ff1493)", 
-        correct: "#ff1493",
-        explanation: "The color #ff1493 symbolizes specificity.", 
-        inputType: "color", 
-        graded: true 
-      },
-      { 
-        question: "26. Pick a color that you feel symbolizes the generality of 'anybody'. (Select #808080)", 
-        correct: "#808080",
-        explanation: "Gray (#808080) represents generality and ambiguity.", 
-        inputType: "color", 
-        graded: true 
-      },
-      { 
-        question: "27. Select the color that best captures the contrast between a defined person and an undefined one. (Select #0000ff)", 
-        correct: "#0000ff",
-        explanation: "Blue (#0000ff) illustrates a clear distinction.", 
-        inputType: "color", 
-        graded: true 
-      },
-      // Type 10: Textarea (free response – not graded) (3 questions)
-      { 
-        question: "28. In your own words, explain the difference between 'somebody' and 'anybody'.", 
-        modelAnswer: "A correct explanation is: 'Somebody' refers to a specific, though unnamed, individual, while 'anybody' refers to any person without specification.", 
-        explanation: "Compare your answer with the model answer.", 
-        inputType: "textarea", 
-        graded: false 
-      },
-      { 
-        question: "29. Describe a scenario where using 'anybody' is more appropriate than 'somebody'.", 
-        modelAnswer: "For example, when asking for help in a public place, 'anybody' is preferred because it invites assistance from whoever is available.", 
-        explanation: "Your response can be compared to the model scenario.", 
-        inputType: "textarea", 
-        graded: false 
-      },
-      { 
-        question: "30. Describe a situation where 'somebody' would be the preferred choice over 'anybody'.", 
-        modelAnswer: "When referring to a specific expert or person known to have a particular quality—even if unnamed—'somebody' is the correct choice.", 
-        explanation: "Compare your answer with the provided explanation.", 
-        inputType: "textarea", 
-        graded: false 
+      {
+        question: "30. Write a short mission report summarizing the intelligence gathered on the suspect, focusing on clues about their identity.",
+        modelAnswer: "The intelligence indicates that a specific individual ('somebody') has been active, but the possibility of a wider network ('anybody') cannot be ruled out.",
+        explanation: "Compare your report with the model to assess the clarity of your insights.",
+        inputType: "textarea",
+        graded: false
       }
     ];
     
-    // Generate quiz elements dynamically
+    // --- Quiz Generation ---
     function generateQuiz() {
       const container = document.getElementById('quizContainer');
       questions.forEach((q, index) => {
         const div = document.createElement('div');
         div.className = 'question';
         
-        // Question text
         const p = document.createElement('p');
         p.innerText = q.question;
         div.appendChild(p);
         
-        // Create input element based on type
         let inputElement;
         switch(q.inputType) {
           case "text":
@@ -387,6 +468,7 @@
             inputElement.type = "text";
             inputElement.id = "answer" + index;
             inputElement.placeholder = "Type your answer...";
+            div.appendChild(inputElement);
             break;
           case "dropdown":
             inputElement = document.createElement('select');
@@ -401,11 +483,12 @@
               option.innerText = opt;
               inputElement.appendChild(option);
             });
+            div.appendChild(inputElement);
             break;
           case "radio":
             inputElement = document.createElement('div');
             inputElement.className = "options-group";
-            q.options.forEach((opt, i) => {
+            q.options.forEach(opt => {
               const radioLabel = document.createElement('label');
               const radioInput = document.createElement('input');
               radioInput.type = "radio";
@@ -415,11 +498,12 @@
               radioLabel.appendChild(document.createTextNode(" " + opt));
               inputElement.appendChild(radioLabel);
             });
+            div.appendChild(inputElement);
             break;
           case "checkbox":
             inputElement = document.createElement('div');
             inputElement.className = "options-group";
-            q.options.forEach((opt, i) => {
+            q.options.forEach(opt => {
               const checkboxLabel = document.createElement('label');
               const checkboxInput = document.createElement('input');
               checkboxInput.type = "checkbox";
@@ -429,6 +513,7 @@
               checkboxLabel.appendChild(document.createTextNode(" " + opt));
               inputElement.appendChild(checkboxLabel);
             });
+            div.appendChild(inputElement);
             break;
           case "range":
             inputElement = document.createElement('input');
@@ -438,7 +523,6 @@
             inputElement.max = q.max;
             inputElement.step = q.step;
             inputElement.value = Math.floor((Number(q.min) + Number(q.max)) / 2);
-            // Display current value
             const rangeVal = document.createElement('span');
             rangeVal.id = "rangeVal" + index;
             rangeVal.className = "rangeValue";
@@ -448,48 +532,75 @@
             });
             div.appendChild(inputElement);
             div.appendChild(rangeVal);
-            inputElement = null; // Already appended, so set to null
             break;
           case "date":
             inputElement = document.createElement('input');
             inputElement.type = "date";
             inputElement.id = "answer" + index;
+            div.appendChild(inputElement);
             break;
-          case "time":
-            inputElement = document.createElement('input');
-            inputElement.type = "time";
+          case "dragdrop":
+            inputElement = document.createElement('div');
+            inputElement.className = "drag-container";
+            inputElement.id = "dragdrop" + index;
+            // Shuffle the items array
+            let items = q.items.slice();
+            items.sort(() => Math.random() - 0.5);
+            items.forEach(word => {
+              const span = document.createElement('span');
+              span.className = "draggable";
+              span.draggable = true;
+              span.innerText = word;
+              span.addEventListener('dragstart', handleDragStart, false);
+              span.addEventListener('dragenter', handleDragEnter, false);
+              span.addEventListener('dragover', handleDragOver, false);
+              span.addEventListener('dragleave', handleDragLeave, false);
+              span.addEventListener('drop', handleDrop, false);
+              span.addEventListener('dragend', handleDragEnd, false);
+              inputElement.appendChild(span);
+            });
+            div.appendChild(inputElement);
+            break;
+          case "imagechoice":
+            inputElement = document.createElement('div');
+            inputElement.className = "image-choice-container";
             inputElement.id = "answer" + index;
+            q.options.forEach(opt => {
+              const imgDiv = document.createElement('div');
+              imgDiv.className = "image-choice";
+              imgDiv.innerText = opt.image;
+              imgDiv.dataset.value = opt.value;
+              imgDiv.addEventListener('click', function() {
+                Array.from(this.parentNode.children).forEach(child => child.classList.remove('selected'));
+                this.classList.add('selected');
+              });
+              inputElement.appendChild(imgDiv);
+            });
+            div.appendChild(inputElement);
             break;
           case "number":
             inputElement = document.createElement('input');
             inputElement.type = "number";
             inputElement.id = "answer" + index;
-            break;
-          case "color":
-            inputElement = document.createElement('input');
-            inputElement.type = "color";
-            inputElement.id = "answer" + index;
+            div.appendChild(inputElement);
             break;
           case "textarea":
             inputElement = document.createElement('textarea');
             inputElement.id = "answer" + index;
-            inputElement.placeholder = "Type your explanation here...";
+            inputElement.placeholder = "Type your response here...";
+            div.appendChild(inputElement);
             break;
           default:
             inputElement = document.createElement('input');
             inputElement.type = "text";
             inputElement.id = "answer" + index;
-        }
-        if(inputElement) {
-          div.appendChild(inputElement);
+            div.appendChild(inputElement);
         }
         
-        // "Check Answer" button
+        // "Check Answer" button for immediate feedback
         const checkBtn = document.createElement('button');
         checkBtn.innerText = "Check Answer";
-        checkBtn.addEventListener("click", function() {
-          checkAnswer(index);
-        });
+        checkBtn.addEventListener("click", function() { checkAnswer(index); });
         div.appendChild(checkBtn);
         
         // Feedback span
@@ -502,135 +613,139 @@
       });
     }
     
-    // Function to check an individual answer and show explanation/model answer.
+    // --- Answer Checking ---
     function checkAnswer(index) {
       const q = questions[index];
-      let userAnswer, isCorrect = false;
+      let userAnswer;
+      let isCorrect = false;
       const feedback = document.getElementById("feedback" + index);
       
-      // Determine input value based on type
-      if(q.inputType === "text" || q.inputType === "number" || q.inputType === "date" || q.inputType === "time" || q.inputType === "color") {
-        userAnswer = document.getElementById("answer" + index).value.trim().toLowerCase();
-        if(typeof q.correct === "number") {
-          isCorrect = Number(userAnswer) === q.correct;
-        } else {
+      switch(q.inputType) {
+        case "text":
+        case "number":
+        case "date":
+          userAnswer = document.getElementById("answer" + index).value.trim().toLowerCase();
+          if(typeof q.correct === "number") {
+            isCorrect = Number(userAnswer) === q.correct;
+          } else {
+            isCorrect = (userAnswer === q.correct.toLowerCase());
+          }
+          break;
+        case "dropdown":
+          userAnswer = document.getElementById("answer" + index).value;
           isCorrect = (userAnswer === q.correct.toLowerCase());
-        }
-      } else if(q.inputType === "dropdown") {
-        userAnswer = document.getElementById("answer" + index).value;
-        isCorrect = (userAnswer === q.correct.toLowerCase());
-      } else if(q.inputType === "radio") {
-        const radios = document.getElementsByName("question" + index);
-        radios.forEach(radio => {
-          if(radio.checked) {
-            userAnswer = radio.value;
+          break;
+        case "radio":
+          const radios = document.getElementsByName("question" + index);
+          radios.forEach(radio => { if(radio.checked) userAnswer = radio.value; });
+          isCorrect = (userAnswer === q.correct.toLowerCase());
+          break;
+        case "checkbox":
+          const checkboxes = document.getElementsByName("question" + index);
+          let selected = [];
+          checkboxes.forEach(box => { if(box.checked) selected.push(box.value); });
+          isCorrect = (selected.length === q.correct.length && selected.every(val => q.correct.includes(val)));
+          break;
+        case "range":
+          userAnswer = Number(document.getElementById("answer" + index).value);
+          if(q.correctRange) {
+            isCorrect = (userAnswer >= q.correctRange.min && userAnswer <= q.correctRange.max);
+          } else {
+            isCorrect = (userAnswer === q.correct);
           }
-        });
-        isCorrect = (userAnswer === q.correct.toLowerCase());
-      } else if(q.inputType === "checkbox") {
-        const checkboxes = document.getElementsByName("question" + index);
-        let selected = [];
-        checkboxes.forEach(box => {
-          if(box.checked) {
-            selected.push(box.value);
-          }
-        });
-        // For checkbox, compare arrays (order doesn't matter)
-        isCorrect = (selected.length === q.correct.length && selected.every(val => q.correct.includes(val)));
-      } else if(q.inputType === "range") {
-        // For range, retrieve value from the corresponding span element if not appended already.
-        const rangeInput = document.getElementById("answer" + index);
-        // If range input was appended inline above, its value is still accessible.
-        if(rangeInput) {
-          userAnswer = Number(rangeInput.value);
-        } else {
-          // Alternatively, get from the displayed span
-          userAnswer = Number(document.getElementById("rangeVal" + index).innerText);
-        }
-        // Check for range conditions if provided
-        if(q.correctRange) {
-          isCorrect = (userAnswer >= q.correctRange.min && userAnswer <= q.correctRange.max);
-        } else {
-          isCorrect = (userAnswer === q.correct);
-        }
-      } else if(q.inputType === "textarea") {
-        userAnswer = document.getElementById("answer" + index).value.trim();
-        // For textarea, we do not grade; just show the model answer.
-        feedback.style.color = "blue";
-        feedback.innerText = " Model Answer: " + q.modelAnswer;
-        return;
+          break;
+        case "dragdrop":
+          const dragContainer = document.getElementById("dragdrop" + index);
+          let arranged = [];
+          dragContainer.childNodes.forEach(item => { if(item.innerText) arranged.push(item.innerText); });
+          isCorrect = (arranged.length === q.correctOrder.length && arranged.every((word, i) => word === q.correctOrder[i]));
+          break;
+        case "imagechoice":
+          const imgContainer = document.getElementById("answer" + index);
+          let selectedImg;
+          Array.from(imgContainer.children).forEach(child => {
+            if(child.classList.contains("selected")) selectedImg = child.dataset.value;
+          });
+          isCorrect = (selectedImg === q.correct.toLowerCase());
+          break;
+        case "textarea":
+          feedback.style.color = "blue";
+          feedback.innerText = " Model Answer: " + q.modelAnswer;
+          return;
+        default:
+          userAnswer = document.getElementById("answer" + index).value.trim().toLowerCase();
+          isCorrect = (userAnswer === q.correct.toLowerCase());
       }
       
-      // Display feedback with detailed explanation
       if(isCorrect) {
         feedback.style.color = "green";
         feedback.innerText = " Correct 😊";
       } else {
         feedback.style.color = "red";
-        // For range questions, show the acceptable answer range if applicable.
-        if(q.inputType === "range" && q.correctRange) {
-          feedback.innerText = " Incorrect. " + q.explanation + " (Acceptable: " + q.correctRange.min + "–" + q.correctRange.max + ")";
-        } else {
-          feedback.innerText = " Incorrect. " + q.explanation;
-        }
+        feedback.innerText = " Incorrect. " + q.explanation;
       }
     }
     
-    // Global submission: Tally score for graded (objective) questions.
+    // --- Global Submission ---
     function submitAll() {
-      let score = 0;
-      let total = 0;
+      let score = 0, total = 0;
       questions.forEach((q, index) => {
         if(q.graded) {
           total++;
-          let isCorrect = false;
-          let userAnswer;
-          if(q.inputType === "text" || q.inputType === "number" || q.inputType === "date" || q.inputType === "time" || q.inputType === "color") {
-            userAnswer = document.getElementById("answer" + index).value.trim().toLowerCase();
-            if(typeof q.correct === "number") {
-              isCorrect = Number(userAnswer) === q.correct;
-            } else {
+          let isCorrect = false, userAnswer;
+          switch(q.inputType) {
+            case "text":
+            case "number":
+            case "date":
+              userAnswer = document.getElementById("answer" + index).value.trim().toLowerCase();
+              if(typeof q.correct === "number") {
+                isCorrect = Number(userAnswer) === q.correct;
+              } else {
+                isCorrect = (userAnswer === q.correct.toLowerCase());
+              }
+              break;
+            case "dropdown":
+              userAnswer = document.getElementById("answer" + index).value;
               isCorrect = (userAnswer === q.correct.toLowerCase());
-            }
-          } else if(q.inputType === "dropdown") {
-            userAnswer = document.getElementById("answer" + index).value;
-            isCorrect = (userAnswer === q.correct.toLowerCase());
-          } else if(q.inputType === "radio") {
-            const radios = document.getElementsByName("question" + index);
-            radios.forEach(radio => {
-              if(radio.checked) {
-                userAnswer = radio.value;
+              break;
+            case "radio":
+              const radios = document.getElementsByName("question" + index);
+              radios.forEach(radio => { if(radio.checked) userAnswer = radio.value; });
+              isCorrect = (userAnswer === q.correct.toLowerCase());
+              break;
+            case "checkbox":
+              const checkboxes = document.getElementsByName("question" + index);
+              let selected = [];
+              checkboxes.forEach(box => { if(box.checked) selected.push(box.value); });
+              isCorrect = (selected.length === q.correct.length && selected.every(val => q.correct.includes(val)));
+              break;
+            case "range":
+              userAnswer = Number(document.getElementById("answer" + index).value);
+              if(q.correctRange) {
+                isCorrect = (userAnswer >= q.correctRange.min && userAnswer <= q.correctRange.max);
+              } else {
+                isCorrect = (userAnswer === q.correct);
               }
-            });
-            isCorrect = (userAnswer === q.correct.toLowerCase());
-          } else if(q.inputType === "checkbox") {
-            const checkboxes = document.getElementsByName("question" + index);
-            let selected = [];
-            checkboxes.forEach(box => {
-              if(box.checked) {
-                selected.push(box.value);
-              }
-            });
-            isCorrect = (selected.length === q.correct.length && selected.every(val => q.correct.includes(val)));
-          } else if(q.inputType === "range") {
-            const rangeInput = document.getElementById("answer" + index);
-            let value;
-            if(rangeInput) {
-              value = Number(rangeInput.value);
-            } else {
-              value = Number(document.getElementById("rangeVal" + index).innerText);
-            }
-            if(q.correctRange) {
-              isCorrect = (value >= q.correctRange.min && value <= q.correctRange.max);
-            } else {
-              isCorrect = (value === q.correct);
-            }
+              break;
+            case "dragdrop":
+              const dragContainer = document.getElementById("dragdrop" + index);
+              let arranged = [];
+              dragContainer.childNodes.forEach(item => { if(item.innerText) arranged.push(item.innerText); });
+              isCorrect = (arranged.length === q.correctOrder.length && arranged.every((word, i) => word === q.correctOrder[i]));
+              break;
+            case "imagechoice":
+              const imgContainer = document.getElementById("answer" + index);
+              let selectedImg;
+              Array.from(imgContainer.children).forEach(child => {
+                if(child.classList.contains("selected")) selectedImg = child.dataset.value;
+              });
+              isCorrect = (selectedImg === q.correct.toLowerCase());
+              break;
           }
           if(isCorrect) score++;
         }
       });
-      const resultDiv = document.getElementById("result");
-      resultDiv.innerText = "You got " + score + " out of " + total + " correct!";
+      document.getElementById("result").innerText = "You got " + score + " out of " + total + " correct!";
     }
     
     document.getElementById("submitAll").addEventListener("click", submitAll);

@@ -19,8 +19,6 @@ jobs:
 
       - name: Ask OpenAI
         id: openai_step  # ✅ Assign an ID so we can reference the output
-        env:
-          GITHUB_TOKEN: ${{ secrets.TOKEN_AI }}
         run: |
           RESPONSE=$(curl -X POST "https://models.inference.ai.azure.com/chat/completions" \
           -H "Authorization: Bearer $GITHUB_TOKEN" \
@@ -37,4 +35,4 @@ jobs:
           }' | jq -r '.choices[0].message.content')  # ✅ Extract response text
 
           echo "ai_response=$RESPONSE" >> "$GITHUB_OUTPUT"  # ✅ Store response using Environment File
-          echo "$RESPONCE"
+          echo "$RESPONSE"

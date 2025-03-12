@@ -2,10 +2,10 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>User Provided PAT - OpenAI Call</title>
+  <title>User Provided PAT - Azure OpenAI Call</title>
 </head>
 <body>
-  <h3>Call OpenAI API (no workflows!)</h3>
+  <h3>Call Azure OpenAI API directly from HTML</h3>
 
   <input id="pat" placeholder="Enter your OpenAI PAT" style="width:400px"><br><br>
   <input id="question" placeholder="Ask something..." style="width:400px">
@@ -23,14 +23,15 @@ async function callOpenAI() {
     return;
   }
 
-  const response = await fetch('https://models.inference.ai.azure.com', {
+  const endpoint = 'https://models.inference.ai.azure.com/openai/deployments/gpt-4o/chat/completions?api-version=2024-02-15-preview';
+
+  const response = await fetch(endpoint, {
     method: 'POST',
     headers: {
-      'Authorization': 'Bearer ' + pat,
-      'Content-Type': 'application/json'
+      'Content-Type': 'application/json',
+      'api-key': pat
     },
     body: JSON.stringify({
-      model: 'gpt-4o',
       messages: [
         { role: 'user', content: question }
       ],

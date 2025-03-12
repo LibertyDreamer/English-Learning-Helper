@@ -23,7 +23,7 @@ async function callOpenAI() {
     return;
   }
 
-  const endpoint = 'https://models.inference.ai.azure.com/v1/chat/completions';
+  const endpoint = 'https://models.inference.ai.azure.com/openai/deployments/gpt-4o/chat/completions?api-version=2024-02-15-preview';
 
   const response = await fetch(endpoint, {
     method: 'POST',

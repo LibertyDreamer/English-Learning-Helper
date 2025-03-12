@@ -35,4 +35,4 @@ jobs:
             "top_p": 1
           }')
 
-          echo "$RESPONSE" >> response.txt
+          echo "$RESPONSE"

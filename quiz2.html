@@ -205,11 +205,11 @@ and include it inside story like it's a part of that story.
         const definitionConversation = [
           {
             role: 'system',
-            content: 'You are a dictionary. Provide a short, kid-friendly definition for the given word. Use simple words.'
+            content: 'You are a dictionary. Provide a short, kid-friendly definition for the given word. Use simple words. But it is for grown ups'
           },
           {
             role: 'user',
-            content: `Define: "${word}" for a 3-year-old.`
+            content: `Define: "${word}"`
           }
         ];
         const defText = await callOpenAI(definitionConversation);

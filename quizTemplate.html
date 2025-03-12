@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>New Quiz Template</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    /* Basic styling */
+    body { font-family: sans-serif; }
+    .question { margin-bottom: 20px; }
+    /* Container for answer field and its button */
+    .answer-field {
+      display: inline-block;
+      vertical-align: middle;
+    }
+    input.answer, select.answer {
+      margin-left: 5px;
+      border: 1px solid #ccc;
+      padding: 3px;
+    }
+    .show-answer-btn {
+      margin-left: 10px;
+      padding: 3px 6px;
+      cursor: pointer;
+    }
+    .correct-answer {
+      font-weight: bold;
+      color: blue;
+      margin-left: 10px;
+    }
+  </style>
+</head>
+<body>
+  <h1>New Quiz Title</h1>
+  
+  <!-- Sample Text Input Question -->
+  <div class="question">
+    <p>
+      Question 1: JavaScript is a 
+      <span class="answer-field">
+        <input type="text" class="answer" data-answer="programming">
+        <button class="show-answer-btn" onclick="showAnswerForQuestion(this)">Show Answer</button>
+      </span>
+      language.
+    </p>
+  </div>
+  
+  <!-- Sample Combobox Question -->
+  <div class="question">
+    <p>
+      Question 2: The capital of France is 
+      <span class="answer-field">
+        <select class="answer" data-answer="paris">
+          <option value="">-- select --</option>
+          <option value="london">London</option>
+          <option value="paris">Paris</option>
+          <option value="berlin">Berlin</option>
+        </select>
+        <button class="show-answer-btn" onclick="showAnswerForQuestion(this)">Show Answer</button>
+      </span>
+      .
+    </p>
+  </div>
+  
+  <!-- Global Control Buttons -->
+  <button id="checkBtn">Check Answers</button>
+  <button id="showAllBtn">Show All Answers</button>
+  
+  <br><br>
+  <a href="index.html">Back to Index</a>
+  
+  <!-- Include the common script -->
+  <script src="common.js"></script>
+  <script>
+    // Attach event listeners to the global buttons
+    document.getElementById('checkBtn').addEventListener('click', checkAnswers);
+    document.getElementById('showAllBtn').addEventListener('click', showAnswers);
+  </script>
+</body>
+</html>

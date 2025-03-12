@@ -2,78 +2,83 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Somebody vs Anybody Quiz 🎉</title>
+  <title>Somebody vs Anybody Quiz 📝</title>
   <style>
-    /* Basic reset and background */
     body {
       margin: 0;
       padding: 0;
-      font-family: 'Arial', sans-serif;
-      background: linear-gradient(135deg, #f0f8ff, #e6e6fa);
+      font-family: Arial, sans-serif;
+      background: linear-gradient(135deg, #e0f7fa, #ffe0b2);
       display: flex;
       justify-content: center;
       align-items: center;
       min-height: 100vh;
     }
-    /* Main container style */
     .container {
-      background: #fff;
+      background: white;
       padding: 20px 30px;
       border-radius: 10px;
       box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-      max-width: 800px;
       width: 90%;
+      max-width: 900px;
       margin: 20px;
     }
     h1 {
       text-align: center;
       color: #333;
     }
-    p.intro {
-      text-align: center;
-      font-size: 18px;
-      color: #555;
-    }
-    /* Style for each question */
     .question {
       margin-bottom: 20px;
-      padding: 10px;
-      border-bottom: 1px solid #ddd;
-    }
-    .question:last-child {
-      border-bottom: none;
+      padding: 15px;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+      background: #f9f9f9;
     }
     .question p {
+      margin: 0 0 10px 0;
       font-size: 16px;
-      color: #555;
-      margin: 5px 0;
+      color: #444;
     }
-    /* Option styles */
-    .options {
-      margin-top: 8px;
-    }
-    .options label {
-      margin-right: 20px;
+    .question input[type="text"] {
+      padding: 8px;
       font-size: 16px;
-      color: #333;
+      width: 60%;
+      margin-right: 10px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+    }
+    .question button {
+      padding: 8px 12px;
+      font-size: 16px;
+      background: #2196F3;
+      color: white;
+      border: none;
+      border-radius: 4px;
       cursor: pointer;
     }
-    /* Submit button */
-    #submitBtn {
+    .question button:hover {
+      background: #1976D2;
+    }
+    .feedback {
+      display: inline-block;
+      margin-left: 10px;
+      font-size: 16px;
+      font-weight: bold;
+    }
+    #submitAll {
       display: block;
       margin: 20px auto;
       padding: 10px 20px;
       font-size: 18px;
-      background: #4caf50;
-      color: #fff;
+      background: #4CAF50;
+      color: white;
       border: none;
       border-radius: 5px;
       cursor: pointer;
     }
-    #submitBtn:hover {
-      background: #45a049;
+    #submitAll:hover {
+      background: #43A047;
     }
-    /* Result display */
     #result {
       text-align: center;
       font-size: 20px;
@@ -85,27 +90,27 @@
 </head>
 <body>
   <div class="container">
-    <h1>Somebody vs Anybody Quiz 😊</h1>
-    <p class="intro">Fill in the blank with the correct word ("somebody" or "anybody") in each sentence.</p>
-    <form id="quizForm">
-      <!-- Quiz questions will be inserted here by JavaScript -->
-    </form>
-    <button id="submitBtn">Submit Quiz</button>
+    <h1>Somebody vs Anybody Quiz 📝</h1>
+    <p style="text-align:center;">Type in the correct word ("somebody" or "anybody") for each question and press "Check Answer".</p>
+    <div id="quizContainer">
+      <!-- Quiz questions will be generated here -->
+    </div>
+    <button id="submitAll">Submit All Answers</button>
     <div id="result"></div>
   </div>
   <script>
-    // Array of 30 quiz questions
+    // Array of quiz questions and answers
     const questions = [
       { question: "1. I'm gonna kill _______.", correct: "somebody" },
       { question: "2. I'm gonna kill _______. (implying chaos and lack of a specific target)", correct: "anybody" },
       { question: "3. I need _______ to fix my car.", correct: "somebody" },
       { question: "4. Is there _______ who can help me with this math problem?", correct: "anybody" },
       { question: "5. I didn't see _______ at the party.", correct: "anybody" },
-      { question: "6. _______ left their bag in the classroom.", correct: "Somebody" },
+      { question: "6. _______ left their bag in the classroom.", correct: "somebody" },
       { question: "7. Can _______ tell me what time it is?", correct: "anybody" },
       { question: "8. I want _______ to join my team.", correct: "somebody" },
       { question: "9. I can't find _______ who understands this joke.", correct: "anybody" },
-      { question: "10. _______ called me while I was sleeping.", correct: "Somebody" },
+      { question: "10. _______ called me while I was sleeping.", correct: "somebody" },
       { question: "11. Did _______ leave a message for you?", correct: "anybody" },
       { question: "12. There's _______ at the door.", correct: "somebody" },
       { question: "13. I don't think _______ will believe your story.", correct: "anybody" },
@@ -113,11 +118,11 @@
       { question: "15. Has _______ seen my phone?", correct: "anybody" },
       { question: "16. I met _______ interesting at the conference.", correct: "somebody" },
       { question: "17. I haven't met _______ as kind as her.", correct: "anybody" },
-      { question: "18. _______ is knocking on the window.", correct: "Somebody" },
+      { question: "18. _______ is knocking on the window.", correct: "somebody" },
       { question: "19. Is _______ home?", correct: "anybody" },
       { question: "20. I wish _______ could help me with my homework.", correct: "somebody" },
       { question: "21. I don't know _______ who can solve this problem.", correct: "anybody" },
-      { question: "22. _______ must have forgotten to lock the door.", correct: "Somebody" },
+      { question: "22. _______ must have forgotten to lock the door.", correct: "somebody" },
       { question: "23. Can _______ explain how this works?", correct: "anybody" },
       { question: "24. I want _______ to listen to my new song.", correct: "somebody" },
       { question: "25. I didn't hear _______ at the meeting.", correct: "anybody" },
@@ -125,72 +130,75 @@
       { question: "27. Does _______ have any experience with coding?", correct: "anybody" },
       { question: "28. I hope _______ appreciates your hard work.", correct: "somebody" },
       { question: "29. I don't think _______ will mind if we join them.", correct: "anybody" },
-      { question: "30. _______ told me a secret yesterday.", correct: "Somebody" }
+      { question: "30. _______ told me a secret yesterday.", correct: "somebody" }
     ];
     
-    // Reference to the form element
-    const quizForm = document.getElementById('quizForm');
+    // Generate the quiz dynamically
+    function generateQuiz() {
+      const quizContainer = document.getElementById('quizContainer');
+      questions.forEach((q, index) => {
+        const div = document.createElement('div');
+        div.className = 'question';
+        
+        const p = document.createElement('p');
+        p.innerText = q.question;
+        div.appendChild(p);
+        
+        // Create text input field for answer
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.id = 'answer' + index;
+        input.placeholder = 'Type your answer here...';
+        div.appendChild(input);
+        
+        // Create "Check Answer" button
+        const checkBtn = document.createElement('button');
+        checkBtn.innerText = 'Check Answer';
+        checkBtn.onclick = function() { checkAnswer(index); };
+        div.appendChild(checkBtn);
+        
+        // Span for immediate feedback
+        const feedback = document.createElement('span');
+        feedback.id = 'feedback' + index;
+        feedback.className = 'feedback';
+        div.appendChild(feedback);
+        
+        quizContainer.appendChild(div);
+      });
+    }
     
-    // Dynamically generate the questions
-    questions.forEach((q, index) => {
-      const div = document.createElement('div');
-      div.className = 'question';
-      
-      const p = document.createElement('p');
-      p.innerText = q.question;
-      div.appendChild(p);
-      
-      const optionsDiv = document.createElement('div');
-      optionsDiv.className = 'options';
-      
-      // Option: "somebody"
-      const labelSomebody = document.createElement('label');
-      const radioSomebody = document.createElement('input');
-      radioSomebody.type = 'radio';
-      radioSomebody.name = 'question' + index;
-      radioSomebody.value = 'somebody';
-      labelSomebody.appendChild(radioSomebody);
-      labelSomebody.appendChild(document.createTextNode(' somebody '));
-      optionsDiv.appendChild(labelSomebody);
-      
-      // Option: "anybody"
-      const labelAnybody = document.createElement('label');
-      const radioAnybody = document.createElement('input');
-      radioAnybody.type = 'radio';
-      radioAnybody.name = 'question' + index;
-      radioAnybody.value = 'anybody';
-      labelAnybody.appendChild(radioAnybody);
-      labelAnybody.appendChild(document.createTextNode(' anybody '));
-      optionsDiv.appendChild(labelAnybody);
-      
-      div.appendChild(optionsDiv);
-      quizForm.appendChild(div);
-    });
+    // Check the answer for a specific question
+    function checkAnswer(index) {
+      const userAnswer = document.getElementById('answer' + index).value.trim().toLowerCase();
+      const feedback = document.getElementById('feedback' + index);
+      const correctAnswer = questions[index].correct.toLowerCase();
+      if(userAnswer === correctAnswer) {
+        feedback.style.color = 'green';
+        feedback.innerText = ' Correct 😊';
+      } else {
+        feedback.style.color = 'red';
+        feedback.innerText = ' Incorrect. Answer: ' + questions[index].correct;
+      }
+    }
     
-    // Event listener for the submit button
-    document.getElementById('submitBtn').addEventListener('click', function(event) {
-      event.preventDefault();
+    // Check all answers and display total score
+    function submitAll() {
       let score = 0;
       questions.forEach((q, index) => {
-        const selected = document.querySelector('input[name="question' + index + '"]:checked');
-        if (selected && selected.value.toLowerCase() === q.correct.toLowerCase()) {
+        const userAnswer = document.getElementById('answer' + index).value.trim().toLowerCase();
+        if(userAnswer === q.correct.toLowerCase()) {
           score++;
         }
       });
-      
       const resultDiv = document.getElementById('result');
-      let message = "";
-      if (score === questions.length) {
-        message = "Perfect score! You got " + score + " out of " + questions.length + " 😄";
-      } else if (score >= questions.length * 0.7) {
-        message = "Great job! You got " + score + " out of " + questions.length + " 🙂";
-      } else if (score >= questions.length * 0.4) {
-        message = "Not bad, but keep practicing! You got " + score + " out of " + questions.length + " 😐";
-      } else {
-        message = "Keep practicing! You got " + score + " out of " + questions.length + " 😕";
-      }
-      resultDiv.innerText = message;
-    });
+      resultDiv.innerText = "You got " + score + " out of " + questions.length + " correct!";
+    }
+    
+    // Set up global submission event
+    document.getElementById('submitAll').addEventListener('click', submitAll);
+    
+    // Generate quiz on page load
+    generateQuiz();
   </script>
 </body>
 </html>

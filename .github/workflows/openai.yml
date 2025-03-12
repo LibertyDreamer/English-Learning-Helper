@@ -21,7 +21,7 @@ jobs:
         run: |
           echo "User asked: ${{ github.event.inputs.question }}" > response.txt
 
-          RESPONSE=$(curl -X POST "https://models.inference.ai.azure.com" \
+          RESPONSE=$(curl -X POST "https://models.inference.ai.azure.com/chat/completions" \
           -H "Authorization: Bearer $GITHUB_TOKEN" \
           -H "Content-Type: application/json" \
           -d '{
@@ -34,5 +34,6 @@ jobs:
             "max_tokens": 4096,
             "top_p": 1
           }')
+
 
           echo "$RESPONSE"

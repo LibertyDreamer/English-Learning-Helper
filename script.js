@@ -1,10 +1,10 @@
 async function askAI() {
     let userInput = document.getElementById("question").value;
 
-    let response = await fetch("https://api.github.com/repos/LibertyDreamer/openai-github-actions/actions/workflows/openai.yml/dispatches", {
+    let response = await fetch("https://api.github.com/repos/LibertyDreamer/quizzes/actions/workflows/openai.yml/dispatches", {
         method: "POST",
         headers: {
-            "Authorization": "Bearer YOUR_GITHUB_PERSONAL_ACCESS_TOKEN",
+            "Authorization": "Bearer TOKEN_AI",
             "Accept": "application/vnd.github.v3+json",
             "Content-Type": "application/json"
         },

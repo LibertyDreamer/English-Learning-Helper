@@ -7,41 +7,64 @@
   <style>
     body { font-family: sans-serif; }
     .question { margin-bottom: 20px; }
-    input.answer, select.answer { margin-left: 5px; }
-    .show-answer-btn { margin-left: 10px; }
+    /* Container for an answer field and its button */
+    .answer-field {
+      display: inline-block;
+      vertical-align: middle;
+    }
+    /* Styling for text inputs and select (combobox) elements */
+    input.answer, select.answer {
+      margin-left: 5px;
+      border: 1px solid #ccc;
+      padding: 3px;
+    }
+    .show-answer-btn {
+      margin-left: 10px;
+      padding: 3px 6px;
+      cursor: pointer;
+    }
+    .correct-answer {
+      font-weight: bold;
+      color: blue;
+      margin-left: 10px;
+    }
   </style>
 </head>
 <body>
   <h1>Quiz 1</h1>
   
-  <!-- Text input question -->
+  <!-- Text input question with its own Show Answer button -->
   <div class="question">
     <p>
       JavaScript is a 
-      <input type="text" class="answer" data-answer="programming">
+      <span class="answer-field">
+        <input type="text" class="answer" data-answer="programming">
+        <button class="show-answer-btn" onclick="showAnswerForQuestion(this)">Show Answer</button>
+      </span>
       language.
-      <button class="show-answer-btn" onclick="showAnswerForQuestion(this)">Show Answer</button>
     </p>
   </div>
   
-  <!-- Combobox question -->
+  <!-- Combobox question with its own Show Answer button -->
   <div class="question">
     <p>
-      The capital of France is  a
-      <select class="answer" data-answer="paris">
-        <option value="">-- select --</option>
-        <option value="london">London</option>
-        <option value="paris">Paris</option>
-        <option value="berlin">Berlin</option>
-      </select>
-      <button class="show-answer-btn" onclick="showAnswerForQuestion(this)">Show Answer</button>
+      The capital of France is 
+      <span class="answer-field">
+        <select class="answer" data-answer="paris">
+          <option value="">-- select --</option>
+          <option value="london">London</option>
+          <option value="paris">Paris</option>
+          <option value="berlin">Berlin</option>
+        </select>
+        <button class="show-answer-btn" onclick="showAnswerForQuestion(this)">Show Answer</button>
+      </span>
+      .
     </p>
   </div>
   
   <!-- Global buttons -->
   <button id="checkBtn">Check Answers</button>
   <button id="showAllBtn">Show All Answers</button>
-  <button id="showOneBtn">Show One Answer</button>
   <br><br>
   <a href="index.html">Back to Index</a>
   
@@ -49,7 +72,6 @@
   <script>
     document.getElementById('checkBtn').addEventListener('click', checkAnswers);
     document.getElementById('showAllBtn').addEventListener('click', showAnswers);
-    document.getElementById('showOneBtn').addEventListener('click', showOneAnswer);
   </script>
 </body>
 </html>

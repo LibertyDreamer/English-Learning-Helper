@@ -10,17 +10,18 @@ on:
 jobs:
   ask_openai:
     runs-on: ubuntu-latest
+    outputs:
+      ai_response: ${{ steps.openai_step.outputs.ai_response }}  # ✅ Store the response as output
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
 
       - name: Ask OpenAI
+        id: openai_step  # ✅ Assign an ID so we can reference the output
         env:
-          GITHUB_TOKEN: ${{ secrets.TOKEN_AI }}  # Use GitHub Secrets instead of hardcoding!
+          GITHUB_TOKEN: ${{ secrets.TOKEN_AI }}
         run: |
-          echo "User asked: ${{ github.event.inputs.question }}"
-
           RESPONSE=$(curl -X POST "https://models.inference.ai.azure.com/chat/completions" \
           -H "Authorization: Bearer $GITHUB_TOKEN" \
           -H "Content-Type: application/json" \
@@ -33,7 +34,6 @@ jobs:
             "temperature": 1,
             "max_tokens": 4096,
             "top_p": 1
-          }')
+          }' | jq -r '.choices[0].message.content')  # ✅ Extract only the response text
 
-
-          echo "$RESPONSE"
+          echo "::set-output name=ai_response::$RESPONSE"  # ✅ Store response as output

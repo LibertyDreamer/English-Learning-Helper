@@ -17,7 +17,7 @@ jobs:
 
       - name: Ask OpenAI
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.TOKEN_AI }}
         run: |
           echo "User asked: ${{ github.event.inputs.question }}" > response.txt
 

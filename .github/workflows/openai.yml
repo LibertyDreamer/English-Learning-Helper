@@ -34,7 +34,7 @@ jobs:
             "temperature": 1,
             "max_tokens": 4096,
             "top_p": 1
-          }' | jq -r '.choices[0].message.content')  # ✅ Extract response text
+          }')  # ✅ Extract response text
 
           echo "ai_response=$RESPONSE" >> "$GITHUB_OUTPUT"  # ✅ Store response using Environment File
           echo "$RESPONSE"

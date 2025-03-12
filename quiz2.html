@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Somebody or Anybody?</title>
+  <title>Somebody or Anybody? - AI-Powered Text Game</title>
   <style>
     /* Old PC / Terminal styling */
     body {
@@ -26,7 +26,7 @@
     #intro, #game-area {
       margin-bottom: 20px;
     }
-    /* Buttons */
+    /* Buttons and Inputs */
     .green-btn {
       background-color: black;
       color: #00ff00;
@@ -39,6 +39,15 @@
     .green-btn:hover {
       background-color: #003300;
     }
+    input[type="text"] {
+      background-color: black;
+      color: #00ff00;
+      border: 1px solid #00ff00;
+      font-family: monospace;
+      padding: 5px;
+      margin: 5px 0;
+      width: 400px;
+    }
     /* Text display area */
     #story {
       white-space: pre-line;
@@ -48,109 +57,123 @@
       padding: 10px;
       min-height: 150px;
     }
-    /* Input fields */
-    input {
-      background-color: black;
-      color: #00ff00;
-      border: 1px solid #00ff00;
-      font-family: monospace;
-      padding: 5px;
-      margin: 5px 0;
-      width: 400px;
-    }
   </style>
 </head>
 <body>
   <div id="container">
     <h1>Somebody or Anybody?</h1>
-    <h2>Space Adventure</h2>
+    <h2>AI-Powered Space Text Adventure</h2>
 
     <div id="intro">
-      <p>Enter your key and click "Start Game" to begin. </p>
-      <input id="pat" placeholder="Enter your key" />
+      <p>
+        Enter your Azure OpenAI PAT (or API key) and click "Start Game" to begin.  
+        Each time, you must type a sentence containing <strong>“somebody”</strong> or <strong>“anybody”</strong>.  
+        The AI will decide if you used the correct one in context or not.
+      </p>
+      <input id="pat" placeholder="Enter your Azure OpenAI PAT" />
       <br>
       <button class="green-btn" onclick="startGame()">Start Game</button>
     </div>
 
     <div id="game-area" style="display:none;">
       <div id="story"></div>
-      <div>
-        <button class="green-btn" onclick="playerChoice('somebody')">somebody</button>
-        <button class="green-btn" onclick="playerChoice('anybody')">anybody</button>
+      <div style="margin-top:10px;">
+        <input type="text" id="player-input" placeholder="Type a sentence using 'somebody' or 'anybody'">
+        <button class="green-btn" onclick="sendPlayerInput()">Send</button>
       </div>
     </div>
   </div>
 
   <script>
-    // We'll store the conversation with the AI in this array of messages.
-    // The system prompt instructs the AI to act as a text-based game about
-    // "somebody" vs. "anybody".
-    let messages = [];
-
-    // Replace with your actual endpoint & model details if different:
+    /********************************************************
+     * CONFIG & GLOBALS
+     ********************************************************/
+    // Azure OpenAI endpoint (replace if needed)
     const endpoint = 'https://models.inference.ai.azure.com/openai/deployments/gpt-4o/chat/completions?api-version=2024-02-15-preview';
-    // The model name is also required in the header for Azure.
+    // Model name header required by Azure
     const modelHeader = { 'x-ms-model-mesh-model-name': 'gpt-4o' };
 
-    let pat = '';
+    // We'll store the conversation with the AI in this array of messages.
+    // The system prompt instructs the AI to act as a text-based game about
+    // "somebody" vs. "anybody," checking correctness in user sentences.
+    let messages = [];
+    let pat = ''; // We'll store the user's PAT
 
+    /********************************************************
+     * START GAME
+     ********************************************************/
     function startGame() {
-      // Get the user's PAT from the input field
       pat = document.getElementById('pat').value.trim();
       if (!pat) {
         alert("Please enter your Azure OpenAI PAT!");
         return;
       }
 
-      // Show the game area
       document.getElementById('game-area').style.display = 'block';
 
-      // Initialize messages with a system instruction
+      // Set up the system instruction
       messages = [
         {
           role: 'system',
           content: `You are a text-based game engine for learning the difference between "somebody" and "anybody" in English. 
-- The setting is a space adventure.
-- Don't create fealing that it's learners material, make it feels more like real game.
-- Vocabulary for kinds 4 - 6 years. Keep it simple. but it's actually for grown ups! Violence included!
-- The user can only answer "somebody" or "anybody".
-- If the user chooses correctly, the story remains comedic/fun. 
-- If the user chooses incorrectly, the story becomes dark/creepy, possibly leading to the user's dead.
-- At each step, you must continue the story and ask the user for the next choice.
-- The game ends if the user dies or if the story concludes successfully. 
-Let's begin. Provide the first scenario now.`
+- The setting is a comedic and dark space adventure.
+- The user must type a sentence containing the learning words."
+- Every time then user make right or wrong desition between learning words make it obviously throught the story! somehow add explanation why it was grammatically correct or not, but don't explain straight.
+- Vocabulary like for 4 years old kid. But the game for grown ups. Ultraviolence is included!!!
+- If they use the correct usage in context, continue the story in a fun, light-hearted way.
+- If they use the wrong usage, continue the story in a dark, creepy way, possibly leading to their demise.
+- Always end your response with a prompt asking them to type another sentence with "somebody" or "anybody," unless the game is over.
+- Keep track of the storyline in one session.`
+        },
+        {
+          role: 'user',
+          content: `Hello! Start the game now.`
         }
       ];
 
-      // Call AI for the first scenario
+      // Get the first AI response (story introduction)
       callOpenAI()
         .then(responseText => {
           document.getElementById('story').textContent = responseText;
         })
         .catch(err => {
-          document.getElementById('story').textContent = "Error starting game: " + err;
+          document.getElementById('story').textContent = "Error: " + err;
         });
     }
 
-    async function playerChoice(choice) {
-      // Add the user's choice to the conversation
+    /********************************************************
+     * PLAYER INPUT
+     ********************************************************/
+    function sendPlayerInput() {
+      const inputField = document.getElementById('player-input');
+      const userSentence = inputField.value.trim();
+      if (!userSentence) {
+        alert("Please type a sentence containing 'somebody' or 'anybody'.");
+        return;
+      }
+
+      // Add the user's sentence as a new user message
       messages.push({
         role: 'user',
-        content: choice
+        content: userSentence
       });
 
-      // Call the AI to get the next part of the story
-      try {
-        const responseText = await callOpenAI();
-        // Display AI's new response
-        document.getElementById('story').textContent = responseText;
-      } catch (err) {
-        document.getElementById('story').textContent = "Error continuing game: " + err;
-      }
+      inputField.value = ''; // clear the input
+
+      // Call the AI for the next part of the story
+      callOpenAI()
+        .then(responseText => {
+          document.getElementById('story').textContent = responseText;
+        })
+        .catch(err => {
+          document.getElementById('story').textContent = "Error: " + err;
+        });
     }
 
+    /********************************************************
+     * CALL AZURE OPENAI
+     ********************************************************/
     async function callOpenAI() {
-      // Make a call to Azure OpenAI with the current conversation
       const bodyData = {
         messages: messages,
         temperature: 1,
@@ -173,14 +196,12 @@ Let's begin. Provide the first scenario now.`
       if (data.error) {
         throw new Error(JSON.stringify(data.error));
       }
-
       if (!data.choices || data.choices.length === 0) {
         throw new Error("No response from AI");
       }
 
       const aiMessage = data.choices[0].message.content;
-
-      // Add AI response to the conversation
+      // Add AI's response to the conversation
       messages.push({
         role: 'assistant',
         content: aiMessage

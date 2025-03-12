@@ -57,6 +57,14 @@
       padding: 10px;
       min-height: 150px;
     }
+    /* Make every token clickable for definitions */
+    .word {
+      cursor: pointer;
+      text-decoration: underline;
+    }
+    .word:hover {
+      background-color: #003300;
+    }
   </style>
 </head>
 <body>
@@ -66,9 +74,9 @@
 
     <div id="intro">
       <p>
-        Enter your Azure OpenAI PAT (or API key) and click "Start Game" to begin.  
-        Each time, you must type a sentence containing <strong>“somebody”</strong> or <strong>“anybody”</strong>.  
-        The AI will decide if you used the correct one in context or not.
+        Enter your Azure OpenAI PAT (or API key) and click "Start Game" to begin.<br>
+        Each time, type a sentence containing <strong>“somebody”</strong> or <strong>“anybody”</strong>.<br>
+        <strong>Click any word</strong> in the story to see a short, kid-friendly definition from the AI!
       </p>
       <input id="pat" placeholder="Enter your Azure OpenAI PAT" />
       <br>
@@ -86,7 +94,7 @@
 
   <script>
     /********************************************************
-     * CONFIG & GLOBALS
+     * 1) CONFIG & GLOBALS
      ********************************************************/
     // Azure OpenAI endpoint (replace if needed)
     const endpoint = 'https://models.inference.ai.azure.com/openai/deployments/gpt-4o/chat/completions?api-version=2024-02-15-preview';
@@ -94,13 +102,12 @@
     const modelHeader = { 'x-ms-model-mesh-model-name': 'gpt-4o' };
 
     // We'll store the conversation with the AI in this array of messages.
-    // The system prompt instructs the AI to act as a text-based game about
-    // "somebody" vs. "anybody," checking correctness in user sentences.
+    // This is the "game" memory so the AI remembers the story.
     let messages = [];
     let pat = ''; // We'll store the user's PAT
 
     /********************************************************
-     * START GAME
+     * 2) START GAME
      ********************************************************/
     function startGame() {
       pat = document.getElementById('pat').value.trim();
@@ -111,7 +118,7 @@
 
       document.getElementById('game-area').style.display = 'block';
 
-      // Set up the system instruction
+      // Set up the system instruction with your custom request
       messages = [
         {
           role: 'system',
@@ -134,9 +141,9 @@ somehow add explanation why it was grammatically correct or not, but don't expla
       ];
 
       // Get the first AI response (story introduction)
-      callOpenAI()
+      callOpenAI(messages)
         .then(responseText => {
-          document.getElementById('story').textContent = responseText;
+          updateStory(responseText);
         })
         .catch(err => {
           document.getElementById('story').textContent = "Error: " + err;
@@ -144,7 +151,7 @@ somehow add explanation why it was grammatically correct or not, but don't expla
     }
 
     /********************************************************
-     * PLAYER INPUT
+     * 3) PLAYER INPUT
      ********************************************************/
     function sendPlayerInput() {
       const inputField = document.getElementById('player-input');
@@ -163,9 +170,9 @@ somehow add explanation why it was grammatically correct or not, but don't expla
       inputField.value = ''; // clear the input
 
       // Call the AI for the next part of the story
-      callOpenAI()
+      callOpenAI(messages)
         .then(responseText => {
-          document.getElementById('story').textContent = responseText;
+          updateStory(responseText);
         })
         .catch(err => {
           document.getElementById('story').textContent = "Error: " + err;
@@ -173,11 +180,41 @@ somehow add explanation why it was grammatically correct or not, but don't expla
     }
 
     /********************************************************
-     * CALL AZURE OPENAI
+     * 4) CLICK-TO-DEFINE (ON ANY WORD)
      ********************************************************/
-    async function callOpenAI() {
+    document.addEventListener('click', (e) => {
+      if (e.target.classList.contains('word')) {
+        const clickedWord = e.target.getAttribute('data-word');
+        // Make a separate request to the AI for a definition of that word
+        defineWord(clickedWord);
+      }
+    });
+
+    async function defineWord(word) {
+      try {
+        const definitionConversation = [
+          {
+            role: 'system',
+            content: 'You are a dictionary. Provide a short, kid-friendly definition for the given word.'
+          },
+          {
+            role: 'user',
+            content: `Define: "${word}" for a 4-year-old.`
+          }
+        ];
+        const defText = await callOpenAI(definitionConversation);
+        alert(`Definition of "${word}":\n\n${defText}`);
+      } catch (err) {
+        alert("Error getting definition: " + err);
+      }
+    }
+
+    /********************************************************
+     * 5) CALL AZURE OPENAI
+     ********************************************************/
+    async function callOpenAI(convArray) {
       const bodyData = {
-        messages: messages,
+        messages: convArray,
         temperature: 1,
         max_tokens: 1024,
         top_p: 1
@@ -203,13 +240,38 @@ somehow add explanation why it was grammatically correct or not, but don't expla
       }
 
       const aiMessage = data.choices[0].message.content;
-      // Add AI's response to the conversation
-      messages.push({
-        role: 'assistant',
-        content: aiMessage
-      });
-
+      // Add AI's response to the conversation if it's the main game conversation
+      if (convArray === messages) {
+        messages.push({
+          role: 'assistant',
+          content: aiMessage
+        });
+      }
       return aiMessage;
+    }
+
+    /********************************************************
+     * 6) SHOWING THE STORY WITH CLICKABLE WORDS
+     ********************************************************/
+    function updateStory(aiText) {
+      // We'll wrap each token in <span class="word" data-word="...">
+      // This is a naive approach to split on whitespace. Punctuation may attach to words.
+      // For a quick example, it's fine. Real usage might need more robust tokenization.
+      const wrapped = parseAndWrapWords(aiText);
+      const storyDiv = document.getElementById('story');
+      storyDiv.innerHTML = wrapped; // Insert as HTML
+    }
+
+    function parseAndWrapWords(text) {
+      // Simple split on spaces
+      const tokens = text.split(/\s+/);
+      const wrappedTokens = tokens.map(token => {
+        // We'll remove punctuation from the data-word, but keep it in display
+        // So that clicking "dark..." => data-word="dark"
+        const cleanToken = token.replace(/[.,!?]+$/, '');
+        return `<span class="word" data-word="${cleanToken}">${token}</span>`;
+      });
+      return wrappedTokens.join(" ");
     }
   </script>
 </body>

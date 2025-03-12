@@ -2,12 +2,12 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>User Provided PAT - Azure OpenAI Call</title>
+  <title>User Provided PAT - Azure OpenAI</title>
 </head>
 <body>
-  <h3>Call Azure OpenAI API directly from HTML</h3>
+  <h3>Azure OpenAI API (Direct Call)</h3>
 
-  <input id="pat" placeholder="Enter your OpenAI PAT" style="width:400px"><br><br>
+  <input id="pat" placeholder="Enter OpenAI PAT" style="width:400px"><br><br>
   <input id="question" placeholder="Ask something..." style="width:400px">
   <button onclick="callOpenAI()">Ask OpenAI</button>
 
@@ -19,7 +19,7 @@ async function callOpenAI() {
   const question = document.getElementById('question').value.trim();
 
   if (!pat) {
-    alert("Please enter your OpenAI PAT!");
+    alert("Please enter your PAT!");
     return;
   }
 
@@ -29,7 +29,7 @@ async function callOpenAI() {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'api-key': pat
+      'api-key': pat,
     },
     body: JSON.stringify({
       messages: [

@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Quiz 1</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body { font-family: sans-serif; }
+    .question { margin-bottom: 20px; }
+    input.answer { margin-left: 5px; }
+  </style>
+</head>
+<body>
+  <h1>Quiz 1</h1>
+  
+  <div class="question">
+    <p>
+      JavaScript is a 
+      <input type="text" class="answer" data-answer="programming">
+      language.
+    </p>
+  </div>
+  
+  <div class="question">
+    <p>
+      HTML stands for 
+      <input type="text" class="answer" data-answer="HyperText">
+      Markup Language.
+    </p>
+  </div>
+  
+  <button id="checkBtn">Check Answers</button>
+  <button id="showBtn">Show Answers</button>
+  <br><br>
+  <a href="index.html">Back to Index</a>
+  
+  <script src="common.js"></script>
+  <script>
+    document.getElementById('checkBtn').addEventListener('click', checkAnswers);
+    document.getElementById('showBtn').addEventListener('click', showAnswers);
+  </script>
+</body>
+</html>

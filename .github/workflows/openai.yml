@@ -35,4 +35,4 @@ jobs:
           }' | jq -r '.choices[0].message.content')  # ✅ Extract response text
 
           echo "ai_response=$RESPONSE" >> "$GITHUB_OUTPUT"  # ✅ Store response using Environment File
-          echo $RESPONCE
+          echo "$RESPONCE"

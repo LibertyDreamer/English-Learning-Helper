@@ -2,28 +2,208 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Quiz Index</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cosmic Adventure: Somebody vs Anybody</title>
   <style>
-    body { font-family: sans-serif; }
-    ul { list-style: none; padding: 0; }
-    li { margin-bottom: 4px; }
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: 'Arial', sans-serif;
+      background: linear-gradient(135deg, #fceabb, #f8b500);
+      color: #333;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+    }
+    #game-container {
+      background: #fff;
+      padding: 20px 30px;
+      border-radius: 10px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+      max-width: 600px;
+      width: 90%;
+    }
+    h1 {
+      text-align: center;
+    }
+    .prompt, .outcome, .final {
+      margin: 20px 0;
+      font-size: 18px;
+      line-height: 1.5;
+    }
+    .choices {
+      text-align: center;
+      margin: 20px 0;
+    }
+    button.choice {
+      padding: 10px 20px;
+      font-size: 16px;
+      margin: 0 10px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      background: #2196F3;
+      color: #fff;
+    }
+    button.choice:hover {
+      background: #1976D2;
+    }
+    button#next {
+      display: block;
+      margin: 20px auto;
+      padding: 10px 20px;
+      font-size: 16px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      background: #4CAF50;
+      color: #fff;
+    }
+    button#next:hover {
+      background: #43A047;
+    }
   </style>
 </head>
 <body>
-  <h1>All Quizzes</h1>
-  <ul id="quizList"></ul>
+  <div id="game-container">
+    <h1>Cosmic Adventure: Somebody vs Anybody</h1>
+    <div id="story"></div>
+    <div id="choices" class="choices"></div>
+    <button id="next" style="display:none;">Next</button>
+  </div>
+  
   <script>
-    const quizList = document.getElementById('quizList');
-    // Generate 1,000 quiz list items dynamically
-    for (let i = 1; i <= 100; i++) {
-      const li = document.createElement('li');
-      const a = document.createElement('a');
-      a.href = `quiz${i}.html`;
-      a.textContent = `Quiz ${i}`;
-      li.appendChild(a);
-      quizList.appendChild(li);
+    // Array of 10 decision points
+    const decisions = [
+      {
+        prompt: "You wake up in a spaceship with no memory. In a daze, you shout: 'I need _______ to help me out!'",
+        correct: "somebody",
+        positive: "Good choice! A trusty mechanic named Sam bursts in and fixes your hyperdrive in record time.",
+        negative: "Oh no! A mime alien appears—silent and useless—leaving you even more lost."
+      },
+      {
+        prompt: "After landing on a quirky planet, you realize its inhabitants speak only in riddles. You call out: 'Can I get _______ to translate these odd phrases?'",
+        correct: "somebody",
+        positive: "Excellent! Zara, the eccentric translator, deciphers every riddle with pizzazz.",
+        negative: "Bummer! A random bystander mumbles nonsense, leaving you utterly baffled."
+      },
+      {
+        prompt: "At a cosmic carnival where rides are powered by laughter, you need to board the Roller Coaster of Giggles. You yell: 'I need _______ to help me get on!'",
+        correct: "anybody",
+        positive: "Nice! The jovial crowd rallies around you, and you soar through fits of laughter.",
+        negative: "Uh oh! Only one grumpy clown shows up, and his sour mood spoils the ride."
+      },
+      {
+        prompt: "You enter an intergalactic diner where the chef has mysteriously vanished. Hungry, you announce: 'I need _______ to cook my cosmic burger!'",
+        correct: "somebody",
+        positive: "Bravo! The renowned chef Marco appears and grills you the tastiest burger in the universe.",
+        negative: "Yikes! A stray spatula comes to life and serves you a cold, limp sandwich."
+      },
+      {
+        prompt: "During a wild galactic game show, you must buzz in for the winning answer. You shout: 'I need _______ to help me answer!'",
+        correct: "anybody",
+        positive: "Boom! The collective genius of the audience lights up the stage, and your answer dazzles the judges.",
+        negative: "Oops! A lone spectator’s feeble cheer leaves the buzzer silent."
+      },
+      {
+        prompt: "At an alien dance-off, the floor is sizzling with moves. To impress the crowd, you cry: 'I need _______ to dance with me!'",
+        correct: "somebody",
+        positive: "Groovy! Luna, a top-notch dancer, joins you and you both rock the floor in style.",
+        negative: "Drat! A clunky robot with no rhythm appears, turning your dance into a comic disaster."
+      },
+      {
+        prompt: "A cosmic mystery unfolds—the legendary donut has vanished from the cafeteria! You declare: 'I need _______ to solve this case!'",
+        correct: "anybody",
+        positive: "Smart move! The entire crew bands together and the elusive donut thief is hilariously caught in the act.",
+        negative: "Oh dear! Only a sleepy janitor shows up, and the case remains as cold as yesterday’s coffee."
+      },
+      {
+        prompt: "During a top-secret agent briefing, critical intel is needed. You demand: 'I need _______ to give me the inside scoop!'",
+        correct: "somebody",
+        positive: "Excellent! Agent X, the mysterious informant, appears with all the juicy details.",
+        negative: "Bad call! A confused tourist ambles in and shares random trivia that makes no sense."
+      },
+      {
+        prompt: "At an unexpected cosmic quiz, your decision could change the mission. You announce: 'I need _______ to help me decide!'",
+        correct: "anybody",
+        positive: "Fantastic! The combined brainpower of the crew rallies and you come up with the winning strategy.",
+        negative: "Alas! A chatty pet parrot squawks a nonsensical answer, leaving you utterly stumped."
+      },
+      {
+        prompt: "In the final showdown with the cosmic overlord, you must summon the ultimate power. You cry out: 'I need _______ now!'",
+        correct: "somebody",
+        positive: "Victory! Captain Stellar, the legendary hero, arrives at just the right moment and together you defeat the overlord in a blaze of glory.",
+        negative: "Disaster! A random cosmic dust bunny shows up instead, and the overlord roars with laughter as chaos ensues."
+      }
+    ];
+    
+    let currentStep = 0;
+    let score = 0;
+    
+    const storyDiv = document.getElementById("story");
+    const choicesDiv = document.getElementById("choices");
+    const nextBtn = document.getElementById("next");
+    
+    function displayStep() {
+      // Clear previous content
+      storyDiv.innerHTML = "";
+      choicesDiv.innerHTML = "";
+      nextBtn.style.display = "none";
+      
+      if (currentStep < decisions.length) {
+        const step = decisions[currentStep];
+        // Display prompt
+        const promptP = document.createElement("p");
+        promptP.className = "prompt";
+        promptP.innerText = step.prompt;
+        storyDiv.appendChild(promptP);
+        
+        // Create choice buttons
+        const btnSomebody = document.createElement("button");
+        btnSomebody.className = "choice";
+        btnSomebody.innerText = "somebody";
+        btnSomebody.addEventListener("click", () => processChoice("somebody"));
+        choicesDiv.appendChild(btnSomebody);
+        
+        const btnAnybody = document.createElement("button");
+        btnAnybody.className = "choice";
+        btnAnybody.innerText = "anybody";
+        btnAnybody.addEventListener("click", () => processChoice("anybody"));
+        choicesDiv.appendChild(btnAnybody);
+      } else {
+        // End of game
+        storyDiv.innerHTML = "<p class='final'>Mission Complete! You made " + score + " out of " + decisions.length + " correct choices. Thanks for playing, Agent!</p>";
+        choicesDiv.innerHTML = "";
+      }
     }
+    
+    function processChoice(choice) {
+      // Disable further clicks
+      Array.from(document.getElementsByClassName("choice")).forEach(btn => btn.disabled = true);
+      
+      const step = decisions[currentStep];
+      const outcomeP = document.createElement("p");
+      outcomeP.className = "outcome";
+      
+      if (choice === step.correct) {
+        score++;
+        outcomeP.innerText = step.positive;
+      } else {
+        outcomeP.innerText = step.negative;
+      }
+      storyDiv.appendChild(outcomeP);
+      
+      // Show Next button after a short delay
+      nextBtn.style.display = "block";
+    }
+    
+    nextBtn.addEventListener("click", () => {
+      currentStep++;
+      displayStep();
+    });
+    
+    // Start the game
+    displayStep();
   </script>
 </body>
 </html>

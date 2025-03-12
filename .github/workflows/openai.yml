@@ -17,12 +17,12 @@ jobs:
 
       - name: Ask OpenAI
         env:
-          GITHUB_TOKEN: ${{ secrets.TOKEN_AI }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Use GitHub Secrets instead of hardcoding!
         run: |
           echo "User asked: ${{ github.event.inputs.question }}" > response.txt
 
           RESPONSE=$(curl -X POST "https://models.inference.ai.azure.com" \
-          -H "Authorization: Bearer $TOKEN_AI" \
+          -H "Authorization: Bearer $GITHUB_TOKEN" \
           -H "Content-Type: application/json" \
           -d '{
             "model": "gpt-4o",

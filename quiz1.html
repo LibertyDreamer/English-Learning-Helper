@@ -2,460 +2,195 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Somebody and Anybody Quiz</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Somebody vs Anybody Quiz 🎉</title>
   <style>
-    /* Basic styling */
-    body { font-family: sans-serif; }
-    .question { margin-bottom: 20px; }
-    .explanation { margin-bottom: 30px; padding: 10px; border: 1px solid #ccc; }
-    /* Container for answer field and its button */
-    .answer-field {
-      display: inline-block;
-      vertical-align: middle;
+    /* Basic reset and background */
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: 'Arial', sans-serif;
+      background: linear-gradient(135deg, #f0f8ff, #e6e6fa);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
     }
-    input.answer, select.answer {
-      margin-left: 5px;
-      border: 1px solid #ccc;
-      padding: 3px;
+    /* Main container style */
+    .container {
+      background: #fff;
+      padding: 20px 30px;
+      border-radius: 10px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      max-width: 800px;
+      width: 90%;
+      margin: 20px;
     }
-    .show-answer-btn {
-      margin-left: 10px;
-      padding: 3px 6px;
+    h1 {
+      text-align: center;
+      color: #333;
+    }
+    p.intro {
+      text-align: center;
+      font-size: 18px;
+      color: #555;
+    }
+    /* Style for each question */
+    .question {
+      margin-bottom: 20px;
+      padding: 10px;
+      border-bottom: 1px solid #ddd;
+    }
+    .question:last-child {
+      border-bottom: none;
+    }
+    .question p {
+      font-size: 16px;
+      color: #555;
+      margin: 5px 0;
+    }
+    /* Option styles */
+    .options {
+      margin-top: 8px;
+    }
+    .options label {
+      margin-right: 20px;
+      font-size: 16px;
+      color: #333;
       cursor: pointer;
     }
-    .correct-answer {
+    /* Submit button */
+    #submitBtn {
+      display: block;
+      margin: 20px auto;
+      padding: 10px 20px;
+      font-size: 18px;
+      background: #4caf50;
+      color: #fff;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    #submitBtn:hover {
+      background: #45a049;
+    }
+    /* Result display */
+    #result {
+      text-align: center;
+      font-size: 20px;
+      margin-top: 20px;
       font-weight: bold;
-      color: blue;
-      margin-left: 10px;
+      color: #333;
     }
   </style>
 </head>
 <body>
-  <h1>Somebody and Anybody Quiz</h1>
-  
-  <!-- Explanation Section -->
-  <div class="explanation">
-    <p><strong>Somebody:</strong> In the sentence "I’m gonna kill somebody," it implies that the speaker has a specific but unnamed target.</p>
-    <p><strong>Anybody:</strong> In "I’m gonna kill anybody," the speaker means that they will kill whoever gets in their way – literally anyone.</p>
-    <p><strong>Key Difference:</strong> "Somebody" refers to a specific, although unnamed, person, whereas "anybody" refers to any person without a specific target.</p>
-    <p><em>Movie villain example:</em> "I’m gonna kill somebody!" shows he has a target in mind, while "I’m gonna kill anybody!" shows he’s out of control.</p>
+  <div class="container">
+    <h1>Somebody vs Anybody Quiz 😊</h1>
+    <p class="intro">Fill in the blank with the correct word ("somebody" or "anybody") in each sentence.</p>
+    <form id="quizForm">
+      <!-- Quiz questions will be inserted here by JavaScript -->
+    </form>
+    <button id="submitBtn">Submit Quiz</button>
+    <div id="result"></div>
   </div>
-  
-  <!-- Question 1: Text Input -->
-  <div class="question">
-    <p>
-      Question 1: In the sentence "I’m gonna kill somebody," what does "somebody" imply?
-      <span class="answer-field">
-        <input type="text" class="answer" data-answer="a specific but unnamed person">
-        <button class="show-answer-btn" onclick="showAnswerForQuestion(this)">Show Answer</button>
-      </span>
-    </p>
-  </div>
-  
-  <!-- Question 2: Dropdown -->
-  <div class="question">
-    <p>
-      Question 2: In the sentence "I’m gonna kill anybody," what does "anybody" imply?
-      <span class="answer-field">
-        <select class="answer" data-answer="literally anyone, no matter who">
-          <option value="">-- select --</option>
-          <option value="a specific but unnamed person">A specific but unnamed person</option>
-          <option value="literally anyone, no matter who">Literally anyone, no matter who</option>
-          <option value="no one in particular">No one in particular</option>
-        </select>
-        <button class="show-answer-btn" onclick="showAnswerForQuestion(this)">Show Answer</button>
-      </span>
-    </p>
-  </div>
-  
-  <!-- Question 3: Dropdown -->
-  <div class="question">
-    <p>
-      Question 3: Which statement best describes the difference between "somebody" and "anybody"?
-      <span class="answer-field">
-        <select class="answer" data-answer="somebody means a specific but unnamed person; anybody means any person whatsoever">
-          <option value="">-- select --</option>
-          <option value="somebody means a specific but unnamed person; anybody means any person whatsoever">
-            Somebody means a specific but unnamed person; Anybody means any person whatsoever
-          </option>
-          <option value="somebody means any person whatsoever; anybody means a specific but unnamed person">
-            Somebody means any person whatsoever; Anybody means a specific but unnamed person
-          </option>
-          <option value="both mean the same thing">Both mean the same thing</option>
-        </select>
-        <button class="show-answer-btn" onclick="showAnswerForQuestion(this)">Show Answer</button>
-      </span>
-    </p>
-  </div>
-  
-  <!-- Question 4: Text Input -->
-  <div class="question">
-    <p>
-      Question 4: If someone says "I’m gonna hurt somebody," what can you infer about their target?
-      <span class="answer-field">
-        <input type="text" class="answer" data-answer="a specific target is implied">
-        <button class="show-answer-btn" onclick="showAnswerForQuestion(this)">Show Answer</button>
-      </span>
-    </p>
-  </div>
-  
-  <!-- Question 5: Dropdown -->
-  <div class="question">
-    <p>
-      Question 5: If someone says "I’m gonna hurt anybody," what is implied?
-      <span class="answer-field">
-        <select class="answer" data-answer="they are indiscriminate in their actions">
-          <option value="">-- select --</option>
-          <option value="they have a specific target in mind">They have a specific target in mind</option>
-          <option value="they are indiscriminate in their actions">They are indiscriminate in their actions</option>
-          <option value="they are confused">They are confused</option>
-        </select>
-        <button class="show-answer-btn" onclick="showAnswerForQuestion(this)">Show Answer</button>
-      </span>
-    </p>
-  </div>
-  
-  <!-- Question 6: Text Input -->
-  <div class="question">
-    <p>
-      Question 6: Complete the sentence: "I’m gonna help ________ who asks." 
-      <em>(Hint: use the term for non-specific reference)</em>
-      <span class="answer-field">
-        <input type="text" class="answer" data-answer="anybody">
-        <button class="show-answer-btn" onclick="showAnswerForQuestion(this)">Show Answer</button>
-      </span>
-    </p>
-  </div>
-  
-  <!-- Question 7: Text Input -->
-  <div class="question">
-    <p>
-      Question 7: Complete the sentence: "I need to speak with ________ important enough to be here." 
-      <em>(Use the term for a specific person)</em>
-      <span class="answer-field">
-        <input type="text" class="answer" data-answer="somebody">
-        <button class="show-answer-btn" onclick="showAnswerForQuestion(this)">Show Answer</button>
-      </span>
-    </p>
-  </div>
-  
-  <!-- Question 8: Dropdown -->
-  <div class="question">
-    <p>
-      Question 8: Which sentence implies a particular target?
-      <span class="answer-field">
-        <select class="answer" data-answer="I’ll call somebody.">
-          <option value="">-- select --</option>
-          <option value="I’ll call somebody.">I’ll call somebody.</option>
-          <option value="I’ll call anybody.">I’ll call anybody.</option>
-        </select>
-        <button class="show-answer-btn" onclick="showAnswerForQuestion(this)">Show Answer</button>
-      </span>
-    </p>
-  </div>
-  
-  <!-- Question 9: Dropdown -->
-  <div class="question">
-    <p>
-      Question 9: Which sentence indicates a lack of specificity?
-      <span class="answer-field">
-        <select class="answer" data-answer="I invited anybody to the party.">
-          <option value="">-- select --</option>
-          <option value="I invited somebody to the party.">I invited somebody to the party.</option>
-          <option value="I invited anybody to the party.">I invited anybody to the party.</option>
-        </select>
-        <button class="show-answer-btn" onclick="showAnswerForQuestion(this)">Show Answer</button>
-      </span>
-    </p>
-  </div>
-  
-  <!-- Question 10: Text Input -->
-  <div class="question">
-    <p>
-      Question 10: In movie dialogues, what does the phrase "I’m gonna kill somebody!" usually imply about the villain's state?
-      <span class="answer-field">
-        <input type="text" class="answer" data-answer="he has a target in mind">
-        <button class="show-answer-btn" onclick="showAnswerForQuestion(this)">Show Answer</button>
-      </span>
-    </p>
-  </div>
-  
-  <!-- Question 11: Text Input -->
-  <div class="question">
-    <p>
-      Question 11: In movie dialogues, what does the phrase "I’m gonna kill anybody!" suggest about the villain?
-      <span class="answer-field">
-        <input type="text" class="answer" data-answer="he’s out of control">
-        <button class="show-answer-btn" onclick="showAnswerForQuestion(this)">Show Answer</button>
-      </span>
-    </p>
-  </div>
-  
-  <!-- Question 12: Dropdown -->
-  <div class="question">
-    <p>
-      Question 12: What does "somebody" emphasize in contrast to "anybody"?
-      <span class="answer-field">
-        <select class="answer" data-answer="specificity">
-          <option value="">-- select --</option>
-          <option value="specificity">Specificity</option>
-          <option value="randomness">Randomness</option>
-          <option value="indifference">Indifference</option>
-        </select>
-        <button class="show-answer-btn" onclick="showAnswerForQuestion(this)">Show Answer</button>
-      </span>
-    </p>
-  </div>
-  
-  <!-- Question 13: Text Input -->
-  <div class="question">
-    <p>
-      Question 13: If a person says "I want to help somebody," what intention is implied?
-      <span class="answer-field">
-        <input type="text" class="answer" data-answer="they intend to help a particular person even if unnamed">
-        <button class="show-answer-btn" onclick="showAnswerForQuestion(this)">Show Answer</button>
-      </span>
-    </p>
-  </div>
-  
-  <!-- Question 14: Dropdown -->
-  <div class="question">
-    <p>
-      Question 14: Which of the following is correct for a non-specific statement?
-      <span class="answer-field">
-        <select class="answer" data-answer="She'll trust anybody.">
-          <option value="">-- select --</option>
-          <option value="She'll trust somebody.">She'll trust somebody.</option>
-          <option value="She'll trust anybody.">She'll trust anybody.</option>
-        </select>
-        <button class="show-answer-btn" onclick="showAnswerForQuestion(this)">Show Answer</button>
-      </span>
-    </p>
-  </div>
-  
-  <!-- Question 15: Text Input -->
-  <div class="question">
-    <p>
-      Question 15: Complete the sentence: "He will accept an invitation from ________ as long as it comes."
-      <span class="answer-field">
-        <input type="text" class="answer" data-answer="anybody">
-        <button class="show-answer-btn" onclick="showAnswerForQuestion(this)">Show Answer</button>
-      </span>
-    </p>
-  </div>
-  
-  <!-- Question 16: Dropdown -->
-  <div class="question">
-    <p>
-      Question 16: Select the appropriate word to complete the sentence: "If you see ________ in need, lend a hand."
-      <span class="answer-field">
-        <select class="answer" data-answer="anybody">
-          <option value="">-- select --</option>
-          <option value="somebody">Somebody</option>
-          <option value="anybody">Anybody</option>
-        </select>
-        <button class="show-answer-btn" onclick="showAnswerForQuestion(this)">Show Answer</button>
-      </span>
-    </p>
-  </div>
-  
-  <!-- Question 17: Text Input -->
-  <div class="question">
-    <p>
-      Question 17: Complete the sentence: "I’m looking for ________ who can help me solve this problem."
-      <span class="answer-field">
-        <input type="text" class="answer" data-answer="somebody">
-        <button class="show-answer-btn" onclick="showAnswerForQuestion(this)">Show Answer</button>
-      </span>
-    </p>
-  </div>
-  
-  <!-- Question 18: Dropdown -->
-  <div class="question">
-    <p>
-      Question 18: Which word suggests a deliberate choice?
-      <span class="answer-field">
-        <select class="answer" data-answer="somebody">
-          <option value="">-- select --</option>
-          <option value="somebody">Somebody</option>
-          <option value="anybody">Anybody</option>
-        </select>
-        <button class="show-answer-btn" onclick="showAnswerForQuestion(this)">Show Answer</button>
-      </span>
-    </p>
-  </div>
-  
-  <!-- Question 19: Text Input -->
-  <div class="question">
-    <p>
-      Question 19: When someone uses "anybody" in a threat, what does it imply about their intentions?
-      <span class="answer-field">
-        <input type="text" class="answer" data-answer="they are indiscriminate in their actions">
-        <button class="show-answer-btn" onclick="showAnswerForQuestion(this)">Show Answer</button>
-      </span>
-    </p>
-  </div>
-  
-  <!-- Question 20: Dropdown -->
-  <div class="question">
-    <p>
-      Question 20: Pick the sentence that uses "somebody" correctly.
-      <span class="answer-field">
-        <select class="answer" data-answer="I’ll call somebody.">
-          <option value="">-- select --</option>
-          <option value="I’ll call somebody.">I’ll call somebody.</option>
-          <option value="I’ll call anybody.">I’ll call anybody.</option>
-        </select>
-        <button class="show-answer-btn" onclick="showAnswerForQuestion(this)">Show Answer</button>
-      </span>
-    </p>
-  </div>
-  
-  <!-- Question 21: Text Input -->
-  <div class="question">
-    <p>
-      Question 21: In the sentence "I trust somebody to handle this", what is implied?
-      <span class="answer-field">
-        <input type="text" class="answer" data-answer="there is a particular person trusted even if not named">
-        <button class="show-answer-btn" onclick="showAnswerForQuestion(this)">Show Answer</button>
-      </span>
-    </p>
-  </div>
-  
-  <!-- Question 22: Dropdown -->
-  <div class="question">
-    <p>
-      Question 22: Which sentence implies a specific assignment?
-      <span class="answer-field">
-        <select class="answer" data-answer="I need somebody to finish this work.">
-          <option value="">-- select --</option>
-          <option value="I need somebody to finish this work.">I need somebody to finish this work.</option>
-          <option value="I need anybody to finish this work.">I need anybody to finish this work.</option>
-        </select>
-        <button class="show-answer-btn" onclick="showAnswerForQuestion(this)">Show Answer</button>
-      </span>
-    </p>
-  </div>
-  
-  <!-- Question 23: Text Input -->
-  <div class="question">
-    <p>
-      Question 23: Complete the sentence: "You can ask ________ if you need help, but I have a favorite expert in mind."
-      <span class="answer-field">
-        <input type="text" class="answer" data-answer="somebody">
-        <button class="show-answer-btn" onclick="showAnswerForQuestion(this)">Show Answer</button>
-      </span>
-    </p>
-  </div>
-  
-  <!-- Question 24: Dropdown -->
-  <div class="question">
-    <p>
-      Question 24: Which is more inclusive in meaning?
-      <span class="answer-field">
-        <select class="answer" data-answer="anybody">
-          <option value="">-- select --</option>
-          <option value="somebody">Somebody</option>
-          <option value="anybody">Anybody</option>
-        </select>
-        <button class="show-answer-btn" onclick="showAnswerForQuestion(this)">Show Answer</button>
-      </span>
-    </p>
-  </div>
-  
-  <!-- Question 25: Text Input -->
-  <div class="question">
-    <p>
-      Question 25: If you hear "I’m going to recruit somebody for the job," what does that imply?
-      <span class="answer-field">
-        <input type="text" class="answer" data-answer="a specific candidate is implied">
-        <button class="show-answer-btn" onclick="showAnswerForQuestion(this)">Show Answer</button>
-      </span>
-    </p>
-  </div>
-  
-  <!-- Question 26: Dropdown -->
-  <div class="question">
-    <p>
-      Question 26: Select the sentence that shows no preference for a specific person.
-      <span class="answer-field">
-        <select class="answer" data-answer="I’m going to help anybody in need.">
-          <option value="">-- select --</option>
-          <option value="I’m going to help anybody in need.">I’m going to help anybody in need.</option>
-          <option value="I’m going to help somebody in need.">I’m going to help somebody in need.</option>
-        </select>
-        <button class="show-answer-btn" onclick="showAnswerForQuestion(this)">Show Answer</button>
-      </span>
-    </p>
-  </div>
-  
-  <!-- Question 27: Text Input -->
-  <div class="question">
-    <p>
-      Question 27: Complete the sentence: "I’m trusting ________ with this secret."
-      <span class="answer-field">
-        <input type="text" class="answer" data-answer="somebody">
-        <button class="show-answer-btn" onclick="showAnswerForQuestion(this)">Show Answer</button>
-      </span>
-    </p>
-  </div>
-  
-  <!-- Question 28: Dropdown -->
-  <div class="question">
-    <p>
-      Question 28: Choose the correct pairing: "somebody" means ________; "anybody" means ________.
-      <span class="answer-field">
-        <select class="answer" data-answer="a specific person; anyone">
-          <option value="">-- select --</option>
-          <option value="a specific person; anyone">A specific person; anyone</option>
-          <option value="anyone; a specific person">Anyone; a specific person</option>
-          <option value="both mean the same thing">Both mean the same thing</option>
-        </select>
-        <button class="show-answer-btn" onclick="showAnswerForQuestion(this)">Show Answer</button>
-      </span>
-    </p>
-  </div>
-  
-  <!-- Question 29: Text Input -->
-  <div class="question">
-    <p>
-      Question 29: What does the use of "anybody" indicate in a statement of indifference?
-      <span class="answer-field">
-        <input type="text" class="answer" data-answer="there is no specific target; it applies to everyone">
-        <button class="show-answer-btn" onclick="showAnswerForQuestion(this)">Show Answer</button>
-      </span>
-    </p>
-  </div>
-  
-  <!-- Question 30: Dropdown -->
-  <div class="question">
-    <p>
-      Question 30: Which term would you use if you intend to refer to a particular person without naming them?
-      <span class="answer-field">
-        <select class="answer" data-answer="somebody">
-          <option value="">-- select --</option>
-          <option value="somebody">Somebody</option>
-          <option value="anybody">Anybody</option>
-        </select>
-        <button class="show-answer-btn" onclick="showAnswerForQuestion(this)">Show Answer</button>
-      </span>
-    </p>
-  </div>
-  
-  <!-- Global Control Buttons -->
-  <button id="checkBtn">Check Answers</button>
-  <button id="showAllBtn">Show All Answers</button>
-  
-  <br><br>
-  <a href="index.html">Back to Index</a>
-  
-  <!-- Include the common script -->
-  <script src="common.js"></script>
   <script>
-    // Attach event listeners to the global buttons
-    document.getElementById('checkBtn').addEventListener('click', checkAnswers);
-    document.getElementById('showAllBtn').addEventListener('click', showAnswers);
+    // Array of 30 quiz questions
+    const questions = [
+      { question: "1. I'm gonna kill _______.", correct: "somebody" },
+      { question: "2. I'm gonna kill _______. (implying chaos and lack of a specific target)", correct: "anybody" },
+      { question: "3. I need _______ to fix my car.", correct: "somebody" },
+      { question: "4. Is there _______ who can help me with this math problem?", correct: "anybody" },
+      { question: "5. I didn't see _______ at the party.", correct: "anybody" },
+      { question: "6. _______ left their bag in the classroom.", correct: "Somebody" },
+      { question: "7. Can _______ tell me what time it is?", correct: "anybody" },
+      { question: "8. I want _______ to join my team.", correct: "somebody" },
+      { question: "9. I can't find _______ who understands this joke.", correct: "anybody" },
+      { question: "10. _______ called me while I was sleeping.", correct: "Somebody" },
+      { question: "11. Did _______ leave a message for you?", correct: "anybody" },
+      { question: "12. There's _______ at the door.", correct: "somebody" },
+      { question: "13. I don't think _______ will believe your story.", correct: "anybody" },
+      { question: "14. We need _______ to sign the contract immediately.", correct: "somebody" },
+      { question: "15. Has _______ seen my phone?", correct: "anybody" },
+      { question: "16. I met _______ interesting at the conference.", correct: "somebody" },
+      { question: "17. I haven't met _______ as kind as her.", correct: "anybody" },
+      { question: "18. _______ is knocking on the window.", correct: "Somebody" },
+      { question: "19. Is _______ home?", correct: "anybody" },
+      { question: "20. I wish _______ could help me with my homework.", correct: "somebody" },
+      { question: "21. I don't know _______ who can solve this problem.", correct: "anybody" },
+      { question: "22. _______ must have forgotten to lock the door.", correct: "Somebody" },
+      { question: "23. Can _______ explain how this works?", correct: "anybody" },
+      { question: "24. I want _______ to listen to my new song.", correct: "somebody" },
+      { question: "25. I didn't hear _______ at the meeting.", correct: "anybody" },
+      { question: "26. There is _______ at the door waiting for you.", correct: "somebody" },
+      { question: "27. Does _______ have any experience with coding?", correct: "anybody" },
+      { question: "28. I hope _______ appreciates your hard work.", correct: "somebody" },
+      { question: "29. I don't think _______ will mind if we join them.", correct: "anybody" },
+      { question: "30. _______ told me a secret yesterday.", correct: "Somebody" }
+    ];
+    
+    // Reference to the form element
+    const quizForm = document.getElementById('quizForm');
+    
+    // Dynamically generate the questions
+    questions.forEach((q, index) => {
+      const div = document.createElement('div');
+      div.className = 'question';
+      
+      const p = document.createElement('p');
+      p.innerText = q.question;
+      div.appendChild(p);
+      
+      const optionsDiv = document.createElement('div');
+      optionsDiv.className = 'options';
+      
+      // Option: "somebody"
+      const labelSomebody = document.createElement('label');
+      const radioSomebody = document.createElement('input');
+      radioSomebody.type = 'radio';
+      radioSomebody.name = 'question' + index;
+      radioSomebody.value = 'somebody';
+      labelSomebody.appendChild(radioSomebody);
+      labelSomebody.appendChild(document.createTextNode(' somebody '));
+      optionsDiv.appendChild(labelSomebody);
+      
+      // Option: "anybody"
+      const labelAnybody = document.createElement('label');
+      const radioAnybody = document.createElement('input');
+      radioAnybody.type = 'radio';
+      radioAnybody.name = 'question' + index;
+      radioAnybody.value = 'anybody';
+      labelAnybody.appendChild(radioAnybody);
+      labelAnybody.appendChild(document.createTextNode(' anybody '));
+      optionsDiv.appendChild(labelAnybody);
+      
+      div.appendChild(optionsDiv);
+      quizForm.appendChild(div);
+    });
+    
+    // Event listener for the submit button
+    document.getElementById('submitBtn').addEventListener('click', function(event) {
+      event.preventDefault();
+      let score = 0;
+      questions.forEach((q, index) => {
+        const selected = document.querySelector('input[name="question' + index + '"]:checked');
+        if (selected && selected.value.toLowerCase() === q.correct.toLowerCase()) {
+          score++;
+        }
+      });
+      
+      const resultDiv = document.getElementById('result');
+      let message = "";
+      if (score === questions.length) {
+        message = "Perfect score! You got " + score + " out of " + questions.length + " 😄";
+      } else if (score >= questions.length * 0.7) {
+        message = "Great job! You got " + score + " out of " + questions.length + " 🙂";
+      } else if (score >= questions.length * 0.4) {
+        message = "Not bad, but keep practicing! You got " + score + " out of " + questions.length + " 😐";
+      } else {
+        message = "Keep practicing! You got " + score + " out of " + questions.length + " 😕";
+      }
+      resultDiv.innerText = message;
+    });
   </script>
 </body>
 </html>

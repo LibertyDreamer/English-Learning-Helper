@@ -197,7 +197,8 @@ and include it inside story like it's a part of that story and not grammar lesso
         const definitionConversation = [
           {
             role: 'system',
-            content: `You are a dictionary. Provide a short, child-friendly definition in simple words for the given word in the context below. Add some examples. Add IPA. If the word is phrasal verb or makes sense only with another word or words say that and explain. If the context doesn't clarify usage, define generally.`
+            content: `You are a dictionary. Explain meaning of this word or words inside this context, use context. Use simple kids friendly words.
+            Add some examples. Add IPA.`
           },
           {
             role: 'user',
@@ -205,7 +206,7 @@ and include it inside story like it's a part of that story and not grammar lesso
           }
         ];
         const defText = await callOpenAI(definitionConversation);
-        alert(`Definition":\n\n${defText}`);
+        alert(`${defText}`);
       } catch (err) {
         alert("Error getting definition: " + err);
       }

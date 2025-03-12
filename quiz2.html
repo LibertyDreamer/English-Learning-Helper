@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Somebody or Anybody? - AI-Powered Text Game</title>
+  <title>Somebody or Anybody? - AI-Powered Text Game (with Contextual Dictionary)</title>
   <style>
     /* Old PC / Terminal styling */
     body {
@@ -50,7 +50,6 @@
     }
     /* Text display area */
     #story {
-      white-space: pre-line;
       margin-top: 20px;
       line-height: 1.4;
       border: 1px dashed #00ff00;
@@ -66,18 +65,21 @@
     .word:hover {
       background-color: #003300;
     }
+    p {
+      margin: 0 0 1em 0; /* spacing between paragraphs */
+    }
   </style>
 </head>
 <body>
   <div id="container">
     <h1>Somebody or Anybody?</h1>
-    <h2>AI-Powered Space Text Adventure</h2>
+    <h2>AI-Powered Space Text Adventure (Context Dictionary)</h2>
 
     <div id="intro">
       <p>
         Enter your Azure OpenAI PAT (API key) and click <strong>Start Game</strong> to begin.<br>
         Each time, type a sentence containing <strong>“somebody”</strong> or <strong>“anybody”</strong>.<br>
-        <strong>Click any word</strong> in the story to see a short, grown-up definition in simple words!<br>
+        <strong>Click any word</strong> to see a definition <em>in the context of its paragraph</em>!<br>
         Enjoy the comedic yet extremely dark space adventure.
       </p>
       <input id="pat" placeholder="Enter your Azure OpenAI PAT" />
@@ -184,30 +186,31 @@ and include it inside story like it's a part of that story.
     }
 
     /********************************************************
-     * 4) CLICK-TO-DEFINE (ANY WORD)
+     * 4) CLICK-TO-DEFINE (ANY WORD, WITH CONTEXT)
      ********************************************************/
     document.addEventListener('click', (e) => {
       if (e.target.classList.contains('word')) {
         const clickedWord = e.target.getAttribute('data-word');
-        // Make a separate request to the AI for a definition of that word
-        defineWord(clickedWord);
+        // The entire paragraph is stored in data-context
+        const paragraphContext = e.target.getAttribute('data-context');
+        defineWord(clickedWord, paragraphContext);
       }
     });
 
-    async function defineWord(word) {
+    async function defineWord(word, context) {
       try {
         const definitionConversation = [
           {
             role: 'system',
-            content: 'You are a dictionary. Provide a short, grown-up definition in simple words for the given word.'
+            content: `You are a dictionary. Provide a short, kids-friendly definition in simple words for the given word in the context below. If the context doesn't clarify usage, define generally.`
           },
           {
             role: 'user',
-            content: `Define: "${word}"`
+            content: `Word: "${word}" Context: "${context}"`
           }
         ];
         const defText = await callOpenAI(definitionConversation);
-        alert(`Definition of "${word}":\n\n${defText}`);
+        alert(`Definition of "${word}" (with context):\n\n${defText}`);
       } catch (err) {
         alert("Error getting definition: " + err);
       }
@@ -255,24 +258,55 @@ and include it inside story like it's a part of that story.
     }
 
     /********************************************************
-     * 6) SHOWING THE STORY WITH CLICKABLE WORDS
+     * 6) SHOWING THE STORY WITH CLICKABLE WORDS & PARAGRAPHS
      ********************************************************/
     function updateStory(aiText) {
-      // We'll wrap each token in <span class="word" data-word="...">
-      const wrapped = parseAndWrapWords(aiText);
+      // 1) Split text into paragraphs based on double newlines
+      // 2) For each paragraph, wrap words in clickable <span> elements
+      // 3) Join everything into final HTML
+      const paragraphsHTML = parseTextToParagraphs(aiText);
       const storyDiv = document.getElementById('story');
-      storyDiv.innerHTML = wrapped;
+      storyDiv.innerHTML = paragraphsHTML;
     }
 
-    function parseAndWrapWords(text) {
-      // Simple split on spaces
-      const tokens = text.split(/\s+/);
+    // Splits text into paragraphs (by double newline), then wraps each paragraph’s words
+    function parseTextToParagraphs(text) {
+      // Split on blank lines (double newlines)
+      const paragraphs = text
+        .trim()
+        .split(/\n\s*\n/); // match double newline or blank lines
+
+      // Convert each paragraph into HTML with clickable words
+      const htmlParagraphs = paragraphs.map(par => {
+        const wrapped = parseAndWrapWords(par);
+        return `<p>${wrapped}</p>`;
+      });
+
+      return htmlParagraphs.join("\n");
+    }
+
+    // Replaces each token with a clickable .word <span>,
+    // storing the entire paragraph text in data-context
+    function parseAndWrapWords(paragraphText) {
+      const tokens = paragraphText.split(/\s+/);
+      // We'll store the entire paragraph as context
+      const safeContext = escapeHtml(paragraphText);
+
       const wrappedTokens = tokens.map(token => {
         // We'll remove trailing punctuation from the data-word
         const cleanToken = token.replace(/[.,!?;:]+$/, '');
-        return `<span class="word" data-word="${cleanToken}">${token}</span>`;
+        return `<span class="word" data-word="${cleanToken}" data-context="${safeContext}">${token}</span>`;
       });
       return wrappedTokens.join(" ");
+    }
+
+    // Basic HTML escaping for storing paragraph text in data-context
+    function escapeHtml(str) {
+      return str
+        .replace(/&/g, "&amp;")
+        .replace(/"/g, "&quot;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;");
     }
   </script>
 </body>

@@ -19,7 +19,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.TOKEN_AI }}  # Use GitHub Secrets instead of hardcoding!
         run: |
-          echo "User asked: ${{ github.event.inputs.question }}" > response.txt
+          echo "User asked: ${{ github.event.inputs.question }}"
 
           RESPONSE=$(curl -X POST "https://models.inference.ai.azure.com/chat/completions" \
           -H "Authorization: Bearer $GITHUB_TOKEN" \

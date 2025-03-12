@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Somebody or Anybody? - AI-Powered Text Game (with Contextual Dictionary)</title>
+  <title></title>
   <style>
     /* Old PC / Terminal styling */
     body {
@@ -72,15 +72,11 @@
 </head>
 <body>
   <div id="container">
-    <h1>Somebody or Anybody?</h1>
-    <h2>AI-Powered Space Text Adventure (Context Dictionary)</h2>
+    <h1>Space adventure</h1>
 
     <div id="intro">
       <p>
-        Enter your Azure OpenAI PAT (API key) and click <strong>Start Game</strong> to begin.<br>
-        Each time, type a sentence containing <strong>“somebody”</strong> or <strong>“anybody”</strong>.<br>
-        <strong>Click any word</strong> to see a definition <em>in the context of its paragraph</em>!<br>
-        Enjoy the comedic yet extremely dark space adventure.
+        Enter your Azure API key.
       </p>
       <input id="pat" placeholder="Enter your Azure OpenAI PAT" />
       <br>
@@ -128,17 +124,18 @@
           role: 'system',
           content: `You are a text-based game engine for learning the difference between "somebody" and "anybody" in English. 
 - The setting is a comedic and extremely dark space adventure.
-- The user must type a sentence containing the learning words."
+- The user must type a sentence containing the learning words.
 - Every time then user make right or wrong decision between learning words make it obvious throughout the story!
 somehow add explanation why it was grammatically correct or not, but don't explain straight, 
 and include it inside story like it's a part of that story.
 - I want this game feels like real game, not like grammar test or something!
-- Vocabulary like for 3 years old kid. But the game for grown ups. Ultraviolence is included!!!
+- Vocabulary like for 3 years old kid. But the game for grown-ups learners. Ultraviolence is included!
 - If they use the correct usage in context, continue the story in a fun, light-hearted way.
 - If they use the wrong usage, continue the story in a dark, creepy way, possibly leading to their dead.
-- Always end your response with a prompt asking them to type another sentence with learning words" unless the game is over.
+- Always end your response with a prompt asking them to type another sentence with learning words unless the game is over.
 - Keep track of the storyline in one session.
-- Don't talk about grammar at all!`
+- Don't talk about grammar at all!
+- Add emoji.`
         },
         {
           role: 'user',
@@ -202,7 +199,7 @@ and include it inside story like it's a part of that story.
         const definitionConversation = [
           {
             role: 'system',
-            content: `You are a dictionary. Provide a short, kids-friendly definition in simple words for the given word in the context below. If the context doesn't clarify usage, define generally.`
+            content: `You are a dictionary. Provide a short, child-friendly definition in simple words for the given word in the context below. Add some examples. If the context doesn't clarify usage, define generally.`
           },
           {
             role: 'user',
@@ -210,7 +207,7 @@ and include it inside story like it's a part of that story.
           }
         ];
         const defText = await callOpenAI(definitionConversation);
-        alert(`Definition of "${word}" (with context):\n\n${defText}`);
+        alert(`Definition of "${word}":\n\n${defText}`);
       } catch (err) {
         alert("Error getting definition: " + err);
       }

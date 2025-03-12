@@ -97,7 +97,7 @@
      * 1) CONFIG & GLOBALS
      ********************************************************/
     // Azure OpenAI endpoint (replace if needed)
-    const endpoint = 'https://models.inference.ai.azure.com/openai/deployments/gpt-4o/chat/completions?api-version=2024-02-15-preview';
+    const endpoint = 'https://models.inference.ai.azure.com/openai/deployments/gpt-4o/chat/completions?api-version=gpt-4o-2024-05-13';
     // Model name header required by Azure
     const modelHeader = { 'x-ms-model-mesh-model-name': 'gpt-4o' };
 
@@ -128,7 +128,6 @@ The user must type a sentence containing the learning words.
 If they use the correct usage in context, continue the story in a fun, light-hearted way.
 If they use the wrong usage, continue the story in a dark, creepy way, possibly leading to their dead.
 Every time then user make right or wrong decision between learning words make it obvious that choosing learning words was right or wrong!
-Add explanation why it was grammatically correct or not, but don't explain straight.
 I want this game feels like real game!
 Vocabulary for A0 - A1. Ultraviolence is included!
 Always end your response with a prompt asking them to type another sentence with learning words unless the game is over.

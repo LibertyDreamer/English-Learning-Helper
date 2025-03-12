@@ -7,28 +7,38 @@
   <style>
     body { font-family: sans-serif; }
     .question { margin-bottom: 20px; }
-    input.answer { margin-left: 5px; }
+    input.answer, select.answer { margin-left: 5px; }
+    .show-answer-btn { margin-left: 10px; }
   </style>
 </head>
 <body>
   <h1>Quiz 1</h1>
   
+  <!-- Text input question -->
   <div class="question">
     <p>
       JavaScript is a 
       <input type="text" class="answer" data-answer="programming">
       language.
+      <button class="show-answer-btn" onclick="showAnswerForQuestion(this)">Show Answer</button>
     </p>
   </div>
   
+  <!-- Combobox question -->
   <div class="question">
     <p>
-      HTML stands for 
-      <input type="text" class="answer" data-answer="HyperText">
-      Markup Language.
+      The capital of France is 
+      <select class="answer" data-answer="paris">
+        <option value="">-- select --</option>
+        <option value="london">London</option>
+        <option value="paris">Paris</option>
+        <option value="berlin">Berlin</option>
+      </select>
+      <button class="show-answer-btn" onclick="showAnswerForQuestion(this)">Show Answer</button>
     </p>
   </div>
   
+  <!-- Global buttons -->
   <button id="checkBtn">Check Answers</button>
   <button id="showAllBtn">Show All Answers</button>
   <button id="showOneBtn">Show One Answer</button>

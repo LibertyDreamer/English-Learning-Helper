@@ -17,7 +17,7 @@ jobs:
 
       - name: Ask OpenAI
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Use GitHub Secrets instead of hardcoding!
+          GITHUB_TOKEN: ${{ secrets.TOKEN_AI }}  # Use GitHub Secrets instead of hardcoding!
         run: |
           echo "User asked: ${{ github.event.inputs.question }}" > response.txt
 

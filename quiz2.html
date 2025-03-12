@@ -57,20 +57,14 @@
       padding: 10px;
       min-height: 150px;
     }
-    /* Make every token clickable for definitions, but without heavy underline */
+    /* Make each token clickable, no highlights or question marks */
     .word {
       cursor: pointer;
       text-decoration: none;
       color: #00ff00;
-      /* No highlight by default; subtle change on hover */
     }
     .word:hover {
       background-color: #003300;
-    }
-    /* Add a little emoji after each word so it's clear it's clickable */
-    .word::after {
-      content: '❓';
-      margin-left: 4px;
     }
   </style>
 </head>
@@ -81,21 +75,21 @@
 
     <div id="intro">
       <p>
-        Enter your Azure OpenAI PAT (API key) and click <strong>Start Game 🚀</strong> to begin.<br>
+        Enter your Azure OpenAI PAT (API key) and click <strong>Start Game</strong> to begin.<br>
         Each time, type a sentence containing <strong>“somebody”</strong> or <strong>“anybody”</strong>.<br>
-        <strong>Click any word</strong> in the story to see a short, kid-friendly definition from the AI.<br>
-        The game is comedic and extremely dark <em>(with ultraviolence!)</em>—enjoy!
+        <strong>Click any word</strong> in the story to see a short, grown-up definition in simple words!<br>
+        Enjoy the comedic yet extremely dark space adventure.
       </p>
       <input id="pat" placeholder="Enter your Azure OpenAI PAT" />
       <br>
-      <button class="green-btn" onclick="startGame()">Start Game 🚀</button>
+      <button class="green-btn" onclick="startGame()">Start Game</button>
     </div>
 
     <div id="game-area" style="display:none;">
       <div id="story"></div>
       <div style="margin-top:10px;">
         <input type="text" id="player-input" placeholder="Type a sentence with 'somebody' or 'anybody'">
-        <button class="green-btn" onclick="sendPlayerInput()">Send 🛸</button>
+        <button class="green-btn" onclick="sendPlayerInput()">Send</button>
       </div>
     </div>
   </div>
@@ -126,7 +120,7 @@
 
       document.getElementById('game-area').style.display = 'block';
 
-      // The system prompt with your new instructions:
+      // The system prompt with your updated instructions:
       messages = [
         {
           role: 'system',
@@ -205,7 +199,7 @@ and include it inside story like it's a part of that story.
         const definitionConversation = [
           {
             role: 'system',
-            content: 'You are a dictionary. Provide a short, kid-friendly definition for the given word. Use simple words. But it is for grown ups'
+            content: 'You are a dictionary. Provide a short, grown-up definition in simple words for the given word.'
           },
           {
             role: 'user',
@@ -265,7 +259,6 @@ and include it inside story like it's a part of that story.
      ********************************************************/
     function updateStory(aiText) {
       // We'll wrap each token in <span class="word" data-word="...">
-      // with a subtle ❓ after each word
       const wrapped = parseAndWrapWords(aiText);
       const storyDiv = document.getElementById('story');
       storyDiv.innerHTML = wrapped;

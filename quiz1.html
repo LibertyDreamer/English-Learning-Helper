@@ -2,754 +2,208 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Mission: Somebody vs Anybody – Gamified Quiz 🚀</title>
+  <title>Cosmic Adventure: Somebody vs Anybody</title>
   <style>
-    /* Basic styling */
     body {
       margin: 0;
       padding: 0;
-      font-family: Arial, sans-serif;
-      background: linear-gradient(135deg, #d0eaff, #ffe0f0);
+      font-family: 'Arial', sans-serif;
+      background: linear-gradient(135deg, #fceabb, #f8b500);
+      color: #333;
       display: flex;
       justify-content: center;
       align-items: center;
       min-height: 100vh;
     }
-    .container {
+    #game-container {
       background: #fff;
       padding: 20px 30px;
       border-radius: 10px;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-      width: 95%;
-      max-width: 1100px;
-      margin: 20px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+      max-width: 600px;
+      width: 90%;
     }
     h1 {
       text-align: center;
-      color: #333;
     }
-    p.intro {
-      text-align: center;
+    .prompt, .outcome, .final {
+      margin: 20px 0;
       font-size: 18px;
-      margin-bottom: 20px;
-      color: #555;
+      line-height: 1.5;
     }
-    .question {
-      margin-bottom: 20px;
-      padding: 15px;
-      border: 2px solid #ddd;
-      border-radius: 5px;
-      background: #f9f9f9;
+    .choices {
+      text-align: center;
+      margin: 20px 0;
     }
-    .question p {
-      margin: 0 0 10px 0;
+    button.choice {
+      padding: 10px 20px;
       font-size: 16px;
-      color: #444;
-    }
-    input[type="text"],
-    input[type="number"],
-    input[type="date"],
-    select,
-    textarea {
-      padding: 8px;
-      font-size: 16px;
-      margin-right: 10px;
-      border: 1px solid #ccc;
-      border-radius: 4px;
-    }
-    textarea {
-      width: 80%;
-      height: 60px;
-      vertical-align: middle;
-    }
-    .options-group {
-      margin: 5px 0;
-    }
-    .options-group label {
-      margin-right: 15px;
-      font-size: 16px;
-      cursor: pointer;
-    }
-    .rangeValue {
-      font-weight: bold;
-      margin-left: 8px;
-    }
-    button {
-      padding: 8px 12px;
-      font-size: 16px;
-      background: #2196F3;
-      color: white;
+      margin: 0 10px;
       border: none;
-      border-radius: 4px;
+      border-radius: 5px;
       cursor: pointer;
-      margin-top: 5px;
+      background: #2196F3;
+      color: #fff;
     }
-    button:hover {
+    button.choice:hover {
       background: #1976D2;
     }
-    .feedback {
-      display: inline-block;
-      margin-left: 10px;
-      font-size: 14px;
-      font-weight: bold;
-    }
-    #submitAll {
+    button#next {
       display: block;
       margin: 20px auto;
       padding: 10px 20px;
-      font-size: 18px;
-      background: #4CAF50;
-      color: white;
+      font-size: 16px;
       border: none;
       border-radius: 5px;
       cursor: pointer;
+      background: #4CAF50;
+      color: #fff;
     }
-    #submitAll:hover {
+    button#next:hover {
       background: #43A047;
-    }
-    #result {
-      text-align: center;
-      font-size: 20px;
-      margin-top: 20px;
-      font-weight: bold;
-      color: #333;
-    }
-    /* Styles for drag & drop puzzles */
-    .drag-container {
-      border: 1px dashed #999;
-      padding: 10px;
-      min-height: 40px;
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-    }
-    .draggable {
-      padding: 6px 10px;
-      background: #e0e0e0;
-      border: 1px solid #bbb;
-      border-radius: 4px;
-      cursor: move;
-    }
-    /* Styles for image choices */
-    .image-choice-container {
-      display: flex;
-      gap: 20px;
-    }
-    .image-choice {
-      font-size: 40px;
-      cursor: pointer;
-      padding: 10px;
-      border: 2px solid transparent;
-      border-radius: 8px;
-      transition: border 0.3s;
-    }
-    .image-choice.selected {
-      border: 2px solid #2196F3;
     }
   </style>
 </head>
 <body>
-  <div class="container">
-    <h1>Mission: Somebody vs Anybody – Gamified Quiz 🚀</h1>
-    <p class="intro">
-      Agent, your mission is to decode secret clues using various interactive methods.
-      Complete each task to uncover the truth behind "somebody" vs "anybody" and secure our operation!
-    </p>
-    <div id="quizContainer">
-      <!-- Quiz questions will be generated here -->
-    </div>
-    <button id="submitAll">Submit All Answers</button>
-    <div id="result"></div>
+  <div id="game-container">
+    <h1>Cosmic Adventure: Somebody vs Anybody</h1>
+    <div id="story"></div>
+    <div id="choices" class="choices"></div>
+    <button id="next" style="display:none;">Next</button>
   </div>
   
   <script>
-    // --- Drag & Drop Handlers ---
-    let dragSrcEl = null;
-    function handleDragStart(e) {
-      dragSrcEl = this;
-      e.dataTransfer.effectAllowed = 'move';
-      e.dataTransfer.setData('text/plain', this.innerText);
-      this.style.opacity = '0.4';
-    }
-    function handleDragOver(e) {
-      if (e.preventDefault) e.preventDefault();
-      e.dataTransfer.dropEffect = 'move';
-      return false;
-    }
-    function handleDragEnter(e) { this.classList.add('over'); }
-    function handleDragLeave(e) { this.classList.remove('over'); }
-    function handleDrop(e) {
-      if (e.stopPropagation) e.stopPropagation();
-      if (dragSrcEl !== this) {
-        // Swap text content of the two elements.
-        let temp = dragSrcEl.innerText;
-        dragSrcEl.innerText = this.innerText;
-        this.innerText = temp;
-      }
-      return false;
-    }
-    function handleDragEnd(e) {
-      this.style.opacity = '1';
-      document.querySelectorAll('.draggable').forEach(item => item.classList.remove('over'));
-    }
-    
-    // --- Questions Array ---
-    const questions = [
-      /* Type 1: Text input (3 questions) */
+    // Array of 10 decision points
+    const decisions = [
       {
-        question: "1. Agent, complete the message: 'I need _______ to infiltrate the enemy base.'",
+        prompt: "You wake up in a spaceship with no memory. In a daze, you shout: 'I need _______ to help me out!'",
         correct: "somebody",
-        explanation: "A specific, skilled operative is implied.",
-        inputType: "text",
-        graded: true
+        positive: "Good choice! A trusty mechanic named Sam bursts in and fixes your hyperdrive in record time.",
+        negative: "Oh no! A mime alien appears—silent and useless—leaving you even more lost."
       },
       {
-        question: "2. In the secret note, it reads: 'Is there _______ available to decode this cipher?'",
+        prompt: "After landing on a quirky planet, you realize its inhabitants speak only in riddles. You call out: 'Can I get _______ to translate these odd phrases?'",
+        correct: "somebody",
+        positive: "Excellent! Zara, the eccentric translator, deciphers every riddle with pizzazz.",
+        negative: "Bummer! A random bystander mumbles nonsense, leaving you utterly baffled."
+      },
+      {
+        prompt: "At a cosmic carnival where rides are powered by laughter, you need to board the Roller Coaster of Giggles. You yell: 'I need _______ to help me get on!'",
         correct: "anybody",
-        explanation: "An open call for assistance is intended.",
-        inputType: "text",
-        graded: true
+        positive: "Nice! The jovial crowd rallies around you, and you soar through fits of laughter.",
+        negative: "Uh oh! Only one grumpy clown shows up, and his sour mood spoils the ride."
       },
       {
-        question: "3. Finish the sentence: '______ has left a trace in the abandoned building.'",
+        prompt: "You enter an intergalactic diner where the chef has mysteriously vanished. Hungry, you announce: 'I need _______ to cook my cosmic burger!'",
         correct: "somebody",
-        explanation: "It implies a specific suspect.",
-        inputType: "text",
-        graded: true
-      },
-      /* Type 2: Dropdown (3 questions) */
-      {
-        question: "4. Select the correct word: '______ hacked into the system last night.'",
-        correct: "somebody",
-        explanation: "A specific hacker is implied.",
-        inputType: "dropdown",
-        options: ["somebody", "anybody"],
-        graded: true
+        positive: "Bravo! The renowned chef Marco appears and grills you the tastiest burger in the universe.",
+        negative: "Yikes! A stray spatula comes to life and serves you a cold, limp sandwich."
       },
       {
-        question: "5. Choose the correct word: 'We haven't found ______ to explain the breach.'",
+        prompt: "During a wild galactic game show, you must buzz in for the winning answer. You shout: 'I need _______ to help me answer!'",
         correct: "anybody",
-        explanation: "It’s an open inquiry for any suspect.",
-        inputType: "dropdown",
-        options: ["somebody", "anybody"],
-        graded: true
+        positive: "Boom! The collective genius of the audience lights up the stage, and your answer dazzles the judges.",
+        negative: "Oops! A lone spectator’s feeble cheer leaves the buzzer silent."
       },
       {
-        question: "6. Select the correct word: '______ left behind a mysterious note.'",
+        prompt: "At an alien dance-off, the floor is sizzling with moves. To impress the crowd, you cry: 'I need _______ to dance with me!'",
         correct: "somebody",
-        explanation: "A specific individual left the note.",
-        inputType: "dropdown",
-        options: ["somebody", "anybody"],
-        graded: true
+        positive: "Groovy! Luna, a top-notch dancer, joins you and you both rock the floor in style.",
+        negative: "Drat! A clunky robot with no rhythm appears, turning your dance into a comic disaster."
       },
-      /* Type 3: Radio buttons (3 questions) */
       {
-        question: "7. Which word completes the alert: 'Did ______ call the command center?'",
+        prompt: "A cosmic mystery unfolds—the legendary donut has vanished from the cafeteria! You declare: 'I need _______ to solve this case!'",
         correct: "anybody",
-        explanation: "The alert is non-specific.",
-        inputType: "radio",
-        options: ["somebody", "anybody"],
-        graded: true
+        positive: "Smart move! The entire crew bands together and the elusive donut thief is hilariously caught in the act.",
+        negative: "Oh dear! Only a sleepy janitor shows up, and the case remains as cold as yesterday’s coffee."
       },
       {
-        question: "8. Choose the correct word: 'I believe ______ is watching our moves.'",
+        prompt: "During a top-secret agent briefing, critical intel is needed. You demand: 'I need _______ to give me the inside scoop!'",
         correct: "somebody",
-        explanation: "It implies a specific observer.",
-        inputType: "radio",
-        options: ["somebody", "anybody"],
-        graded: true
+        positive: "Excellent! Agent X, the mysterious informant, appears with all the juicy details.",
+        negative: "Bad call! A confused tourist ambles in and shares random trivia that makes no sense."
       },
       {
-        question: "9. Fill in: 'There's ______ at the gate, but I can't identify them.'",
-        correct: "somebody",
-        explanation: "Although unidentified, it's a specific person.",
-        inputType: "radio",
-        options: ["somebody", "anybody"],
-        graded: true
-      },
-      /* Type 4: Checkbox (3 questions) */
-      {
-        question: "10. Select the word that completes the message: 'I didn't see ______ at the rendezvous point.'",
-        correct: ["anybody"],
-        explanation: "No one was seen at the meeting point.",
-        inputType: "checkbox",
-        options: ["somebody", "anybody", "nobody"],
-        graded: true
-      },
-      {
-        question: "11. Choose the word that fits: '______ leaked the confidential files.'",
-        correct: ["somebody"],
-        explanation: "A specific insider is implied.",
-        inputType: "checkbox",
-        options: ["somebody", "anybody", "everyone"],
-        graded: true
-      },
-      {
-        question: "12. Pick the correct word: 'Is ______ able to decrypt this code?'",
-        correct: ["anybody"],
-        explanation: "It’s an open call for code decryption assistance.",
-        inputType: "checkbox",
-        options: ["somebody", "anybody", "no one"],
-        graded: true
-      },
-      /* Type 5: Range (slider) (3 questions) */
-      {
-        question: "13. Using the slider, rate the specificity when you hear 'somebody' (0 = not specific, 10 = extremely specific).",
-        correctRange: { min: 7, max: 10 },
-        explanation: "'Somebody' typically implies a fairly specific individual.",
-        inputType: "range",
-        min: 0,
-        max: 10,
-        step: 1,
-        graded: true
-      },
-      {
-        question: "14. Rate the generality of 'anybody' on a scale from 0 (not general) to 10 (very general).",
-        correctRange: { min: 7, max: 10 },
-        explanation: "'Anybody' is used in a broad, general sense.",
-        inputType: "range",
-        min: 0,
-        max: 10,
-        step: 1,
-        graded: true
-      },
-      {
-        question: "15. On a scale from 0 to 10, rate how ambiguous the sentence 'I need somebody to help' sounds (0 = clear, 10 = ambiguous).",
-        correctRange: { min: 4, max: 6 },
-        explanation: "The sentence has moderate ambiguity.",
-        inputType: "range",
-        min: 0,
-        max: 10,
-        step: 1,
-        graded: true
-      },
-      /* Type 6: Date (3 questions) */
-      {
-        question: "16. Agent, select the date when the secret meeting occurred. (Hint: 2025-05-20)",
-        correct: "2025-05-20",
-        explanation: "The meeting was scheduled on May 20, 2025.",
-        inputType: "date",
-        graded: true
-      },
-      {
-        question: "17. Choose the date mentioned in the intercepted message. (Hint: 2025-06-10)",
-        correct: "2025-06-10",
-        explanation: "The informant provided that specific date.",
-        inputType: "date",
-        graded: true
-      },
-      {
-        question: "18. Pick the date when the operation was compromised. (Hint: 2025-04-01)",
-        correct: "2025-04-01",
-        explanation: "The breach occurred on April 1, 2025.",
-        inputType: "date",
-        graded: true
-      },
-      /* Type 7: Drag & Drop (3 questions) */
-      {
-        question: "19. Rearrange the words to form the sentence: 'I need somebody to infiltrate the base.'",
-        correctOrder: ["I", "need", "somebody", "to", "infiltrate", "the", "base"],
-        explanation: "The correct order conveys the intended message.",
-        inputType: "dragdrop",
-        items: ["base.", "need", "to", "infiltrate", "the", "I", "somebody"],
-        graded: true
-      },
-      {
-        question: "20. Drag and drop to arrange: 'Anybody can be a spy if they train hard.'",
-        correctOrder: ["Anybody", "can", "be", "a", "spy", "if", "they", "train", "hard"],
-        explanation: "This order emphasizes that anyone can become a spy.",
-        inputType: "dragdrop",
-        items: ["if", "hard", "they", "train", "spy", "a", "can", "Anybody", "be"],
-        graded: true
-      },
-      {
-        question: "21. Arrange the words to complete: 'Somebody must secure the perimeter immediately.'",
-        correctOrder: ["Somebody", "must", "secure", "the", "perimeter", "immediately"],
-        explanation: "It indicates that a specific person must act.",
-        inputType: "dragdrop",
-        items: ["secure", "must", "the", "immediately", "Somebody", "perimeter"],
-        graded: true
-      },
-      /* Type 8: Image Choice (clickable images) (3 questions) */
-      {
-        question: "22. Select the icon that best represents a specific operative ('somebody') in our mission.",
-        correct: "somebody",
-        explanation: "The single operative icon (👤) represents 'somebody'.",
-        inputType: "imagechoice",
-        options: [
-          { value: "somebody", image: "👤" },
-          { value: "anybody", image: "👥" }
-        ],
-        graded: true
-      },
-      {
-        question: "23. Choose the icon that symbolizes an open call for assistance ('anybody') in our intel.",
+        prompt: "At an unexpected cosmic quiz, your decision could change the mission. You announce: 'I need _______ to help me decide!'",
         correct: "anybody",
-        explanation: "The group icon (👥) stands for 'anybody'.",
-        inputType: "imagechoice",
-        options: [
-          { value: "somebody", image: "👤" },
-          { value: "anybody", image: "👥" }
-        ],
-        graded: true
+        positive: "Fantastic! The combined brainpower of the crew rallies and you come up with the winning strategy.",
+        negative: "Alas! A chatty pet parrot squawks a nonsensical answer, leaving you utterly stumped."
       },
       {
-        question: "24. Pick the image that best fits: The message reads 'Somebody is on the move.'",
+        prompt: "In the final showdown with the cosmic overlord, you must summon the ultimate power. You cry out: 'I need _______ now!'",
         correct: "somebody",
-        explanation: "A single operative icon (👤) signifies a specific individual.",
-        inputType: "imagechoice",
-        options: [
-          { value: "somebody", image: "👤" },
-          { value: "anybody", image: "👥" }
-        ],
-        graded: true
-      },
-      /* Type 9: Number (3 questions) */
-      {
-        question: "25. Enter the number of letters in the word 'somebody'.",
-        correct: 8,
-        explanation: "'Somebody' has 8 letters.",
-        inputType: "number",
-        graded: true
-      },
-      {
-        question: "26. What is the numeric clue level for 'anybody'? (Hint: 5)",
-        correct: 5,
-        explanation: "The clue level is rated 5.",
-        inputType: "number",
-        graded: true
-      },
-      {
-        question: "27. Enter the code number for the secret file labeled 'Somebody'.",
-        correct: 101,
-        explanation: "The file code for 'Somebody' is 101.",
-        inputType: "number",
-        graded: true
-      },
-      /* Type 10: Textarea (free response – not graded) (3 questions) */
-      {
-        question: "28. In your own words, describe the significance of the difference between 'somebody' and 'anybody' in our operation.",
-        modelAnswer: "The difference lies in specificity: 'somebody' implies a particular individual, whereas 'anybody' opens up to any potential helper.",
-        explanation: "Reflect on how specificity affects decision-making in the mission.",
-        inputType: "textarea",
-        graded: false
-      },
-      {
-        question: "29. Explain how ambiguity in language can impact espionage operations.",
-        modelAnswer: "Ambiguity may cause misinterpretations and delays, making it critical to use precise language.",
-        explanation: "Highlight the operational risks of ambiguous communication.",
-        inputType: "textarea",
-        graded: false
-      },
-      {
-        question: "30. Write a short mission report summarizing the intelligence gathered on the suspect, focusing on clues about their identity.",
-        modelAnswer: "The intelligence indicates that a specific individual ('somebody') has been active, but the possibility of a wider network ('anybody') cannot be ruled out.",
-        explanation: "Compare your report with the model to assess the clarity of your insights.",
-        inputType: "textarea",
-        graded: false
+        positive: "Victory! Captain Stellar, the legendary hero, arrives at just the right moment and together you defeat the overlord in a blaze of glory.",
+        negative: "Disaster! A random cosmic dust bunny shows up instead, and the overlord roars with laughter as chaos ensues."
       }
     ];
     
-    // --- Quiz Generation ---
-    function generateQuiz() {
-      const container = document.getElementById('quizContainer');
-      questions.forEach((q, index) => {
-        const div = document.createElement('div');
-        div.className = 'question';
-        
-        const p = document.createElement('p');
-        p.innerText = q.question;
-        div.appendChild(p);
-        
-        let inputElement;
-        switch(q.inputType) {
-          case "text":
-            inputElement = document.createElement('input');
-            inputElement.type = "text";
-            inputElement.id = "answer" + index;
-            inputElement.placeholder = "Type your answer...";
-            div.appendChild(inputElement);
-            break;
-          case "dropdown":
-            inputElement = document.createElement('select');
-            inputElement.id = "answer" + index;
-            const defaultOpt = document.createElement('option');
-            defaultOpt.value = "";
-            defaultOpt.innerText = "Choose an answer";
-            inputElement.appendChild(defaultOpt);
-            q.options.forEach(opt => {
-              const option = document.createElement('option');
-              option.value = opt.toLowerCase();
-              option.innerText = opt;
-              inputElement.appendChild(option);
-            });
-            div.appendChild(inputElement);
-            break;
-          case "radio":
-            inputElement = document.createElement('div');
-            inputElement.className = "options-group";
-            q.options.forEach(opt => {
-              const radioLabel = document.createElement('label');
-              const radioInput = document.createElement('input');
-              radioInput.type = "radio";
-              radioInput.name = "question" + index;
-              radioInput.value = opt.toLowerCase();
-              radioLabel.appendChild(radioInput);
-              radioLabel.appendChild(document.createTextNode(" " + opt));
-              inputElement.appendChild(radioLabel);
-            });
-            div.appendChild(inputElement);
-            break;
-          case "checkbox":
-            inputElement = document.createElement('div');
-            inputElement.className = "options-group";
-            q.options.forEach(opt => {
-              const checkboxLabel = document.createElement('label');
-              const checkboxInput = document.createElement('input');
-              checkboxInput.type = "checkbox";
-              checkboxInput.name = "question" + index;
-              checkboxInput.value = opt.toLowerCase();
-              checkboxLabel.appendChild(checkboxInput);
-              checkboxLabel.appendChild(document.createTextNode(" " + opt));
-              inputElement.appendChild(checkboxLabel);
-            });
-            div.appendChild(inputElement);
-            break;
-          case "range":
-            inputElement = document.createElement('input');
-            inputElement.type = "range";
-            inputElement.id = "answer" + index;
-            inputElement.min = q.min;
-            inputElement.max = q.max;
-            inputElement.step = q.step;
-            inputElement.value = Math.floor((Number(q.min) + Number(q.max)) / 2);
-            const rangeVal = document.createElement('span');
-            rangeVal.id = "rangeVal" + index;
-            rangeVal.className = "rangeValue";
-            rangeVal.innerText = inputElement.value;
-            inputElement.addEventListener('input', function() {
-              rangeVal.innerText = this.value;
-            });
-            div.appendChild(inputElement);
-            div.appendChild(rangeVal);
-            break;
-          case "date":
-            inputElement = document.createElement('input');
-            inputElement.type = "date";
-            inputElement.id = "answer" + index;
-            div.appendChild(inputElement);
-            break;
-          case "dragdrop":
-            inputElement = document.createElement('div');
-            inputElement.className = "drag-container";
-            inputElement.id = "dragdrop" + index;
-            // Shuffle the items array
-            let items = q.items.slice();
-            items.sort(() => Math.random() - 0.5);
-            items.forEach(word => {
-              const span = document.createElement('span');
-              span.className = "draggable";
-              span.draggable = true;
-              span.innerText = word;
-              span.addEventListener('dragstart', handleDragStart, false);
-              span.addEventListener('dragenter', handleDragEnter, false);
-              span.addEventListener('dragover', handleDragOver, false);
-              span.addEventListener('dragleave', handleDragLeave, false);
-              span.addEventListener('drop', handleDrop, false);
-              span.addEventListener('dragend', handleDragEnd, false);
-              inputElement.appendChild(span);
-            });
-            div.appendChild(inputElement);
-            break;
-          case "imagechoice":
-            inputElement = document.createElement('div');
-            inputElement.className = "image-choice-container";
-            inputElement.id = "answer" + index;
-            q.options.forEach(opt => {
-              const imgDiv = document.createElement('div');
-              imgDiv.className = "image-choice";
-              imgDiv.innerText = opt.image;
-              imgDiv.dataset.value = opt.value;
-              imgDiv.addEventListener('click', function() {
-                Array.from(this.parentNode.children).forEach(child => child.classList.remove('selected'));
-                this.classList.add('selected');
-              });
-              inputElement.appendChild(imgDiv);
-            });
-            div.appendChild(inputElement);
-            break;
-          case "number":
-            inputElement = document.createElement('input');
-            inputElement.type = "number";
-            inputElement.id = "answer" + index;
-            div.appendChild(inputElement);
-            break;
-          case "textarea":
-            inputElement = document.createElement('textarea');
-            inputElement.id = "answer" + index;
-            inputElement.placeholder = "Type your response here...";
-            div.appendChild(inputElement);
-            break;
-          default:
-            inputElement = document.createElement('input');
-            inputElement.type = "text";
-            inputElement.id = "answer" + index;
-            div.appendChild(inputElement);
-        }
-        
-        // "Check Answer" button for immediate feedback
-        const checkBtn = document.createElement('button');
-        checkBtn.innerText = "Check Answer";
-        checkBtn.addEventListener("click", function() { checkAnswer(index); });
-        div.appendChild(checkBtn);
-        
-        // Feedback span
-        const feedbackSpan = document.createElement('span');
-        feedbackSpan.id = "feedback" + index;
-        feedbackSpan.className = "feedback";
-        div.appendChild(feedbackSpan);
-        
-        container.appendChild(div);
-      });
-    }
+    let currentStep = 0;
+    let score = 0;
     
-    // --- Answer Checking ---
-    function checkAnswer(index) {
-      const q = questions[index];
-      let userAnswer;
-      let isCorrect = false;
-      const feedback = document.getElementById("feedback" + index);
+    const storyDiv = document.getElementById("story");
+    const choicesDiv = document.getElementById("choices");
+    const nextBtn = document.getElementById("next");
+    
+    function displayStep() {
+      // Clear previous content
+      storyDiv.innerHTML = "";
+      choicesDiv.innerHTML = "";
+      nextBtn.style.display = "none";
       
-      switch(q.inputType) {
-        case "text":
-        case "number":
-        case "date":
-          userAnswer = document.getElementById("answer" + index).value.trim().toLowerCase();
-          if(typeof q.correct === "number") {
-            isCorrect = Number(userAnswer) === q.correct;
-          } else {
-            isCorrect = (userAnswer === q.correct.toLowerCase());
-          }
-          break;
-        case "dropdown":
-          userAnswer = document.getElementById("answer" + index).value;
-          isCorrect = (userAnswer === q.correct.toLowerCase());
-          break;
-        case "radio":
-          const radios = document.getElementsByName("question" + index);
-          radios.forEach(radio => { if(radio.checked) userAnswer = radio.value; });
-          isCorrect = (userAnswer === q.correct.toLowerCase());
-          break;
-        case "checkbox":
-          const checkboxes = document.getElementsByName("question" + index);
-          let selected = [];
-          checkboxes.forEach(box => { if(box.checked) selected.push(box.value); });
-          isCorrect = (selected.length === q.correct.length && selected.every(val => q.correct.includes(val)));
-          break;
-        case "range":
-          userAnswer = Number(document.getElementById("answer" + index).value);
-          if(q.correctRange) {
-            isCorrect = (userAnswer >= q.correctRange.min && userAnswer <= q.correctRange.max);
-          } else {
-            isCorrect = (userAnswer === q.correct);
-          }
-          break;
-        case "dragdrop":
-          const dragContainer = document.getElementById("dragdrop" + index);
-          let arranged = [];
-          dragContainer.childNodes.forEach(item => { if(item.innerText) arranged.push(item.innerText); });
-          isCorrect = (arranged.length === q.correctOrder.length && arranged.every((word, i) => word === q.correctOrder[i]));
-          break;
-        case "imagechoice":
-          const imgContainer = document.getElementById("answer" + index);
-          let selectedImg;
-          Array.from(imgContainer.children).forEach(child => {
-            if(child.classList.contains("selected")) selectedImg = child.dataset.value;
-          });
-          isCorrect = (selectedImg === q.correct.toLowerCase());
-          break;
-        case "textarea":
-          feedback.style.color = "blue";
-          feedback.innerText = " Model Answer: " + q.modelAnswer;
-          return;
-        default:
-          userAnswer = document.getElementById("answer" + index).value.trim().toLowerCase();
-          isCorrect = (userAnswer === q.correct.toLowerCase());
-      }
-      
-      if(isCorrect) {
-        feedback.style.color = "green";
-        feedback.innerText = " Correct 😊";
+      if (currentStep < decisions.length) {
+        const step = decisions[currentStep];
+        // Display prompt
+        const promptP = document.createElement("p");
+        promptP.className = "prompt";
+        promptP.innerText = step.prompt;
+        storyDiv.appendChild(promptP);
+        
+        // Create choice buttons
+        const btnSomebody = document.createElement("button");
+        btnSomebody.className = "choice";
+        btnSomebody.innerText = "somebody";
+        btnSomebody.addEventListener("click", () => processChoice("somebody"));
+        choicesDiv.appendChild(btnSomebody);
+        
+        const btnAnybody = document.createElement("button");
+        btnAnybody.className = "choice";
+        btnAnybody.innerText = "anybody";
+        btnAnybody.addEventListener("click", () => processChoice("anybody"));
+        choicesDiv.appendChild(btnAnybody);
       } else {
-        feedback.style.color = "red";
-        feedback.innerText = " Incorrect. " + q.explanation;
+        // End of game
+        storyDiv.innerHTML = "<p class='final'>Mission Complete! You made " + score + " out of " + decisions.length + " correct choices. Thanks for playing, Agent!</p>";
+        choicesDiv.innerHTML = "";
       }
     }
     
-    // --- Global Submission ---
-    function submitAll() {
-      let score = 0, total = 0;
-      questions.forEach((q, index) => {
-        if(q.graded) {
-          total++;
-          let isCorrect = false, userAnswer;
-          switch(q.inputType) {
-            case "text":
-            case "number":
-            case "date":
-              userAnswer = document.getElementById("answer" + index).value.trim().toLowerCase();
-              if(typeof q.correct === "number") {
-                isCorrect = Number(userAnswer) === q.correct;
-              } else {
-                isCorrect = (userAnswer === q.correct.toLowerCase());
-              }
-              break;
-            case "dropdown":
-              userAnswer = document.getElementById("answer" + index).value;
-              isCorrect = (userAnswer === q.correct.toLowerCase());
-              break;
-            case "radio":
-              const radios = document.getElementsByName("question" + index);
-              radios.forEach(radio => { if(radio.checked) userAnswer = radio.value; });
-              isCorrect = (userAnswer === q.correct.toLowerCase());
-              break;
-            case "checkbox":
-              const checkboxes = document.getElementsByName("question" + index);
-              let selected = [];
-              checkboxes.forEach(box => { if(box.checked) selected.push(box.value); });
-              isCorrect = (selected.length === q.correct.length && selected.every(val => q.correct.includes(val)));
-              break;
-            case "range":
-              userAnswer = Number(document.getElementById("answer" + index).value);
-              if(q.correctRange) {
-                isCorrect = (userAnswer >= q.correctRange.min && userAnswer <= q.correctRange.max);
-              } else {
-                isCorrect = (userAnswer === q.correct);
-              }
-              break;
-            case "dragdrop":
-              const dragContainer = document.getElementById("dragdrop" + index);
-              let arranged = [];
-              dragContainer.childNodes.forEach(item => { if(item.innerText) arranged.push(item.innerText); });
-              isCorrect = (arranged.length === q.correctOrder.length && arranged.every((word, i) => word === q.correctOrder[i]));
-              break;
-            case "imagechoice":
-              const imgContainer = document.getElementById("answer" + index);
-              let selectedImg;
-              Array.from(imgContainer.children).forEach(child => {
-                if(child.classList.contains("selected")) selectedImg = child.dataset.value;
-              });
-              isCorrect = (selectedImg === q.correct.toLowerCase());
-              break;
-          }
-          if(isCorrect) score++;
-        }
-      });
-      document.getElementById("result").innerText = "You got " + score + " out of " + total + " correct!";
+    function processChoice(choice) {
+      // Disable further clicks
+      Array.from(document.getElementsByClassName("choice")).forEach(btn => btn.disabled = true);
+      
+      const step = decisions[currentStep];
+      const outcomeP = document.createElement("p");
+      outcomeP.className = "outcome";
+      
+      if (choice === step.correct) {
+        score++;
+        outcomeP.innerText = step.positive;
+      } else {
+        outcomeP.innerText = step.negative;
+      }
+      storyDiv.appendChild(outcomeP);
+      
+      // Show Next button after a short delay
+      nextBtn.style.display = "block";
     }
     
-    document.getElementById("submitAll").addEventListener("click", submitAll);
-    generateQuiz();
+    nextBtn.addEventListener("click", () => {
+      currentStep++;
+      displayStep();
+    });
+    
+    // Start the game
+    displayStep();
   </script>
 </body>
 </html>

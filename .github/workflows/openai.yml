@@ -11,7 +11,7 @@ jobs:
   ask_openai:
     runs-on: ubuntu-latest
     outputs:
-      ai_response: ${{ steps.openai_step.outputs.ai_response }}  # ✅ Store the response as output
+      ai_response: ${{ steps.openai_step.outputs.ai_response }}  # ✅ Store response as output
 
     steps:
       - name: Checkout repository
@@ -34,6 +34,6 @@ jobs:
             "temperature": 1,
             "max_tokens": 4096,
             "top_p": 1
-          }' | jq -r '.choices[0].message.content')  # ✅ Extract only the response text
+          }' | jq -r '.choices[0].message.content')  # ✅ Extract response text
 
-          echo "::set-output name=ai_response::$RESPONSE"  # ✅ Store response as output
+          echo "ai_response=$RESPONSE" >> "$GITHUB_OUTPUT"  # ✅ Store response using Environment File

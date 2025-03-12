@@ -1,0 +1,38 @@
+name: OpenAI Query
+
+on:
+  workflow_dispatch:
+    inputs:
+      question:
+        description: "User's question"
+        required: true
+
+jobs:
+  ask_openai:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Ask OpenAI
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo "User asked: ${{ github.event.inputs.question }}" > response.txt
+
+          RESPONSE=$(curl -X POST "https://models.inference.ai.azure.com" \
+          -H "Authorization: Bearer $TOKEN_AI" \
+          -H "Content-Type: application/json" \
+          -d '{
+            "model": "gpt-4o",
+            "messages": [
+              { "role": "system", "content": "You are a helpful AI assistant." },
+              { "role": "user", "content": "${{ github.event.inputs.question }}" }
+            ],
+            "temperature": 1,
+            "max_tokens": 4096,
+            "top_p": 1
+          }')
+
+          echo "$RESPONSE" >> response.txt

@@ -56,3 +56,9 @@ input[type="text"] {
   border: 2px dashed #d4af37;
   background-color: rgba(0, 0, 0, 0.5);
 }
+
+.clickable-word {
+  cursor: pointer;
+}
+
+

@@ -21,13 +21,35 @@
   </div>
 
   <!-- Inline JavaScript to load text file content into the story div -->
-  <script type="module">
+   <script type="module">
     import { makeWordsClickable } from './clickableWords.js';
+    import { callOpenAI } from './openaiCaller.js';
 
+async function getResponse(word, context) {
+    const pat = document.getElementById("pat").textContent;
+    const messages = [
+          {
+            role: 'system',
+            content: `You are a dictionary. Explain meaning of this word or words inside this exact context.
+            It should be A0-A1 explanation like for kids but it's for adult. Add IPA.`
+          },
+          {
+            role: 'user',
+            content: `Word: "${word}" Context: "${context}"`
+          }
+        ];
+
+    try {
+      const aiMessage = await callOpenAI(messages, pat);
+      alert(`${aiMessage}`);
+    } catch (err) {
+      alert(`${err}`);
+    }
+  }
+
+    
      function handleWordClick(clickedWord, context) {
-        // Your custom code for handling the clicked word and its context.
-        console.log('Clicked word:', clickedWord);
-        console.log('Context:', context);
+        getResponse(clickedWord, context);
     }
 
     // Find the button element on the page

@@ -18,6 +18,9 @@ export function makeWordsClickable(containerId, callback) {
     return;
   }
 
+  // Ensure that whitespace (spaces, newlines) is preserved in the container.
+  container.style.whiteSpace = "pre-wrap";
+
   // Preserve original formatting by splitting text on spaces, keeping whitespace tokens.
   const originalText = container.textContent;
   const tokens = originalText.split(/(\s+)/);

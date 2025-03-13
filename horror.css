@@ -15,7 +15,7 @@ body {
   padding: 20px;
   border: 3px solid #ff0000;
   box-shadow: 0 0 20px rgba(255, 0, 0, 0.7);
-  /* Flicker animation: 6s duration, subtle and infrequent flickers */
+  /* Flicker animation: 6s duration with very subtle dips */
   animation: flicker 6s infinite;
 }
 
@@ -63,6 +63,6 @@ input[type="text"] {
     opacity: 1;
   }
   92%, 94%, 96% {
-    opacity: 0.7;
+    opacity: 0.95;
   }
 }

@@ -1,0 +1,65 @@
+/* horror.css */
+/* Base Horror Theme */
+body {
+  background: radial-gradient(ellipse at center, #0d0d0d 0%, #000000 80%);
+  color: #ff0000;
+  font-family: 'Courier New', monospace;
+  margin: 0;
+  padding: 0;
+}
+
+#container {
+  width: 90%;
+  max-width: 800px;
+  margin: 40px auto;
+  padding: 20px;
+  border: 3px solid #ff0000;
+  box-shadow: 0 0 20px rgba(255, 0, 0, 0.7);
+}
+
+h1, h2 {
+  color: #ff4d4d;
+  margin: 0 0 10px;
+  text-shadow: 2px 2px 4px #000;
+}
+
+.green-btn {
+  background-color: transparent;
+  color: #ff0000;
+  border: 2px solid #ff0000;
+  padding: 10px 20px;
+  margin: 5px;
+  cursor: pointer;
+}
+
+.green-btn:hover {
+  background-color: rgba(255, 0, 0, 0.2);
+  box-shadow: 0 0 10px #ff0000;
+}
+
+input[type="text"] {
+  background-color: rgba(0, 0, 0, 0.8);
+  color: #ff0000;
+  border: 2px solid #ff0000;
+  padding: 8px;
+  margin: 5px 0;
+  width: 400px;
+}
+
+#story {
+  margin-top: 20px;
+  line-height: 1.4;
+  padding: 15px;
+  min-height: 150px;
+  border: 2px dashed #ff0000;
+  background-color: rgba(0, 0, 0, 0.5);
+}
+
+/* Optional: Flicker effect for horror theme */
+@keyframes flicker {
+  0%, 19%, 21%, 23%, 25%, 54%, 56%, 100% { opacity: 1; }
+  20%, 24%, 55% { opacity: 0.4; }
+}
+#container {
+  animation: flicker 2s infinite;
+}

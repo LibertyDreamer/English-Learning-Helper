@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <title>Space Adventure Game</title>
+  <!-- You can change the stylesheet to reading-dark.css, fantasy.css, etc. -->
   <link rel="stylesheet" href="oldpc.css">
 </head>
 <body>
@@ -27,12 +28,13 @@
   <script type="module">
     import { makeWordsClickable } from './clickableWords.js';
     import { callOpenAI } from './openaiCaller.js';
+
     // We'll store the conversation with the AI in this array of messages.
     // This is the "game" memory so the AI remembers the story in one session.
     let messages = [
-        {
-          role: 'system',
-          content: `You are a text-based game engine for learning English.
+      {
+        role: 'system',
+        content: `You are a text-based game engine for learning English.
 HIGH PRIORITY -> Don't tell about grammar or the theme to user, for user it has to be just a game, it's really important!
 Chose one random word for every session and repeat it really often, I mean really!
 Themes for teaching today is somebody and anybody, something and anything, some and any.
@@ -43,64 +45,89 @@ Every time then user make right or wrong decision between learning themes make i
 The setting is a comedic and extremely dark space adventure.
 I want this game feels like real game!
 Vocabulary for A0 - A1. Ultraviolence is included!
-Offer hints how user can answer.`}];
-    
-    function handleWordClick(clickedWord, context) {
-        // Assuming "pat" is an input field, use .value
-    const pat = document.getElementById("pat").value;
-    const message = [
-      {
-        role: 'system',
-        content: `You are a dictionary. Explain meaning of this word or words inside this exact context.
-It should be A0-A1 explanation like for kids but it's for adult. Add IPA.`
-      },
-      {
-        role: 'user',
-        content: `Word: "${word}" Context: "${context}"`
+Offer hints how user can answer.`
       }
     ];
 
-    try {
-      const aiMessage = await callOpenAI(message, pat);
-      alert(`${aiMessage}`);
-    } catch (err) {
-      alert(`${err}`);
-    }
+    /********************************************************
+     * 1) WORD CLICK HANDLER
+     ********************************************************/
+    // Must be async if we're going to use "await" inside it
+    async function handleWordClick(clickedWord, context) {
+      const pat = document.getElementById("pat").value;
+      if (!pat) {
+        alert("Please enter your Azure OpenAI PAT!");
+        return;
+      }
+
+      // We build a small conversation array for the dictionary query
+      const message = [
+        {
+          role: 'system',
+          content: `You are a dictionary. Explain meaning of this word or words inside this exact context.
+It should be A0-A1 explanation like for kids but it's for adult. Add IPA.`
+        },
+        {
+          role: 'user',
+          content: `Word: "${clickedWord}" Context: "${context}"`
+        }
+      ];
+
+      try {
+        const aiMessage = await callOpenAI(message, pat);
+        alert(aiMessage);
+      } catch (err) {
+        alert("Error: " + err);
+      }
     }
 
-    const sendMessageButton = document.querySelector("send-btn");
-      sendMessageButton.addEventListener("click", () => {
-       const inputField = document.getElementById('player-input');
+    /********************************************************
+     * 2) SEND MESSAGE BUTTON
+     ********************************************************/
+    const sendMessageButton = document.getElementById("send-btn");
+
+    // Make sure to wrap in an async function if calling `await`
+    sendMessageButton.addEventListener("click", async () => {
+      const pat = document.getElementById("pat").value.trim();
+      if (!pat) {
+        alert("Please enter your Azure OpenAI PAT!");
+        return;
+      }
+
+      const inputField = document.getElementById('player-input');
       const userSentence = inputField.value.trim();
       if (!userSentence) {
         alert("Input is empty, man!");
         return;
       }
 
-        // Add the user's sentence as a new user message
+      // Add the user's sentence as a new user message
       messages.push({
         role: 'user',
         content: userSentence
       });
 
-      inputField.value = ''; // clear the input
+      // Clear the input
+      inputField.value = '';
 
-        try {
-      const aiMessage = await callOpenAI(messages, pat);
-      document.getElementById("story").textContent = `${aiMessage}`;
-          makeWordsClickable('story', handleWordClick);
-    } catch (err) {
-      alert(`${err}`);
-    }
+      // Call the AI to continue the story
+      try {
+        const aiMessage = await callOpenAI(messages, pat);
+        // Push the AI's response into the conversation
+        messages.push({
+          role: 'assistant',
+          content: aiMessage
+        });
 
-  });
+        // Display the AI's response in the story div
+        document.getElementById("story").textContent = aiMessage;
 
-
-    
-
-    
+        // Make the loaded text clickable
+        makeWordsClickable('story', handleWordClick);
+      } catch (err) {
+        alert("Error: " + err);
+      }
+    });
   </script>
-
-  
 </body>
 </html>

@@ -50,14 +50,13 @@
         reader.onload = function(e) {
           // Set the content of the "story" div to the text file's content
           document.getElementById("story").textContent = e.target.result;
+          makeWordsClickable('story', handleWordClick);
         };
         reader.onerror = function() {
           console.error("Error reading file");
         };
         // Read the file as plain text
         reader.readAsText(file);
-        //this is from reader.js
-        makeWordsClickable('story', handleWordClick);
       }
     });
   </script>

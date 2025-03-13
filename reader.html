@@ -2,20 +2,54 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Space Adventure Game</title>
+  <title>Reader</title>
   <!-- Change the stylesheet to "oldpc.css", "fantasy.css", or "horror.css" to choose a theme -->
   <link rel="stylesheet" href="horror.css">
 </head>
 <body>
   <div id="container">
     <h1>Space Adventure</h1>
-
     <div id="game-area">
       <div id="story">This is story text!!!!</div>
+      <button type="button">Load book.</button>
     </div>
   </div>
 
-  <!-- Load the external JavaScript module -->
-  <script type="module" src="quiz3.js"></script>
+  <!-- Inline JavaScript to load text file content into the story div -->
+  <script type="module">
+    // Find the button element on the page
+    const loadButton = document.querySelector("button");
+
+    // Create a hidden file input element
+    const fileInput = document.createElement("input");
+    fileInput.type = "file";
+    fileInput.accept = ".txt"; // Accept only text files
+    fileInput.style.display = "none"; // Hide the element
+
+    // Append the file input to the document body so it can work properly
+    document.body.appendChild(fileInput);
+
+    // When the button is clicked, simulate a click on the file input
+    loadButton.addEventListener("click", () => {
+      fileInput.click();
+    });
+
+    // When the user selects a file, read it and load its content into the story div
+    fileInput.addEventListener("change", (event) => {
+      const file = event.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          // Set the content of the "story" div to the text file's content
+          document.getElementById("story").textContent = e.target.result;
+        };
+        reader.onerror = function() {
+          console.error("Error reading file");
+        };
+        // Read the file as plain text
+        reader.readAsText(file);
+      }
+    });
+  </script>
 </body>
 </html>

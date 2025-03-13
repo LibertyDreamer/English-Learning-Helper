@@ -2,7 +2,7 @@
 /* Base Horror Theme */
 body {
   background: radial-gradient(ellipse at center, #0d0d0d 0%, #000000 80%);
-  color: #ff0000;
+  color: #ff0000; /* blood red */
   font-family: 'Courier New', monospace;
   margin: 0;
   padding: 0;
@@ -15,6 +15,8 @@ body {
   padding: 20px;
   border: 3px solid #ff0000;
   box-shadow: 0 0 20px rgba(255, 0, 0, 0.7);
+  /* Flicker animation: 6s duration, subtle and infrequent flickers */
+  animation: flicker 6s infinite;
 }
 
 h1, h2 {
@@ -55,11 +57,12 @@ input[type="text"] {
   background-color: rgba(0, 0, 0, 0.5);
 }
 
-/* Optional: Flicker effect for horror theme */
+/* Slow and subtle flicker effect */
 @keyframes flicker {
-  0%, 19%, 21%, 23%, 25%, 54%, 56%, 100% { opacity: 1; }
-  20%, 24%, 55% { opacity: 0.4; }
-}
-#container {
-  animation: flicker 2s infinite;
+  0%, 90%, 100% {
+    opacity: 1;
+  }
+  92%, 94%, 96% {
+    opacity: 0.7;
+  }
 }

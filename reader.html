@@ -22,22 +22,23 @@
 
   <!-- Inline JavaScript to load text file content into the story div -->
    <script type="module">
-    import { makeWordsClickable } from './clickableWords.js';
-    import { callOpenAI } from './openaiCaller.js';
+  import { makeWordsClickable } from './clickableWords.js';
+  import { callOpenAI } from './openaiCaller.js';
 
-async function getResponse(word, context) {
-    const pat = document.getElementById("pat").textContent;
+  async function getResponse(word, context) {
+    // Assuming "pat" is an input field, use .value
+    const pat = document.getElementById("pat").value;
     const messages = [
-          {
-            role: 'system',
-            content: `You are a dictionary. Explain meaning of this word or words inside this exact context.
-            It should be A0-A1 explanation like for kids but it's for adult. Add IPA.`
-          },
-          {
-            role: 'user',
-            content: `Word: "${word}" Context: "${context}"`
-          }
-        ];
+      {
+        role: 'system',
+        content: `You are a dictionary. Explain meaning of this word or words inside this exact context.
+It should be A0-A1 explanation like for kids but it's for adult. Add IPA.`
+      },
+      {
+        role: 'user',
+        content: `Word: "${word}" Context: "${context}"`
+      }
+    ];
 
     try {
       const aiMessage = await callOpenAI(messages, pat);
@@ -47,45 +48,45 @@ async function getResponse(word, context) {
     }
   }
 
-    
-     function handleWordClick(clickedWord, context) {
-        getResponse(clickedWord, context);
+  function handleWordClick(clickedWord, context) {
+    getResponse(clickedWord, context);
+  }
+
+  // Find the button element on the page
+  const loadButton = document.querySelector("button");
+
+  // Create a hidden file input element
+  const fileInput = document.createElement("input");
+  fileInput.type = "file";
+  fileInput.accept = ".txt"; // Accept only text files
+  fileInput.style.display = "none"; // Hide the element
+
+  // Append the file input to the document body so it can work properly
+  document.body.appendChild(fileInput);
+
+  // When the button is clicked, simulate a click on the file input
+  loadButton.addEventListener("click", () => {
+    fileInput.click();
+  });
+
+  // When the user selects a file, read it and load its content into the story div
+  fileInput.addEventListener("change", (event) => {
+    const file = event.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        // Set the content of the "story" div to the text file's content
+        document.getElementById("story").textContent = e.target.result;
+        makeWordsClickable('story', handleWordClick);
+      };
+      reader.onerror = function() {
+        console.error("Error reading file");
+      };
+      // Read the file as plain text
+      reader.readAsText(file);
     }
+  });
+</script>
 
-    // Find the button element on the page
-    const loadButton = document.querySelector("button");
-
-    // Create a hidden file input element
-    const fileInput = document.createElement("input");
-    fileInput.type = "file";
-    fileInput.accept = ".txt"; // Accept only text files
-    fileInput.style.display = "none"; // Hide the element
-
-    // Append the file input to the document body so it can work properly
-    document.body.appendChild(fileInput);
-
-    // When the button is clicked, simulate a click on the file input
-    loadButton.addEventListener("click", () => {
-      fileInput.click();
-    });
-
-    // When the user selects a file, read it and load its content into the story div
-    fileInput.addEventListener("change", (event) => {
-      const file = event.target.files[0];
-      if (file) {
-        const reader = new FileReader();
-        reader.onload = function(e) {
-          // Set the content of the "story" div to the text file's content
-          document.getElementById("story").textContent = e.target.result;
-          makeWordsClickable('story', handleWordClick);
-        };
-        reader.onerror = function() {
-          console.error("Error reading file");
-        };
-        // Read the file as plain text
-        reader.readAsText(file);
-      }
-    });
-  </script>
 </body>
 </html>

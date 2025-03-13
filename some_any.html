@@ -3,7 +3,6 @@
 <head>
   <meta charset="UTF-8" />
   <title>Space Adventure Game</title>
-  <!-- Change the stylesheet to "oldpc.css", "fantasy.css", or "horror.css" to choose a theme -->
   <link rel="stylesheet" href="oldpc.css">
 </head>
 <body>
@@ -23,10 +22,85 @@
       </div>
     </div>
   </div>
-<!-- Write role here -->
-<div id="role" style="display:none;"></div>
 
   <!-- Load the external JavaScript module -->
-  <script type="module" src="some_any.js"></script>
+  <script type="module">
+    import { makeWordsClickable } from './clickableWords.js';
+    import { callOpenAI } from './openaiCaller.js';
+    // We'll store the conversation with the AI in this array of messages.
+    // This is the "game" memory so the AI remembers the story in one session.
+    let messages = [
+        {
+          role: 'system',
+          content: `You are a text-based game engine for learning English.
+HIGH PRIORITY -> Don't tell about grammar or the theme to user, for user it has to be just a game, it's really important!
+Chose one random word for every session and repeat it really often, I mean really!
+Themes for teaching today is somebody and anybody, something and anything, some and any.
+The user must type a sentence which is relevant to todays themes. You have to make them use the relevant words.
+If they use the correct usage in context, continue the story in a fun, light-hearted way.
+If they use the wrong usage, continue the story in a dark, creepy way, possibly leading to their dead.
+Every time then user make right or wrong decision between learning themes make it obvious that choose was right or wrong throw your story!
+The setting is a comedic and extremely dark space adventure.
+I want this game feels like real game!
+Vocabulary for A0 - A1. Ultraviolence is included!
+Offer hints how user can answer.`}];
+    
+    function handleWordClick(clickedWord, context) {
+        // Assuming "pat" is an input field, use .value
+    const pat = document.getElementById("pat").value;
+    const message = [
+      {
+        role: 'system',
+        content: `You are a dictionary. Explain meaning of this word or words inside this exact context.
+It should be A0-A1 explanation like for kids but it's for adult. Add IPA.`
+      },
+      {
+        role: 'user',
+        content: `Word: "${word}" Context: "${context}"`
+      }
+    ];
+
+    try {
+      const aiMessage = await callOpenAI(message, pat);
+      alert(`${aiMessage}`);
+    } catch (err) {
+      alert(`${err}`);
+    }
+    }
+
+    const sendMessageButton = document.querySelector("send-btn");
+      sendMessageButton.addEventListener("click", () => {
+       const inputField = document.getElementById('player-input');
+      const userSentence = inputField.value.trim();
+      if (!userSentence) {
+        alert("Input is empty, man!");
+        return;
+      }
+
+        // Add the user's sentence as a new user message
+      messages.push({
+        role: 'user',
+        content: userSentence
+      });
+
+      inputField.value = ''; // clear the input
+
+        try {
+      const aiMessage = await callOpenAI(messages, pat);
+      document.getElementById("story").textContent = `${aiMessage}`;
+          makeWordsClickable('story', handleWordClick);
+    } catch (err) {
+      alert(`${err}`);
+    }
+
+  });
+
+
+    
+
+    
+  </script>
+
+  
 </body>
 </html>

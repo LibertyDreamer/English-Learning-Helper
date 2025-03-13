@@ -15,7 +15,7 @@ body {
   padding: 20px;
   border: 3px solid #ff0000;
   box-shadow: 0 0 20px rgba(255, 0, 0, 0.7);
-  /* Flicker animation: 6s duration with very subtle dips */
+  /* Single subtle flicker once every 6 seconds */
   animation: flicker 6s infinite;
 }
 
@@ -57,12 +57,9 @@ input[type="text"] {
   background-color: rgba(0, 0, 0, 0.5);
 }
 
-/* Slow and subtle flicker effect */
+/* Flicker keyframes: one subtle dip once in 6 seconds */
 @keyframes flicker {
-  0%, 90%, 100% {
-    opacity: 1;
-  }
-  92%, 94%, 96% {
-    opacity: 0.95;
-  }
+  0%, 95% { opacity: 1; }
+  96%, 98% { opacity: 0.95; }
+  99%, 100% { opacity: 1; }
 }

@@ -15,8 +15,6 @@ body {
   padding: 20px;
   border: 3px solid #ff0000;
   box-shadow: 0 0 20px rgba(255, 0, 0, 0.7);
-  /* Single subtle flicker once every 6 seconds */
-  animation: flicker 6s infinite;
 }
 
 h1, h2 {
@@ -55,11 +53,4 @@ input[type="text"] {
   min-height: 150px;
   border: 2px dashed #ff0000;
   background-color: rgba(0, 0, 0, 0.5);
-}
-
-/* Flicker keyframes: one subtle dip once in 6 seconds */
-@keyframes flicker {
-  0%, 95% { opacity: 1; }
-  96%, 98% { opacity: 0.95; }
-  99%, 100% { opacity: 1; }
 }

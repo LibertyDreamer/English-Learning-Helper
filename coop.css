@@ -1,45 +1,75 @@
 /* style.css */
-/* Dark cosmic-inspired background and a modern layout with grid */
+/* Neon, glassy dark style with a futuristic vibe */
+
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap');
 
 html, body {
   margin: 0;
   padding: 0;
-  background: linear-gradient(135deg, #141e30 0%, #243b55 100%);
-  font-family: 'Roboto', sans-serif;
-  color: #eee;
+  width: 100%;
   height: 100%;
+  font-family: 'Montserrat', sans-serif;
+  background: radial-gradient(circle at top left, #0f0c29, #302b63, #24243e);
+  color: #f0f0f0;
+  overflow: hidden; /* remove if you want to scroll entire page */
 }
 
-/* Container with grid layout */
+/* Main container with a responsive grid */
 #container {
   display: grid;
   grid-template-areas:
     "user-panel user-panel"
-    "story chat"
+    "story       chat"
     "decision-panel shared-decisions";
   grid-template-columns: 1fr 1fr;
   grid-template-rows: auto 1fr auto;
   gap: 20px;
   max-width: 1200px;
+  height: 100vh; /* Fill the viewport height */
   margin: 0 auto;
   padding: 20px;
+  box-sizing: border-box;
+  overflow-y: auto; /* Scroll within container if content is too tall */
 }
 
-/* USER PANEL */
+/* Frosted-glass style container for each section */
+#container > div {
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(10px);
+  border-radius: 8px;
+  padding: 20px;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+}
+
+/* Title for each section */
+#container h1, #container h2 {
+  margin-top: 0;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+/* =========== USER PANEL =========== */
 #user-panel {
   grid-area: user-panel;
-  background-color: rgba(0, 0, 0, 0.4);
-  border-radius: 6px;
-  padding: 20px;
   text-align: center;
 }
 
 #user-panel h1 {
-  margin-top: 0;
+  font-weight: 700;
+  font-size: 2em;
+  color: #ff69b4; /* Neon pink accent */
+  margin-bottom: 10px;
 }
 
 .username-box {
   margin-top: 20px;
+}
+.username-box label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 600;
 }
 .username-box input {
   width: 200px;
@@ -47,141 +77,174 @@ html, body {
   margin-right: 10px;
   border: none;
   border-radius: 4px;
+  outline: none;
+  font-size: 1em;
 }
 .username-box button {
   padding: 8px 16px;
   border: none;
   border-radius: 4px;
-  background-color: #4caf50;
+  background-color: #ff69b4;
   color: #fff;
+  font-weight: 600;
   cursor: pointer;
+  transition: background-color 0.3s ease;
 }
 .username-box button:hover {
-  background-color: #45a049;
+  background-color: #ff85c7;
 }
 
-/* STORY */
+/* =========== STORY =========== */
 #story {
   grid-area: story;
-  background-color: rgba(0, 0, 0, 0.4);
-  border-radius: 6px;
-  padding: 20px;
-  overflow-y: auto;
-  max-height: 60vh; /* adjust as needed */
+  display: flex;
+  flex-direction: column;
+  max-height: 60vh; /* Adjust as needed */
 }
+
 #story h2 {
-  margin-top: 0;
+  color: #72ddf7; /* Neon cyan accent */
+  margin-bottom: 10px;
 }
+
 #story-content {
-  margin-top: 10px;
+  flex: 1;
+  overflow-y: auto;
+  padding-right: 10px; /* space for scrollbar */
   line-height: 1.6;
 }
 
-/* CHAT */
+/* =========== CHAT =========== */
 #chat {
   grid-area: chat;
-  background-color: rgba(0, 0, 0, 0.4);
-  border-radius: 6px;
-  padding: 20px;
   display: flex;
   flex-direction: column;
 }
+
 #chat h2 {
-  margin-top: 0;
+  color: #72ddf7;
+  margin-bottom: 10px;
 }
+
 #chat-messages {
   flex: 1;
   overflow-y: auto;
-  border: 1px solid #444;
+  border: 1px solid rgba(255,255,255,0.2);
   padding: 10px;
-  margin-bottom: 10px;
   border-radius: 4px;
-  background-color: rgba(255, 255, 255, 0.05);
+  background-color: rgba(0,0,0,0.3);
+  margin-bottom: 10px;
 }
+
 #chat-input {
   display: flex;
+  gap: 10px;
 }
+
 #chat-text {
   flex: 1;
   padding: 8px;
   border: none;
   border-radius: 4px;
-  margin-right: 10px;
+  background: rgba(255,255,255,0.1);
+  color: #fff;
+  outline: none;
 }
+
 #chat-send-btn {
   padding: 8px 16px;
   border: none;
   border-radius: 4px;
-  background-color: #2196F3;
-  color: #fff;
+  background-color: #72ddf7;
+  color: #000;
+  font-weight: 600;
   cursor: pointer;
+  transition: background-color 0.3s ease;
 }
 #chat-send-btn:hover {
-  background-color: #1976D2;
+  background-color: #8bf3ff;
 }
 
-/* DECISION PANEL */
+/* =========== DECISION PANEL =========== */
 #decision-panel {
   grid-area: decision-panel;
-  background-color: rgba(0, 0, 0, 0.4);
-  border-radius: 6px;
-  padding: 20px;
   text-align: center;
 }
+
 #decision-panel h2 {
-  margin-top: 0;
+  color: #72ddf7;
+  margin-bottom: 10px;
 }
+
 .decision-box {
   margin-top: 20px;
+  display: flex;
+  justify-content: center;
+  gap: 10px;
 }
+
 #decision-input {
   width: 60%;
   padding: 8px;
   border: none;
   border-radius: 4px;
-  margin-right: 10px;
+  background: rgba(255,255,255,0.1);
+  color: #fff;
+  outline: none;
 }
+
 #decision-send-btn {
   padding: 8px 16px;
   border: none;
   border-radius: 4px;
-  background-color: #f44336;
+  background-color: #b455f2; /* Another neon accent (purple) */
   color: #fff;
+  font-weight: 600;
   cursor: pointer;
+  transition: background-color 0.3s ease;
 }
 #decision-send-btn:hover {
-  background-color: #d32f2f;
+  background-color: #c57af5;
 }
 
-/* SHARED DECISIONS */
+/* =========== SHARED DECISIONS =========== */
 #shared-decisions {
   grid-area: shared-decisions;
-  background-color: rgba(0, 0, 0, 0.4);
-  border-radius: 6px;
-  padding: 20px;
 }
+
 #shared-decisions h2 {
-  margin-top: 0;
+  color: #72ddf7;
+  margin-bottom: 10px;
 }
+
 #decision-list {
   list-style: none;
   padding: 0;
   margin: 0;
+  max-height: 200px;
+  overflow-y: auto;
+  border: 1px solid rgba(255,255,255,0.2);
+  border-radius: 4px;
+  background-color: rgba(0,0,0,0.3);
+  padding: 10px;
 }
 #decision-list li {
   margin-bottom: 8px;
-  border-bottom: 1px solid #555;
+  border-bottom: 1px solid rgba(255,255,255,0.1);
   padding: 4px 0;
 }
 
-/* Scrollbars, optional styling */
+/* =========== SCROLLBARS =========== */
 ::-webkit-scrollbar {
   width: 8px;
 }
 ::-webkit-scrollbar-track {
-  background: #333;
+  background: rgba(255,255,255,0.1);
 }
 ::-webkit-scrollbar-thumb {
-  background: #555;
+  background: #ff69b4;
   border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #ff85c7;
 }

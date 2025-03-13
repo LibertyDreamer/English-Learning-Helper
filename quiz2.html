@@ -86,7 +86,7 @@
     <div id="game-area" style="display:none;">
       <div id="story"></div>
       <div style="margin-top:10px;">
-        <input type="text" id="player-input" placeholder="Type a sentence with 'somebody' or 'anybody'">
+        <input type="text" id="player-input" placeholder="Type anything here.">
         <button class="green-btn" onclick="sendPlayerInput()">Send</button>
       </div>
     </div>
@@ -124,17 +124,16 @@
           role: 'system',
           content: `You are a text-based game engine for learning English.
 HIGH PRIORITY -> Don't tell about grammar or the theme to user, for user it has to be just a game, it's really important!
-Theme for teaching is somebody and anybody, something and anything, some and any in general.
-The user must type a sentence whis is relevant to todays theme. You have to make them.
+Chose one random word for every session and repeat it really often, I mean really!
+Themes for teaching today is somebody and anybody, something and anything, some and any.
+The user must type a sentence which is relevant to todays themes. You have to make them use the relevant words.
 If they use the correct usage in context, continue the story in a fun, light-hearted way.
 If they use the wrong usage, continue the story in a dark, creepy way, possibly leading to their dead.
-Every time then user make right or wrong decision between learning theme make it obvious that choose was right or wrong throw your story!
+Every time then user make right or wrong decision between learning themes make it obvious that choose was right or wrong throw your story!
 The setting is a comedic and extremely dark space adventure.
 I want this game feels like real game!
 Vocabulary for A0 - A1. Ultraviolence is included!
-Always end your response with a prompt asking them to type another sentence relevant to the theme.
-Offer variant how user can answer.
-Keep track of the storyline in one session.`
+Offer hints how user can answer.`
         },
         {
           role: 'user',
@@ -159,7 +158,7 @@ Keep track of the storyline in one session.`
       const inputField = document.getElementById('player-input');
       const userSentence = inputField.value.trim();
       if (!userSentence) {
-        alert("Please type a sentence containing 'somebody' or 'anybody'.");
+        alert("Input is empty, man!");
         return;
       }
 
@@ -198,7 +197,8 @@ Keep track of the storyline in one session.`
         const definitionConversation = [
           {
             role: 'system',
-            content: `You are a dictionary. Explain meaning of this word or words inside this exact context. It should be A0-A1 explanation for kid. Add IPA.`
+            content: `You are a dictionary. Explain meaning of this word or words inside this exact context.
+            It should be A0-A1 explanation like for kids but it's for adult. Add IPA.`
           },
           {
             role: 'user',

@@ -7,4 +7,4 @@ function handleWordClick(clickedWord, context) {
 }
 
 // Assuming your story content is in an element with id "story"
-makeWordsClickable('story', handleWordClick);
+//makeWordsClickable('story', handleWordClick);

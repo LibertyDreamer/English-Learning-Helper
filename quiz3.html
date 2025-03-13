@@ -3,20 +3,13 @@
 <head>
   <meta charset="UTF-8" />
   <title>Space Adventure Game</title>
-  <link rel="stylesheet" href="styles.css">
+  <!-- Change the stylesheet to "oldpc.css", "fantasy.css", or "horror.css" to choose a theme -->
+  <link rel="stylesheet" href="oldpc.css">
 </head>
-<body class="oldpc-theme">
+<body>
   <div id="container">
     <h1>Space Adventure</h1>
-    
-    <!-- Theme selector combobox -->
-    <label for="theme-select">Select Theme: </label>
-    <select id="theme-select">
-      <option value="oldpc-theme">Old PC</option>
-      <option value="fantasy-theme">Fantasy</option>
-      <option value="horror-theme">Horror</option>
-    </select>
-    
+
     <div id="intro">
       <p>Enter your Azure API key.</p>
       <input id="pat" placeholder="Enter your Azure OpenAI PAT" />
@@ -33,7 +26,7 @@
     </div>
   </div>
 
-  <!-- Import main module -->
-  <script type="module" src="./main.js"></script>
+  <!-- Load the external JavaScript module -->
+  <script type="module" src="main.js"></script>
 </body>
 </html>

@@ -3,29 +3,34 @@
 
 @import url('https://fonts.googleapis.com/css2?family=Merriweather:wght@300;400;700&display=swap');
 
-body {
-  background-color: #1e1e1e; /* Dark background */
-  color: #e0e0e0; /* Light grey text for contrast */
-  font-family: 'Merriweather', serif;
+/* Reset some default margins/padding to ensure consistent centering */
+html, body {
   margin: 0;
   padding: 0;
+  width: 100%;
+  background-color: #1e1e1e; /* Dark background */
+  color: #e0e0e0;           /* Light grey text for contrast */
+  font-family: 'Merriweather', serif;
   line-height: 1.6;
 }
 
+/* Container for your main content, centered with margin: 0 auto */
 #container {
   width: 90%;
   max-width: 800px;
-  margin: 40px auto;
+  margin: 40px auto; /* Center the container */
   padding: 30px;
   background-color: #2a2a2a; /* Slightly lighter dark background */
   border: 1px solid #444;
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+  text-align: left;  /* Ensure text is left-aligned */
 }
 
 h1, h2 {
   color: #f0f0f0;
   margin-bottom: 15px;
   text-align: center;
+  line-height: 1.2;
 }
 
 .green-btn {
@@ -33,7 +38,7 @@ h1, h2 {
   color: #e0e0e0;
   border: none;
   padding: 10px 20px;
-  margin: 5px;
+  margin: 5px 0;
   cursor: pointer;
   font-family: 'Merriweather', serif;
   border-radius: 4px;
@@ -68,6 +73,7 @@ input[type="text"] {
   text-align: justify;
 }
 
+/* Make clickable words more noticeable on hover */
 .clickable-word {
   cursor: pointer;
   transition: color 0.2s ease, background-color 0.2s ease;

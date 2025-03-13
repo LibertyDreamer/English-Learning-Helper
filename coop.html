@@ -5,9 +5,12 @@
   <title>Co-op Space Adventure</title>
   <!-- Google Font -->
   <link rel="preconnect" href="https://fonts.gstatic.com" />
-  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet" />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap"
+    rel="stylesheet"
+  />
   <!-- Custom CSS -->
-  <link rel="stylesheet" href="coop.css" />
+  <link rel="stylesheet" href="style.css" />
 </head>
 <body>
   <div id="container">
@@ -47,7 +50,11 @@
     <div id="decision-panel">
       <h2>Your Decision</h2>
       <div class="decision-box">
-        <input type="text" id="decision-input" placeholder="Enter your action/decision..." />
+        <input
+          type="text"
+          id="decision-input"
+          placeholder="Enter your action/decision..."
+        />
         <button id="decision-send-btn">Go!</button>
       </div>
     </div>
@@ -63,9 +70,8 @@
     </div>
   </div>
 
-  <!-- (Optional) Include your scripts here -->
+  <!-- (Optional) Example JS for demonstration -->
   <script>
-    // Example: basic placeholders to illustrate functionality
     document.getElementById('save-username-btn').addEventListener('click', () => {
       const username = document.getElementById('username').value.trim();
       if (username) {
@@ -76,7 +82,6 @@
     document.getElementById('chat-send-btn').addEventListener('click', () => {
       const message = document.getElementById('chat-text').value.trim();
       if (message) {
-        // Insert logic to send chat message
         alert("Sent chat message: " + message);
       }
     });
@@ -84,7 +89,6 @@
     document.getElementById('decision-send-btn').addEventListener('click', () => {
       const decision = document.getElementById('decision-input').value.trim();
       if (decision) {
-        // Insert logic to send decision
         alert("Decision made: " + decision);
       }
     });

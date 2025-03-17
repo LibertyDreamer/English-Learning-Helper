@@ -26,8 +26,8 @@
   import { callOpenAI } from './openaiCaller.js';
 
 
-function fuu(word, lang = "auto") {
-    let audio = new Audio(`https://translate.google.com/translate_tts?ie=UTF-8&tl=${lang}&client=tw-ob&q=${encodeURIComponent(word)}`);
+function fuu(word) {
+    let audio = new Audio(`https://translate.google.com/translate_tts?ie=UTF-8&tl=auto&client=tw-ob&q=${encodeURIComponent(word)}`);
     audio.play();
 }
 
@@ -86,7 +86,7 @@ function showAlertWithMeaning(word, meaning) {
     playButton.style.cursor = "pointer";
     playButton.style.borderRadius = "5px";
     playButton.onclick = function () {
-        fuu(word, lang);
+        fuu(word);
     };
     buttonsContainer.appendChild(playButton);
 
@@ -127,7 +127,7 @@ It should be A0-A1 explanation like for kids but it's for adult. Add IPA.`
 
     try {
       const aiMessage = await callOpenAI(messages, pat);
-      showAlertWithMeaning('${word}', `${aiMessage}`);
+      showAlertWithMeaning(word, `${aiMessage}`);
     } catch (err) {
       alert(`${err}`);
     }

@@ -25,38 +25,36 @@
   import { makeWordsClickable } from './clickableWords.js';
   import { callOpenAI } from './openaiCaller.js';
 
-async function fuu(word, lang = "en-EN") {
-    const url = "https://api.soundoftext.com/sounds";
+
+
+function fuu(word, lang = "en") {
+    // Create a hidden iframe
+    let iframe = document.createElement("iframe");
+    iframe.style.width = "0px";
+    iframe.style.height = "0px";
+    iframe.style.border = "none";
+    iframe.src = `https://translate.google.com/?sl=auto&tl=${lang}&text=${encodeURIComponent(word)}&op=translate`;
     
-    const requestData = {
-        engine: "Google",
-        data: { text: word, voice: lang }
+    document.body.appendChild(iframe);
+
+    // Wait for iframe to load, then try to press the play button
+    iframe.onload = function () {
+        setTimeout(() => {
+            try {
+                let iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+                let playButton = iframeDoc.querySelector("button[jsname='Q4iAWc']"); // Play button
+
+                if (playButton) {
+                    playButton.click();
+                } else {
+                    console.error("Play button not found.");
+                }
+            } catch (error) {
+                console.error("Error accessing iframe:", error);
+            }
+        }, 2000); // Wait 2 seconds for page to load
     };
-
-    try {
-        const response = await fetch(url, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(requestData)
-        });
-
-        const data = await response.json();
-        if (data && data.id) {
-            const audioUrl = `https://soundoftext.com/static/sounds/google/${data.id}.mp3`;
-            let audio = new Audio(audioUrl);
-            audio.play();
-        } else {
-            console.error("TTS audio not found.");
-        }
-    } catch (error) {
-        console.error("Error:", error);
-    }
 }
-
-
-
-
-
 
 function showAlertWithMeaning(word, meaning) {
     // Remove existing modal if any

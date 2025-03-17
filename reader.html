@@ -28,10 +28,11 @@
 function fuu(word, lang = "en-us") {
     const googleTTS = `https://translate.google.com/translate_tts?ie=UTF-8&tl=${lang}&client=tw-ob&q=${encodeURIComponent(word)}`;
 
-    // Create an audio element and play the Google TTS link directly
-    let audio = new Audio(googleTTS);
-    audio.play();
+    window.open(googleTTS, "_blank");
 }
+
+
+
 
 
 

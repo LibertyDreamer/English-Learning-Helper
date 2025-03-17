@@ -19,6 +19,7 @@
       <button type="button">Load book.</button>
     </div>
   </div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mespeak/1.1.1/mespeak.min.js"></script>
 
   <!-- Inline JavaScript to load text file content into the story div -->
    <script type="module">
@@ -27,25 +28,46 @@
 
 
 
+// Global flag to avoid reloading config/voice on every call.
+let meSpeakInitialized = false;
+
 function fuu(word) {
-    if (!('speechSynthesis' in window)) {
-        console.error("Speech synthesis not supported.");
-        return;
-    }
+  if (!word) return;
+  if (!window.meSpeak) {
+    console.error("meSpeak is not loaded.");
+    return;
+  }
 
-    let utterance = new SpeechSynthesisUtterance(word);
-    let voices = speechSynthesis.getVoices();
+  // Function to actually speak the word using meSpeak.
+  function speakNow() {
+    meSpeak.speak(word, {
+      amplitude: 100, // volume control
+      pitch: 50,      // pitch level
+      speed: 175      // words per minute
+    });
+  }
 
-    // Pick a solid English voice (adjust this if needed)
-    utterance.voice = voices.find(v => v.lang.startsWith('en') && v.name.includes('Google')) || voices[0];
-
-    // 🎯 **Fine-Tuned Settings for Maximum Impact**
-    utterance.rate = 1.8;  // ⏩ FAST but clear (default is 1.0)
-    utterance.pitch = 1.2; // 🎶 Slightly higher for sharpness
-    utterance.volume = 1.0; // 🔊 Max loudness
-
-    speechSynthesis.speak(utterance);
+  // If not initialized, load config and voice first.
+  if (!meSpeakInitialized) {
+    meSpeak.loadConfig("https://cdnjs.cloudflare.com/ajax/libs/mespeak/1.1.1/mespeak_config.json", function(configSuccess) {
+      if (configSuccess) {
+        meSpeak.loadVoice("https://cdnjs.cloudflare.com/ajax/libs/mespeak/1.1.1/voices/en/en-us.json", function(voiceLoaded) {
+          if (voiceLoaded) {
+            meSpeakInitialized = true;
+            speakNow();
+          } else {
+            console.error("Voice failed to load.");
+          }
+        });
+      } else {
+        console.error("Configuration failed to load.");
+      }
+    });
+  } else {
+    speakNow();
+  }
 }
+
 
 
 

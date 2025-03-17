@@ -25,16 +25,39 @@
   import { makeWordsClickable } from './clickableWords.js';
   import { callOpenAI } from './openaiCaller.js';
 
-function fuu(word, lang = "en-us") {
-    const googleTTS = `https://translate.google.com/translate_tts?ie=UTF-8&tl=${lang}&client=tw-ob&q=${encodeURIComponent(word)}`;
+async function getOxfordPronunciation(word, accent = "us") {
+    const url = `https://www.oxfordlearnersdictionaries.com/definition/english/${word}`;
 
-    window.open(googleTTS, "_blank");
+    try {
+        const response = await fetch(url);
+        const html = await response.text();
+
+        // Create a temporary DOM to parse HTML
+        let parser = new DOMParser();
+        let doc = parser.parseFromString(html, "text/html");
+
+        // Look for the pronunciation audio links
+        let audioTag;
+        if (accent === "us") {
+            audioTag = doc.querySelector(".pron-us > div.audio_play_button");
+        } else {
+            audioTag = doc.querySelector(".pron-uk > div.audio_play_button");
+        }
+
+        if (audioTag) {
+            let mp3Url = audioTag.getAttribute("data-src-mp3");
+            if (mp3Url) {
+                let audio = new Audio(mp3Url);
+                audio.play();
+                return;
+            }
+        }
+
+        console.error("Pronunciation not found!");
+    } catch (error) {
+        console.error("Error fetching pronunciation:", error);
+    }
 }
-
-
-
-
-
 
 
 function showAlertWithMeaning(word, meaning) {

@@ -27,12 +27,13 @@
 
 
 
-function fuu(word, lang = "en-US") {
-    const tinkoffTTS = `https://voice.tinkoff.ru/synthesize?text=${encodeURIComponent(word)}&voice=oksana&format=mp3`;
+function fuu(word, lang = "en") {
+    const lingvanexTTS = `https://api.lingvanex.com/translate?platform=web&text=${encodeURIComponent(word)}&lang=${lang}`;
 
-    let audio = new Audio(tinkoffTTS);
+    let audio = new Audio(lingvanexTTS);
     audio.play();
 }
+
 
 fuu("HELLO WORLD");
 

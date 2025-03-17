@@ -27,10 +27,15 @@
 
 
 
-function fuu(word, lang = "en") {
-    const googleTTS = `https://translate.google.com/?sl=auto&tl=${lang}&text=${encodeURIComponent(word)}&op=translate`;
-    window.open(googleTTS, "_blank");
+function fuu(word, lang = "en-US") {
+    let utterance = new SpeechSynthesisUtterance(word);
+    utterance.lang = lang;
+    utterance.rate = 1;  // Speed (1 = normal)
+    utterance.pitch = 1; // Voice pitch
+
+    speechSynthesis.speak(utterance);
 }
+
 
 
 function showAlertWithMeaning(word, meaning) {

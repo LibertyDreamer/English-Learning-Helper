@@ -115,7 +115,7 @@ function showAlertWithMeaning(word, meaning) {
     playButton.style.cursor = "pointer";
     playButton.style.borderRadius = "5px";
     playButton.onclick = function () {
-        fuu(word);
+        getOxfordPronunciation(word);
     };
     buttonsContainer.appendChild(playButton);
 

@@ -26,11 +26,22 @@
   import { callOpenAI } from './openaiCaller.js';
 
 function fuu(word, lang = "en") {
-    const url = `https://translate.google.com/translate_tts?ie=UTF-8&tl=${lang}&client=tw-ob&q=${encodeURIComponent(word)}`;
+    const googleTTS = `https://translate.google.com/translate_tts?ie=UTF-8&tl=${lang}&client=tw-ob&q=${encodeURIComponent(word)}`;
 
-    let audio = new Audio(url);
+    // Create an iframe to load Google TTS
+    let iframe = document.createElement("iframe");
+    iframe.style.display = "none";
+    iframe.src = googleTTS;
+    document.body.appendChild(iframe);
+
+    // Play audio from the iframe
+    let audio = new Audio(googleTTS);
     audio.play();
+
+    // Remove iframe after audio plays
+    audio.onended = () => document.body.removeChild(iframe);
 }
+
 
 function showAlertWithMeaning(word, meaning) {
     // Remove existing modal if any

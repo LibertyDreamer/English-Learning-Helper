@@ -19,11 +19,10 @@
       <button type="button">Load book.</button>
     </div>
   </div>
-  
-  <!-- Load meSpeak library -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/mespeak/1.1.1/mespeak.min.js"></script>
-  
-  <!-- Inline JavaScript -->
+
+  <!-- Updated meSpeak 1.1.28 -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/mespeak/1.1.28/mespeak.min.js"></script>
+
   <script type="module">
     import { makeWordsClickable } from './clickableWords.js';
     import { callOpenAI } from './openaiCaller.js';
@@ -31,7 +30,6 @@
     // Global flag to avoid reloading config/voice on every call.
     let meSpeakInitialized = false;
 
-    // fuu() function using meSpeak – all code is contained inside.
     function fuu(word) {
       if (!word) return;
       if (!window.meSpeak) {
@@ -39,20 +37,19 @@
         return;
       }
 
-      // Function to speak the given word.
       function speakNow() {
         meSpeak.speak(word, {
-          amplitude: 100, // volume control
-          pitch: 50,      // pitch level
-          speed: 175      // words per minute
+          amplitude: 100, // volume
+          pitch: 50,      // pitch
+          speed: 175      // wpm
         });
       }
 
-      // If not yet initialized, load configuration and voice.
+      // If not initialized, load config and voice first.
       if (!meSpeakInitialized) {
-        meSpeak.loadConfig("https://cdnjs.cloudflare.com/ajax/libs/mespeak/1.1.1/mespeak_config.json", function(configSuccess) {
+        meSpeak.loadConfig("https://cdnjs.cloudflare.com/ajax/libs/mespeak/1.1.28/mespeak_config.json", function(configSuccess) {
           if (configSuccess) {
-            meSpeak.loadVoice("https://cdnjs.cloudflare.com/ajax/libs/mespeak/1.1.1/voices/en/en-us.json", function(voiceLoaded) {
+            meSpeak.loadVoice("https://cdnjs.cloudflare.com/ajax/libs/mespeak/1.1.28/voices/en/en-us.json", function(voiceLoaded) {
               if (voiceLoaded) {
                 meSpeakInitialized = true;
                 speakNow();
@@ -69,17 +66,15 @@
       }
     }
 
-    
-     fuu("HELLO WORLD");
+    // Example usage (comment out if you want to avoid autoplay blocking):
+    // window.onload = () => fuu("Hello world!");
 
     function showAlertWithMeaning(word, meaning) {
-      // Remove existing modal if any.
       let existingModal = document.getElementById("custom-alert");
       if (existingModal) {
         document.body.removeChild(existingModal);
       }
 
-      // Create modal container.
       let modal = document.createElement("div");
       modal.id = "custom-alert";
       modal.style.position = "fixed";
@@ -88,7 +83,7 @@
       modal.style.transform = "translate(-50%, -50%)";
       modal.style.width = "400px";
       modal.style.padding = "15px";
-      modal.style.backgroundColor = "#222";  // Dark theme.
+      modal.style.backgroundColor = "#222";
       modal.style.color = "#eee";
       modal.style.border = "1px solid #444";
       modal.style.boxShadow = "0 4px 10px rgba(0, 0, 0, 0.3)";
@@ -97,13 +92,11 @@
       modal.style.textAlign = "center";
       modal.style.zIndex = "1000";
 
-      // Word title.
       let wordTitle = document.createElement("h2");
       wordTitle.textContent = word;
       wordTitle.style.marginBottom = "10px";
       modal.appendChild(wordTitle);
 
-      // Meaning text.
       let meaningText = document.createElement("p");
       meaningText.textContent = meaning;
       meaningText.style.fontSize = "14px";
@@ -111,13 +104,11 @@
       meaningText.style.marginBottom = "15px";
       modal.appendChild(meaningText);
 
-      // Buttons container.
       let buttonsContainer = document.createElement("div");
       buttonsContainer.style.display = "flex";
       buttonsContainer.style.justifyContent = "center";
       buttonsContainer.style.gap = "10px";
 
-      // Play Button.
       let playButton = document.createElement("button");
       playButton.textContent = "🔊 Play";
       playButton.style.padding = "8px 15px";
@@ -131,7 +122,6 @@
       };
       buttonsContainer.appendChild(playButton);
 
-      // Close Button.
       let closeButton = document.createElement("button");
       closeButton.textContent = "Close";
       closeButton.style.padding = "8px 15px";
@@ -150,7 +140,6 @@
     }
 
     async function getResponse(word, context) {
-      // Use the "pat" input value.
       const pat = document.getElementById("pat").value;
       const messages = [
         {
@@ -176,7 +165,6 @@ It should be A0-A1 explanation like for kids but it's for adult. Add IPA.`
       getResponse(clickedWord, context);
     }
 
-    // File loading logic.
     const loadButton = document.querySelector("button");
     const fileInput = document.createElement("input");
     fileInput.type = "file";
@@ -203,6 +191,5 @@ It should be A0-A1 explanation like for kids but it's for adult. Add IPA.`
       }
     });
   </script>
-
 </body>
 </html>

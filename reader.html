@@ -25,15 +25,34 @@
   import { makeWordsClickable } from './clickableWords.js';
   import { callOpenAI } from './openaiCaller.js';
 
-function fuu(word, lang = "en") {
-    const proxy = "https://translate.tts-api.com/v1/tts";
-    const url = `${proxy}?text=${encodeURIComponent(word)}&lang=${lang}`;
+async function fuu(word, lang = "en") {
+    const url = "https://api.soundoftext.com/sounds";
+    
+    const requestData = {
+        engine: "Google",
+        data: { text: word, voice: lang }
+    };
 
-    let audio = new Audio(url);
-    audio.play().catch(error => {
-        console.error("Error playing audio:", error);
-    });
+    try {
+        const response = await fetch(url, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(requestData)
+        });
+
+        const data = await response.json();
+        if (data && data.id) {
+            const audioUrl = `https://soundoftext.com/static/sounds/google/${data.id}.mp3`;
+            let audio = new Audio(audioUrl);
+            audio.play();
+        } else {
+            console.error("TTS audio not found.");
+        }
+    } catch (error) {
+        console.error("Error:", error);
+    }
 }
+
 
 
 

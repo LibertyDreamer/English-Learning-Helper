@@ -31,7 +31,7 @@ function fuu(word, lang = "auto") {
     audio.play();
 }
 
-function showAlertWithMeaning(word, meaning, lang = "auto") {
+function showAlertWithMeaning(word, meaning) {
     // Remove existing modal if any
     let existingModal = document.getElementById("custom-alert");
     if (existingModal) {
@@ -107,7 +107,8 @@ function showAlertWithMeaning(word, meaning, lang = "auto") {
     modal.appendChild(buttonsContainer);
 
     // Append to body
-   
+    document.body.appendChild(modal);
+}
 
   async function getResponse(word, context) {
     // Assuming "pat" is an input field, use .value

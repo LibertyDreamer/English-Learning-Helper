@@ -25,10 +25,14 @@
   import { makeWordsClickable } from './clickableWords.js';
   import { callOpenAI } from './openaiCaller.js';
 
-function fuu(word, lang = "en") {
+function fuu(word, lang = "en-us") {
     const googleTTS = `https://translate.google.com/translate_tts?ie=UTF-8&tl=${lang}&client=tw-ob&q=${encodeURIComponent(word)}`;
-    window.open(googleTTS, "_blank");
+
+    // Create an audio element and play the Google TTS link directly
+    let audio = new Audio(googleTTS);
+    audio.play();
 }
+
 
 
 

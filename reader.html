@@ -26,14 +26,15 @@
   import { callOpenAI } from './openaiCaller.js';
 
 function fuu(word, lang = "en") {
-    const proxyServer = "https://soundoftext.com/static/sounds/google/";
-    const googleTTS = `${proxyServer}${encodeURIComponent(word)}_${lang}.mp3`;
+    const proxy = "https://translate.tts-api.com/v1/tts";
+    const url = `${proxy}?text=${encodeURIComponent(word)}&lang=${lang}`;
 
-    let audio = new Audio(googleTTS);
+    let audio = new Audio(url);
     audio.play().catch(error => {
         console.error("Error playing audio:", error);
     });
 }
+
 
 
 

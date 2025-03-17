@@ -25,6 +25,63 @@
   import { makeWordsClickable } from './clickableWords.js';
   import { callOpenAI } from './openaiCaller.js';
 
+function fuu(word) {
+    if ('speechSynthesis' in window) {
+        let utterance = new SpeechSynthesisUtterance(word);
+        
+        // Auto-detect language using regex (basic detection)
+        if (/[\u0400-\u04FF]/.test(word)) {
+            utterance.lang = 'ru-RU'; // Russian
+        } else if (/[\u4E00-\u9FFF]/.test(word)) {
+            utterance.lang = 'zh-CN'; // Chinese
+        } else if (/[\u0600-\u06FF]/.test(word)) {
+            utterance.lang = 'ar-SA'; // Arabic
+        } else {
+            utterance.lang = 'en-US'; // Default to English
+        }
+
+        window.speechSynthesis.speak(utterance);
+    } else {
+        alert("Speech synthesis not supported in your browser.");
+    }
+}
+
+function showAlertWithMeaning(word, meaning) {
+    let modal = document.createElement("div");
+    modal.style.position = "fixed";
+    modal.style.top = "50%";
+    modal.style.left = "50%";
+    modal.style.transform = "translate(-50%, -50%)";
+    modal.style.padding = "20px";
+    modal.style.backgroundColor = "white";
+    modal.style.border = "2px solid black";
+    modal.style.boxShadow = "0px 4px 6px rgba(0, 0, 0, 0.1)";
+    modal.style.zIndex = "1000";
+    modal.style.textAlign = "center";
+
+    let text = document.createElement("p");
+    text.innerHTML = `<strong>${word}</strong>: ${meaning}`;
+    modal.appendChild(text);
+
+    let playButton = document.createElement("button");
+    playButton.textContent = "🔊 Play";
+    playButton.onclick = function() {
+        fuu(word);
+    };
+    modal.appendChild(playButton);
+
+    let closeButton = document.createElement("button");
+    closeButton.textContent = "Close";
+    closeButton.style.marginLeft = "10px";
+    closeButton.onclick = function() {
+        document.body.removeChild(modal);
+    };
+    modal.appendChild(closeButton);
+
+    document.body.appendChild(modal);
+}
+
+
   async function getResponse(word, context) {
     // Assuming "pat" is an input field, use .value
     const pat = document.getElementById("pat").value;
@@ -42,7 +99,7 @@ It should be A0-A1 explanation like for kids but it's for adult. Add IPA.`
 
     try {
       const aiMessage = await callOpenAI(messages, pat);
-      alert(`${aiMessage}`);
+      showAlertWithMeaning("${word}", `${aiMessage}`);
     } catch (err) {
       alert(`${err}`);
     }

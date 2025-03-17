@@ -28,29 +28,21 @@
 
 
 function fuu(word, lang = "en") {
-    const googleTTS = `https://translate.google.com/translate_tts?ie=UTF-8&tl=${lang}&client=tw-ob&q=${encodeURIComponent(word)}`;
-    
-    // Open a tiny, nearly invisible window
-    let win = window.open("", "_blank", "width=1,height=1,left=-1000,top=-1000");
+    const googleTTS = `https://translate.google.com/?sl=auto&tl=${lang}&text=${encodeURIComponent(word)}&op=translate`;
+
+    // Open a small hidden window
+    let win = window.open(googleTTS, "_blank", "width=200,height=200,left=-1000,top=-1000");
 
     if (win) {
-        win.document.write(`
-            <html>
-                <body>
-                    <audio autoplay onended="window.close();">
-                        <source src="${googleTTS}" type="audio/mpeg">
-                    </audio>
-                    <script>
-                        setTimeout(() => window.close(), 5000); // Auto-close if audio doesn't trigger
-                    </script>
-                </body>
-            </html>
-        `);
-        win.document.close();
+        setTimeout(() => {
+            win.close(); // Close after 5 seconds
+        }, 5000);
     } else {
         console.error("Popup blocked! Allow popups for this site.");
     }
 }
+
+
 
 
 

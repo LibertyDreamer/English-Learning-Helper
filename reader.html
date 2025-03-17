@@ -31,43 +31,8 @@
     let meSpeakInitialized = false;
 
     function fuu(word) {
-      if (!word) return;
-      if (!window.meSpeak) {
-        console.error("meSpeak is not loaded.");
-        return;
-      }
-
-      function speakNow() {
-        meSpeak.speak(word, {
-          amplitude: 100, // volume
-          pitch: 50,      // pitch
-          speed: 175      // wpm
-        });
-      }
-
-      // If not initialized, load config and voice first.
-      if (!meSpeakInitialized) {
-        meSpeak.loadConfig("https://cdnjs.cloudflare.com/ajax/libs/mespeak/1.1.28/mespeak_config.json", function(configSuccess) {
-          if (configSuccess) {
-            meSpeak.loadVoice("https://cdnjs.cloudflare.com/ajax/libs/mespeak/1.1.28/voices/en/en-us.json", function(voiceLoaded) {
-              if (voiceLoaded) {
-                meSpeakInitialized = true;
-                speakNow();
-              } else {
-                console.error("Voice failed to load.");
-              }
-            });
-          } else {
-            console.error("Configuration failed to load.");
-          }
-        });
-      } else {
-        speakNow();
-      }
+     
     }
-
-    // Example usage (comment out if you want to avoid autoplay blocking):
-    // window.onload = () => fuu("Hello world!");
 
     function showAlertWithMeaning(word, meaning) {
       let existingModal = document.getElementById("custom-alert");

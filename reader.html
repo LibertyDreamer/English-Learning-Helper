@@ -28,33 +28,10 @@
 
 
 function fuu(word, lang = "en") {
-    // Create a hidden iframe
-    let iframe = document.createElement("iframe");
-    iframe.style.width = "0px";
-    iframe.style.height = "0px";
-    iframe.style.border = "none";
-    iframe.src = `https://translate.google.com/?sl=auto&tl=${lang}&text=${encodeURIComponent(word)}&op=translate`;
-    
-    document.body.appendChild(iframe);
-
-    // Wait for iframe to load, then try to press the play button
-    iframe.onload = function () {
-        setTimeout(() => {
-            try {
-                let iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
-                let playButton = iframeDoc.querySelector("button[jsname='Q4iAWc']"); // Play button
-
-                if (playButton) {
-                    playButton.click();
-                } else {
-                    console.error("Play button not found.");
-                }
-            } catch (error) {
-                console.error("Error accessing iframe:", error);
-            }
-        }, 2000); // Wait 2 seconds for page to load
-    };
+    const googleTTS = `https://translate.google.com/?sl=auto&tl=${lang}&text=${encodeURIComponent(word)}&op=translate`;
+    window.open(googleTTS, "_blank");
 }
+
 
 function showAlertWithMeaning(word, meaning) {
     // Remove existing modal if any

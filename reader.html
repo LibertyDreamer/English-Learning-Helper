@@ -25,18 +25,16 @@
   import { makeWordsClickable } from './clickableWords.js';
   import { callOpenAI } from './openaiCaller.js';
 
-
 function fuu(word, lang = "auto") {
-    const url = `https://translate.google.com/translate_tts?ie=UTF-8&tl=${lang}&client=tw-ob&q=${encodeURIComponent(word)}`;
+    const proxy = "https://corsproxy.io/?";
+    const googleTTS = `https://translate.google.com/translate_tts?ie=UTF-8&client=tw-ob&q=${encodeURIComponent(word)}&tl=${lang}`;
+    const url = proxy + googleTTS;
 
-    fetch(url)
-        .then(response => response.blob()) // Convert response to a blob (audio file)
-        .then(blob => {
-            const audio = new Audio(URL.createObjectURL(blob));
-            audio.play();
-        })
-        .catch(error => console.error("Error playing audio:", error));
+    let audio = new Audio(url);
+    audio.play();
 }
+
+
 
 
 function showAlertWithMeaning(word, meaning) {

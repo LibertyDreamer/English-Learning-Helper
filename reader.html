@@ -27,29 +27,14 @@
 
 
 
-function fuu(word, lang = "en-EU") {
-    const googleTTS = `https://translate.google.com/translate_tts?ie=UTF-8&tl=${lang}&client=tw-ob&q=${encodeURIComponent(word)}`;
+function fuu(word, lang = "en") {
+    const yandexTTS = `https://tts.voicetech.yandex.net/generate?text=${encodeURIComponent(word)}&lang=${lang}&format=mp3&speaker=alyss`;
 
-    // Open a tiny hidden window
-    let win = window.open("", "_blank", "width=1,height=1,left=-1000,top=-1000");
-
-    if (win) {
-        win.document.write(`
-            <html>
-                <body onload="document.getElementById('ttsAudio').play()">
-                    <audio id="ttsAudio" autoplay onended="window.close();">
-                        <source src="${googleTTS}" type="audio/mpeg">
-                    </audio>
-                    <script>
-                        setTimeout(() => window.close(), 5000); // Auto-close after 5 sec in case playback fails
-                    </script>
-                </body>
-            </html>`);
-        win.document.close();
-    } else {
-        console.error("Popup blocked! Allow popups for this site.");
-    }
+    let audio = new Audio(yandexTTS);
+    audio.play();
 }
+
+
 
 
 

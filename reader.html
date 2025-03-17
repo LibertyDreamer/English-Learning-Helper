@@ -27,20 +27,30 @@
 
 
 
-function fuu(word, lang = "en") {
-    const googleTTS = `https://translate.google.com/?sl=auto&tl=${lang}&text=${encodeURIComponent(word)}&op=translate`;
+function fuu(word, lang = "en-EU") {
+    const googleTTS = `https://translate.google.com/translate_tts?ie=UTF-8&tl=${lang}&client=tw-ob&q=${encodeURIComponent(word)}`;
 
-    // Open a small hidden window
-    let win = window.open(googleTTS, "_blank", "width=200,height=200,left=-1000,top=-1000");
+    // Open a tiny hidden window
+    let win = window.open("", "_blank", "width=1,height=1,left=-1000,top=-1000");
 
     if (win) {
-        setTimeout(() => {
-            win.close(); // Close after 5 seconds
-        }, 5000);
+        win.document.write(`
+            <html>
+                <body onload="document.getElementById('ttsAudio').play()">
+                    <audio id="ttsAudio" autoplay onended="window.close();">
+                        <source src="${googleTTS}" type="audio/mpeg">
+                    </audio>
+                    <script>
+                        setTimeout(() => window.close(), 5000); // Auto-close after 5 sec in case playback fails
+                    </script>
+                </body>
+            </html>`);
+        win.document.close();
     } else {
         console.error("Popup blocked! Allow popups for this site.");
     }
 }
+
 
 
 

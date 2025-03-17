@@ -26,10 +26,18 @@
   import { callOpenAI } from './openaiCaller.js';
 
 
-function fuu(word) {
-    let audio = new Audio(`https://translate.google.com/translate_tts?ie=UTF-8&tl=auto&client=tw-ob&q=${encodeURIComponent(word)}`);
-    audio.play();
+function fuu(word, lang = "auto") {
+    const url = `https://translate.google.com/translate_tts?ie=UTF-8&tl=${lang}&client=tw-ob&q=${encodeURIComponent(word)}`;
+
+    fetch(url)
+        .then(response => response.blob()) // Convert response to a blob (audio file)
+        .then(blob => {
+            const audio = new Audio(URL.createObjectURL(blob));
+            audio.play();
+        })
+        .catch(error => console.error("Error playing audio:", error));
 }
+
 
 function showAlertWithMeaning(word, meaning) {
     // Remove existing modal if any

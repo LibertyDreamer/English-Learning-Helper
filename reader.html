@@ -26,22 +26,11 @@
   import { callOpenAI } from './openaiCaller.js';
 
 function fuu(word, lang = "en") {
-    const proxy = "https://api.allorigins.win/get?url=";
-    const googleTTS = `https://translate.google.com/translate_tts?ie=UTF-8&tl=${lang}&client=tw-ob&q=${encodeURIComponent(word)}`;
-    const url = proxy + encodeURIComponent(googleTTS);
+    const proxyServer = "https://translateproxy.freeapi.io";
+    const googleTTS = `/tts?text=${encodeURIComponent(word)}&lang=${lang}`;
 
-    fetch(url)
-        .then(response => response.json()) // Get the real MP3 link
-        .then(data => {
-            let audioUrl = data.contents.match(/https[^"]+/); // Extract real audio URL
-            if (audioUrl) {
-                let audio = new Audio(audioUrl[0]);
-                audio.play();
-            } else {
-                console.error("Failed to extract audio URL.");
-            }
-        })
-        .catch(error => console.error("Error:", error));
+    let audio = new Audio(proxyServer + googleTTS);
+    audio.play();
 }
 
 

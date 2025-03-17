@@ -27,12 +27,13 @@
 
 
 
-function fuu(word, lang = "en") {
-    const yandexTTS = `https://tts.voicetech.yandex.net/generate?text=${encodeURIComponent(word)}&lang=${lang}&format=mp3&speaker=alyss`;
+function fuu(word, lang = "en-US") {
+    const tinkoffTTS = `https://voice.tinkoff.ru/synthesize?text=${encodeURIComponent(word)}&voice=oksana&format=mp3`;
 
-    let audio = new Audio(yandexTTS);
+    let audio = new Audio(tinkoffTTS);
     audio.play();
 }
+
 
 
 

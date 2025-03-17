@@ -28,14 +28,15 @@
 
 
 function fuu(word, lang = "en") {
-    const proxy = "https://api.freetts.com/";
-    const url = `${proxy}?text=${encodeURIComponent(word)}&lang=${lang}`;
+    const proxyServer = "https://translate.tts-api.com/v1/tts";
+    const googleTTS = `${proxyServer}?text=${encodeURIComponent(word)}&lang=${lang}`;
 
-    let audio = new Audio(url);
+    let audio = new Audio(googleTTS);
     audio.play().catch(error => {
         console.error("Error playing audio:", error);
     });
 }
+
 
 
 

@@ -3,31 +3,29 @@
 
 @import url('https://fonts.googleapis.com/css2?family=Merriweather:wght@300;400;700&display=swap');
 
-/* Reset margins, ensure no horizontal scroll so the panel won't be cut off */
+/* Reset some default margins/padding to ensure consistent centering */
 html, body {
   margin: 0;
   padding: 0;
   width: 100%;
-  overflow-x: hidden;  /* Prevent horizontal scroll */
-  background-color: #1e1e1e; 
-  color: #e0e0e0;
+  background-color: #1e1e1e; /* Dark background */
+  color: #e0e0e0;           /* Light grey text for contrast */
   font-family: 'Merriweather', serif;
   line-height: 1.6;
 }
 
-/* Main container: centered, doesn't move when panel opens */
+/* Container for main content, centered with margin: 0 auto */
 #container {
   width: 90%;
   max-width: 800px;
-  margin: 40px auto;
+  margin: 40px auto; 
   padding: 30px;
-  background-color: #2a2a2a;
+  background-color: #2a2a2a; 
   border: 1px solid #444;
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
   text-align: left;
 }
 
-/* Basic headings */
 h1, h2 {
   color: #f0f0f0;
   margin-bottom: 15px;
@@ -35,7 +33,7 @@ h1, h2 {
   line-height: 1.2;
 }
 
-/* Basic button styling */
+/* Simple button style */
 button {
   background-color: #3a3a3a;
   color: #e0e0e0;
@@ -52,7 +50,7 @@ button:hover {
   background-color: #555;
 }
 
-/* Text/password inputs, fill their container's width */
+/* For text inputs */
 input[type="text"],
 input[type="password"],
 select {
@@ -61,12 +59,13 @@ select {
   border: 1px solid #555;
   padding: 8px 12px;
   margin: 5px 0;
-  width: 100%;  /* Fit parent container, no overflow */
+  width: 100%;
+  max-width: 400px;
   font-family: 'Merriweather', serif;
   border-radius: 4px;
 }
 
-/* The "story" area */
+/* The text area for the story */
 #story {
   margin-top: 20px;
   padding: 20px;
@@ -79,7 +78,7 @@ select {
   text-align: justify;
 }
 
-/* Clickable words (for definitions) */
+/* Make clickable words more noticeable on hover */
 .clickable-word {
   cursor: pointer;
   transition: color 0.2s ease, background-color 0.2s ease;
@@ -90,11 +89,11 @@ select {
   padding: 0 2px;
 }
 
-/* ===============================
-   Settings Panel & Button (slide-in)
-================================= */
+/* =========================================
+   Settings Panel & Button (slide-in from right)
+========================================= */
 
-/* Settings button at top-right */
+/* Position the Settings button in the top-right corner */
 #settingsBtn {
   position: fixed;
   top: 10px;
@@ -106,35 +105,32 @@ select {
   cursor: pointer;
   border-radius: 5px;
   font-size: 14px;
-  z-index: 9999; /* Above the panel */
+  z-index: 9999; /* Ensure it's above the panel */
 }
 
 #settingsBtn:hover {
   background: #666;
 }
 
-/* The Settings panel: hidden off-screen to the right by default */
+/* The Settings panel (off-screen to the right by default) */
 #settingsPanel {
   position: fixed;
   top: 0;
-  right: 0;
-  width: 280px;                 /* A bit narrower so it's fully visible */
+  right: -300px;          /* Hide off-screen */
+  width: 300px;           /* Fixed width */
   height: 100%;
   background: #222;
   color: #eee;
   padding: 20px;
   box-shadow: -3px 0 10px rgba(0, 0, 0, 0.3);
-
-  /* Slide off-screen: translateX(100%) means "start 100% beyond the right edge" */
-  transform: translateX(100%);
-  transition: transform 0.3s ease;
-  overflow-y: auto;  /* Scroll if content is tall */
-  z-index: 9998;
+  transition: right 0.3s ease;  /* Slide animation */
+  overflow-y: auto;             /* Scroll if content is tall */
+  z-index: 9998;                /* Just below the button */
 }
 
-/* When "open", it slides in from the right (translateX(0)) */
+/* Slide the panel fully into view */
 #settingsPanel.open {
-  transform: translateX(0);
+  right: 0;
 }
 
 #settingsPanel h2 {

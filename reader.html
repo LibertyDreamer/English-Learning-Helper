@@ -145,12 +145,12 @@ document.getElementById("voiceSelect").addEventListener("input", () => {
       document.body.appendChild(modal);
     }
 
-    async function getResponse(word, context) {
+    async function getResponse(word, context, role) {
       const pat = document.getElementById("pat").value;
       const messages = [
         {
           role: 'system',
-          content: document.getElementById("AISystemRole").value
+          content: "${word}"
         },
         {
           role: 'user',
@@ -166,8 +166,17 @@ document.getElementById("voiceSelect").addEventListener("input", () => {
       }
     }
 
+    // Toggle the settings panel
+    const settingsBtn = document.getElementById("settingsBtn");
+    const settingsPanel = document.getElementById("settingsPanel");
+
+    settingsBtn.addEventListener("click", () => {
+      settingsPanel.classList.toggle("open");
+    });
+
+
     function handleWordClick(clickedWord, context) {
-      getResponse(clickedWord, context);
+      getResponse(clickedWord, context, document.getElementById("AISystemRole").value);
     }
 
     // File reading logic
@@ -195,15 +204,6 @@ document.getElementById("voiceSelect").addEventListener("input", () => {
         };
         reader.readAsText(file);
       }
-    });
-
-    // Toggle the settings panel
-    const settingsBtn = document.getElementById("settingsBtn");
-    const settingsPanel = document.getElementById("settingsPanel");
-
-    settingsBtn.addEventListener("click", () => {
-      // Slide in/out by toggling "open" class
-      settingsPanel.classList.toggle("open");
     });
   </script>
 </body>

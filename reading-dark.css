@@ -3,7 +3,7 @@
 
 @import url('https://fonts.googleapis.com/css2?family=Merriweather:wght@300;400;700&display=swap');
 
-/* Reset margins, ensure no horizontal scroll so the panel won't be cut off */
+/* Reset margins and ensure no horizontal scroll so the panel won't be cut off */
 html, body {
   margin: 0;
   padding: 0;
@@ -47,7 +47,6 @@ button {
   border-radius: 4px;
   transition: background-color 0.3s ease;
 }
-
 button:hover {
   background-color: #555;
 }
@@ -61,7 +60,7 @@ select {
   border: 1px solid #555;
   padding: 8px 12px;
   margin: 5px 0;
-  width: 100%;  /* Fit parent container, no overflow */
+  width: 100%;  /* Fit parent container */
   font-family: 'Merriweather', serif;
   border-radius: 4px;
 }
@@ -87,7 +86,7 @@ select {
 .clickable-word:hover {
   color: #ffffff;
   background-color: #444;
-  padding: 0 0px;
+  padding: 0 2px;
 }
 
 /* ===============================
@@ -108,7 +107,6 @@ select {
   font-size: 14px;
   z-index: 9999; /* Above the panel */
 }
-
 #settingsBtn:hover {
   background: #666;
 }
@@ -117,24 +115,21 @@ select {
 #settingsPanel {
   position: fixed;
   top: 0;
-  right: 0;
-  width: 20%;                 
+  right: -280px;       /* Start 280px off-screen */
+  width: 280px;
   height: 100%;
   background: #222;
   color: #eee;
   padding: 20px;
   box-shadow: -3px 0 10px rgba(0, 0, 0, 0.3);
-
-  /* Slide off-screen: translateX(100%) means "start 100% beyond the right edge" */
-  transform: translateX(100%);
-  transition: transform 0.3s ease;
-  overflow-y: auto;  /* Scroll if content is tall */
+  transition: right 0.3s ease;  /* Slide animation using "right" */
+  overflow-y: auto;             /* Scroll if content is tall */
   z-index: 9998;
 }
 
-/* When "open", it slides in from the right (translateX(0)) */
+/* Slide the panel fully into view */
 #settingsPanel.open {
-  translateX(0);
+  right: 0;  /* Moves from -280px to 0 */
 }
 
 #settingsPanel h2 {

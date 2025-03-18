@@ -24,11 +24,6 @@ html, body {
   border: 1px solid #444;
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
   text-align: left;
-  transition: margin-right 0.3s ease; /* For sliding away when panel opens */
-}
-
-#container.panel-open {
-  margin-right: 300px; /* Slide the container left to reveal the panel */
 }
 
 h1, h2 {
@@ -39,7 +34,7 @@ h1, h2 {
 }
 
 /* Simple button style */
-button, .green-btn {
+button {
   background-color: #3a3a3a;
   color: #e0e0e0;
   border: none;
@@ -51,7 +46,7 @@ button, .green-btn {
   transition: background-color 0.3s ease;
 }
 
-button:hover, .green-btn:hover {
+button:hover {
   background-color: #555;
 }
 
@@ -94,9 +89,9 @@ select {
   padding: 0 2px;
 }
 
-/* ===================== */
-/* Settings Panel & Button
-/* ===================== */
+/* =========================================
+   Settings Panel & Button (slide-in from right)
+========================================= */
 
 /* Position the Settings button in the top-right corner */
 #settingsBtn {
@@ -110,34 +105,32 @@ select {
   cursor: pointer;
   border-radius: 5px;
   font-size: 14px;
-  z-index: 999;
+  z-index: 9999; /* Ensure it's above the panel */
 }
 
 #settingsBtn:hover {
   background: #666;
 }
 
-/* Settings panel (slides in from the right) */
+/* The Settings panel (off-screen to the right by default) */
 #settingsPanel {
   position: fixed;
   top: 0;
-  right: 0;
-  width: 300px;
+  right: -300px;          /* Hide off-screen */
+  width: 300px;           /* Fixed width */
   height: 100%;
   background: #222;
   color: #eee;
   padding: 20px;
   box-shadow: -3px 0 10px rgba(0, 0, 0, 0.3);
-
-  /* Start hidden off-screen via transform, then slide in */
-  transform: translateX(100%);
-  transition: transform 0.3s ease;
-  z-index: 998; /* Just below the settings button */
+  transition: right 0.3s ease;  /* Slide animation */
+  overflow-y: auto;             /* Scroll if content is tall */
+  z-index: 9998;                /* Just below the button */
 }
 
-/* When the panel is "open", transform: translateX(0) slides it fully into view */
+/* Slide the panel fully into view */
 #settingsPanel.open {
-  transform: translateX(0);
+  right: 0;
 }
 
 #settingsPanel h2 {

@@ -4,13 +4,53 @@
   <meta charset="UTF-8" />
   <title>Reader</title>
   <link rel="stylesheet" href="reading-dark.css">
+
+  <!-- 1) Include PDF.js via CDN -->
+  <script
+    src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.13.216/pdf.min.js"
+    integrity="sha512-S4xxCRWyKnIhxmpk0zOfe0XsrAvmpB/0gyCljXDnSwzBj0cLCQ5bJmZ+bW4mZ7oW6z1idjQHJK7lfct17Kc59g=="
+    crossorigin="anonymous"
+    referrerpolicy="no-referrer"
+  ></script>
+
+  <script>
+    // Configure PDF.js worker
+    pdfjsLib.GlobalWorkerOptions.workerSrc =
+      "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.13.216/pdf.worker.min.js";
+  </script>
+
+  <!-- Minimal inline style for the text layer -->
+  <style>
+    /* This class is where PDF.js places text spans */
+    .textLayer {
+      position: absolute;
+      top: 0;
+      left: 0;
+      color: transparent; /* PDF.js will absolutely position text, so we hide the base color. */
+      pointer-events: none; /* We'll re-enable pointer-events on the spans themselves. */
+    }
+
+    /* Make text spans clickable */
+    .textLayer span {
+      pointer-events: auto; 
+      cursor: pointer;      /* Show pointer on hover */
+      color: black;         /* If you want visible text on top, set color here. */
+      background-color: rgba(255, 255, 0, 0.2); /* optional highlight */
+    }
+
+    /* On hover, highlight the text chunk */
+    .textLayer span:hover {
+      background-color: rgba(255, 255, 0, 0.4);
+    }
+  </style>
 </head>
 <body>
   <div id="container">
     <h1>Reader</h1>
 
     <div id="game-area">
-      <div id="story"></div>
+      <!-- We'll place our canvas & text layer here -->
+      <div id="story" style="position: relative;"></div>
       <button type="button">Load book</button>
     </div>
   </div>
@@ -167,11 +207,11 @@
       getResponse(clickedWord, context, document.getElementById("AISystemRole").value, document.getElementById("pat").value);
     }
 
-    // File reading logic
+    // Minimal changes to read & render PDF with text layer
     const loadButton = document.querySelector("#game-area button");
     const fileInput = document.createElement("input");
     fileInput.type = "file";
-    fileInput.accept = ".pdf";  // <--- minimal change
+    fileInput.accept = ".pdf";  // Only accept PDF
     fileInput.style.display = "none";
     document.body.appendChild(fileInput);
 
@@ -179,32 +219,89 @@
       fileInput.click();
     });
 
-    fileInput.addEventListener("change", (event) => {
+    fileInput.addEventListener("change", async (event) => {
       const file = event.target.files[0];
       if (file) {
         const reader = new FileReader();
         reader.onload = function(e) {
           const storyDiv = document.getElementById("story");
+          storyDiv.innerHTML = ""; // Clear previous content
 
-          // Convert ArrayBuffer to a Blob, then use createObjectURL
-          const pdfBlob = new Blob([e.target.result], { type: "application/pdf" });
-          const pdfUrl = URL.createObjectURL(pdfBlob);
+          // Create a canvas for the PDF page
+          const canvas = document.createElement("canvas");
+          const canvasContext = canvas.getContext("2d");
+          storyDiv.appendChild(canvas);
 
-          storyDiv.innerHTML = `
-            <iframe
-              src="${pdfUrl}"
-              style="width: 100%; height: 80vh;"
-            ></iframe>
-          `;
-          // Keep the clickableWords call (though it won't parse PDF text)
-          makeWordsClickable('story', handleWordClick);
+          // Use PDF.js to load and render page 1
+          const loadingTask = pdfjsLib.getDocument({ data: e.target.result });
+          loadingTask.promise.then(async (pdf) => {
+            // For demonstration, just load page 1
+            const page = await pdf.getPage(1);
+            const scale = 1.0;
+            const viewport = page.getViewport({ scale });
+
+            // Resize the canvas
+            canvas.width = viewport.width;
+            canvas.height = viewport.height;
+
+            // Render page into canvas
+            const renderContext = {
+              canvasContext,
+              viewport,
+            };
+            const renderTask = page.render(renderContext);
+
+            // Once rendering is complete, build the text layer
+            renderTask.promise.then(async () => {
+              const textContent = await page.getTextContent();
+              
+              // Create a textLayer div on top of the canvas
+              const textLayerDiv = document.createElement("div");
+              textLayerDiv.className = "textLayer";
+              // Position & size must match the canvas
+              textLayerDiv.style.left = canvas.offsetLeft + "px";
+              textLayerDiv.style.top = canvas.offsetTop + "px";
+              textLayerDiv.style.height = canvas.offsetHeight + "px";
+              textLayerDiv.style.width = canvas.offsetWidth + "px";
+
+              // Absolutely position it inside #story
+              textLayerDiv.style.position = "absolute";
+              storyDiv.appendChild(textLayerDiv);
+
+              // Render the text layer
+              pdfjsLib.renderTextLayer({
+                textContent,
+                container: textLayerDiv,
+                viewport,
+                textDivs: []
+              }).promise.then(() => {
+                // Now each text chunk is in a <span> inside textLayerDiv
+                // Add an event listener for each chunk:
+                const textSpans = textLayerDiv.querySelectorAll("span");
+                textSpans.forEach(span => {
+                  span.addEventListener("click", () => {
+                    // The entire span might contain multiple words, so you may want
+                    // to split on whitespace. For a quick approach:
+                    const words = span.textContent.split(/\s+/);
+                    // For each word, you could do:
+                    words.forEach(word => {
+                      // Example: call handleWordClick on each separate word
+                      // Or just do it for the entire chunk:
+                      handleWordClick(word, "PDF context");
+                    });
+                  });
+                });
+              });
+            });
+          }).catch(err => {
+            console.error("Error parsing PDF:", err);
+          });
         };
         reader.onerror = function() {
           console.error("Error reading file");
         };
-
-        // Read as ArrayBuffer to properly handle PDF
-        reader.readAsArrayBuffer(file); // <--- minimal change
+        // Read as ArrayBuffer
+        reader.readAsArrayBuffer(file);
       }
     });
   </script>

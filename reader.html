@@ -39,15 +39,6 @@
     import { callOpenAI } from './openaiCaller.js';
     import { sayThis } from './ttsModule.js';
 
-function saveSettings() {
-  const patValue = document.getElementById("pat").value;
-  const someValue = document.getElementById("someSetting").value;
-  const anotherValue = document.getElementById("anotherSetting").value;
-
-  localStorage.setItem("azurePat", patValue);
-  localStorage.setItem("someSetting", someValue);
-  localStorage.setItem("anotherSetting", anotherValue);
-}
 
 function loadSettings() {
   const savedPat = localStorage.getItem("azurePat");
@@ -67,9 +58,20 @@ function loadSettings() {
 
 loadSettings();
 
-document.getElementById("pat").addEventListener("input", saveSettings);
-document.getElementById("someSetting").addEventListener("input", saveSettings);
-document.getElementById("anotherSetting").addEventListener("input", saveSettings);
+
+
+document.getElementById("pat").addEventListener("input", () => {
+    localStorage.setItem("azurePat", document.getElementById("pat").value);
+});
+
+document.getElementById("someSetting").addEventListener("input", () => {
+    localStorage.setItem("someSetting", document.getElementById("someSetting").value);
+});
+
+document.getElementById("anotherSetting").addEventListener("input", () => {
+    localStorage.setItem("anotherSetting", document.getElementById("anotherSetting").value);
+});
+
 
 
 

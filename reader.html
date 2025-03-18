@@ -20,19 +20,26 @@
     </div>
   </div>
 
-  <!-- Updated meSpeak 1.1.28 -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/mespeak/1.1.28/mespeak.min.js"></script>
-
   <script type="module">
     import { makeWordsClickable } from './clickableWords.js';
     import { callOpenAI } from './openaiCaller.js';
 
-    // Global flag to avoid reloading config/voice on every call.
-    let meSpeakInitialized = false;
-
-    function fuu(word) {
-     
+   async function fuu(word) {
+    if (!word) {
+        console.error("No text provided.");
+        return;
     }
+
+    const ttsUrl = "https://api.streamelements.com/kappa/v2/speech?voice=Brian&text=" + encodeURIComponent(word);
+
+    try {
+        const audio = new Audio(ttsUrl);
+        audio.play();
+    } catch (error) {
+        console.error("TTS Error:", error);
+    }
+}
+
 
     function showAlertWithMeaning(word, meaning) {
       let existingModal = document.getElementById("custom-alert");

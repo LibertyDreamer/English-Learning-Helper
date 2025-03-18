@@ -117,7 +117,7 @@ select {
 #settingsPanel {
   position: fixed;
   top: 0;
-  right: -20;
+  right: 0;
   width: 20%;                 
   height: 100%;
   background: #222;
@@ -134,7 +134,7 @@ select {
 
 /* When "open", it slides in from the right (translateX(0)) */
 #settingsPanel.open {
-  right: 0;
+  translateX(0%);
 }
 
 #settingsPanel h2 {

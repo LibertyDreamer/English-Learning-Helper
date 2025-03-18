@@ -87,7 +87,7 @@ select {
 .clickable-word:hover {
   color: #ffffff;
   background-color: #444;
-  padding: 0 2px;
+  padding: 0 0px;
 }
 
 /* ===============================
@@ -118,7 +118,7 @@ select {
   position: fixed;
   top: 0;
   right: 0;
-  width: 280px;                 /* A bit narrower so it's fully visible */
+  width: 20%;                 
   height: 100%;
   background: #222;
   color: #eee;

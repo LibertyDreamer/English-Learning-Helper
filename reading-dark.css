@@ -50,7 +50,7 @@ button:hover {
   background-color: #555;
 }
 
-/* For text/password inputs, remove max-width to prevent overflow in panel */
+/* For text inputs */
 input[type="text"],
 input[type="password"],
 select {
@@ -59,7 +59,8 @@ select {
   border: 1px solid #555;
   padding: 8px 12px;
   margin: 5px 0;
-  width: 100%;          /* Fill the parent container (the panel) */
+  width: 100%;
+  max-width: 400px;
   font-family: 'Merriweather', serif;
   border-radius: 4px;
 }
@@ -104,7 +105,7 @@ select {
   cursor: pointer;
   border-radius: 5px;
   font-size: 14px;
-  z-index: 9999; /* Above the panel */
+  z-index: 9999; /* Ensure it's above the panel */
 }
 
 #settingsBtn:hover {
@@ -115,8 +116,8 @@ select {
 #settingsPanel {
   position: fixed;
   top: 0;
-  right: -300px;          /* Hide off-screen initially */
-  width: 300px;           /* Fixed width so it's fully visible */
+  right: -300px;          /* Hide off-screen */
+  width: 300px;           /* Fixed width */
   height: 100%;
   background: #222;
   color: #eee;
@@ -124,7 +125,7 @@ select {
   box-shadow: -3px 0 10px rgba(0, 0, 0, 0.3);
   transition: right 0.3s ease;  /* Slide animation */
   overflow-y: auto;             /* Scroll if content is tall */
-  z-index: 9998;
+  z-index: 9998;                /* Just below the button */
 }
 
 /* Slide the panel fully into view */

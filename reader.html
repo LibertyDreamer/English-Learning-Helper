@@ -4,26 +4,65 @@
   <meta charset="UTF-8" />
   <title>Reader</title>
   <link rel="stylesheet" href="reading.css">
+
+  <style>
+    /* 🔹 Make settings button stay in the top-right corner */
+    #settingsBtn {
+        position: fixed;
+        top: 10px;
+        right: 10px;
+        background: #444;
+        color: white;
+        border: none;
+        padding: 8px 12px;
+        cursor: pointer;
+        border-radius: 5px;
+        font-size: 14px;
+    }
+
+    #settingsBtn:hover {
+        background: #666;
+    }
+
+    /* 🔹 Side panel settings (hidden by default) */
+    #settingsPanel {
+        position: fixed;
+        top: 0;
+        right: -250px; /* Initially hidden off-screen */
+        width: 250px;
+        height: 100%;
+        background: #222;
+        color: white;
+        padding: 20px;
+        box-shadow: -3px 0 10px rgba(0, 0, 0, 0.3);
+        transition: right 0.3s ease-in-out;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    /* 🔹 Show panel when active */
+    .settings-open {
+        right: 0 !important;
+    }
+
+    /* 🔹 Style for labels & inputs */
+    label {
+        font-size: 14px;
+        color: #ddd;
+    }
+
+    input, select {
+        background: #333;
+        color: white;
+        border: 1px solid #555;
+        padding: 5px;
+        border-radius: 3px;
+        width: 100%;
+    }
+  </style>
 </head>
-  
-      <!-- Settings Button -->
-<button id="settingsBtn">⚙ Settings</button>
 
-<!-- Hidden Settings Panel -->
-<div id="settingsPanel" style="display: none;">
-    <label>Font Size:</label>
-    <input type="number" id="fontSizeInput" value="16"> px
-
-    <label>Theme:</label>
-    <select id="themeSelect">
-        <option value="dark">Dark</option>
-        <option value="light">Light</option>
-    </select>
-
-    <label>Other Option:</label>
-    <input type="text" id="otherSetting" placeholder="Type here...">
-</div>
-  
 <body>
   <div id="container">
     <h1>Reader</h1>
@@ -39,11 +78,28 @@
     </div>
   </div>
 
+  <!-- Settings Button -->
+  <button id="settingsBtn">⚙ Settings</button>
+
+  <!-- Hidden Settings Panel (Expands from right side) -->
+  <div id="settingsPanel">
+      <label>Font Size:</label>
+      <input type="number" id="fontSizeInput" value="16"> px
+
+      <label>Theme:</label>
+      <select id="themeSelect">
+          <option value="dark">Dark</option>
+          <option value="light">Light</option>
+      </select>
+
+      <label>Other Option:</label>
+      <input type="text" id="otherSetting" placeholder="Type here...">
+  </div>
+
   <script type="module">
     import { makeWordsClickable } from './clickableWords.js';
     import { callOpenAI } from './openaiCaller.js';
     import { sayThis, getAvailableVoices } from './ttsModule.js';
-
 
     function showAlertWithMeaning(word, meaning) {
       sayThis(word);
@@ -121,8 +177,7 @@
       const messages = [
         {
           role: 'system',
-          content: `You are a dictionary. Explain meaning of these words in this exact context.
-Explain this for children, but don’t sugarcoat it. If it includes things like murder or sex, etc, don’t skip them—say it as it is. Add IPA.`
+          content: `Explain this for children, but don’t sugarcoat it. If it includes things like murder or sex, don’t skip them—say it as it is. Add IPA.`
         },
         {
           role: 'user',
@@ -142,20 +197,20 @@ Explain this for children, but don’t sugarcoat it. If it includes things like 
       getResponse(clickedWord, context);
     }
 
-     document.addEventListener("DOMContentLoaded", function() {
-    const settingsBtn = document.getElementById("settingsBtn");
-    const settingsPanel = document.getElementById("settingsPanel");
+    // Toggle settings panel
+    document.addEventListener("DOMContentLoaded", function() {
+      const settingsBtn = document.getElementById("settingsBtn");
+      const settingsPanel = document.getElementById("settingsPanel");
 
-    settingsBtn.addEventListener("click", function() {
-        // Toggle visibility of settings panel
-        if (settingsPanel.style.display === "none") {
-            settingsPanel.style.display = "block";
-        } else {
-            settingsPanel.style.display = "none";
-        }
+      settingsBtn.addEventListener("click", function() {
+          if (settingsPanel.classList.contains("settings-open")) {
+              settingsPanel.classList.remove("settings-open");
+          } else {
+              settingsPanel.classList.add("settings-open");
+          }
+      });
     });
-});
-    
+
     const loadButton = document.querySelector("button");
     const fileInput = document.createElement("input");
     fileInput.type = "file";

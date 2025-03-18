@@ -3,19 +3,18 @@
 
 @import url('https://fonts.googleapis.com/css2?family=Merriweather:wght@300;400;700&display=swap');
 
-/* Reset margins and ensure no horizontal scroll so the panel won't be cut off */
 html, body {
   margin: 0;
   padding: 0;
   width: 100%;
-  overflow-x: hidden;  /* Prevent horizontal scroll */
-  background-color: #1e1e1e; 
+  overflow-x: hidden; /* Prevent horizontal scrolling */
+  background-color: #1e1e1e;
   color: #e0e0e0;
   font-family: 'Merriweather', serif;
   line-height: 1.6;
 }
 
-/* Main container: centered, doesn't move when panel opens */
+/* Main container stays centered */
 #container {
   width: 90%;
   max-width: 800px;
@@ -27,7 +26,6 @@ html, body {
   text-align: left;
 }
 
-/* Basic headings */
 h1, h2 {
   color: #f0f0f0;
   margin-bottom: 15px;
@@ -51,16 +49,18 @@ button:hover {
   background-color: #555;
 }
 
-/* Text/password inputs, fill their container's width */
-input[type="text"],
-input[type="password"],
-select {
+/* Ensure text boxes fit inside panel */
+#settingsPanel input[type="text"],
+#settingsPanel input[type="password"],
+#settingsPanel select {
+  box-sizing: border-box;  /* So padding doesn't push them beyond container */
+  width: 100%;             /* Fill the panel width */
+  max-width: 100%;         /* Don’t exceed the panel boundary */
   background-color: #333;
   color: #e0e0e0;
   border: 1px solid #555;
   padding: 8px 12px;
   margin: 5px 0;
-  width: 100%;  /* Fit parent container */
   font-family: 'Merriweather', serif;
   border-radius: 4px;
 }
@@ -78,7 +78,7 @@ select {
   text-align: justify;
 }
 
-/* Clickable words (for definitions) */
+/* Clickable words for definitions */
 .clickable-word {
   cursor: pointer;
   transition: color 0.2s ease, background-color 0.2s ease;
@@ -86,7 +86,7 @@ select {
 .clickable-word:hover {
   color: #ffffff;
   background-color: #444;
-  padding: 0 0px;
+  padding: 0 2px;
 }
 
 /* ===============================
@@ -115,8 +115,8 @@ select {
 #settingsPanel {
   position: fixed;
   top: 0;
-  right: 0;
-  width: 20%;    
+  right: -280px;       /* Start 280px off-screen */
+  width: 280px;
   height: 100%;
   background: #222;
   color: #eee;
@@ -129,7 +129,7 @@ select {
 
 /* Slide the panel fully into view */
 #settingsPanel.open {
-  transform: translateX(0);
+  right: 0;  /* Moves from -280px to 0 */
 }
 
 #settingsPanel h2 {

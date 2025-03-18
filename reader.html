@@ -39,6 +39,40 @@
     import { callOpenAI } from './openaiCaller.js';
     import { sayThis } from './ttsModule.js';
 
+function saveSettings() {
+  const patValue = document.getElementById("pat").value;
+  const someValue = document.getElementById("someSetting").value;
+  const anotherValue = document.getElementById("anotherSetting").value;
+
+  localStorage.setItem("azurePat", patValue);
+  localStorage.setItem("someSetting", someValue);
+  localStorage.setItem("anotherSetting", anotherValue);
+}
+
+function loadSettings() {
+  const savedPat = localStorage.getItem("azurePat");
+  const savedSome = localStorage.getItem("someSetting");
+  const savedAnother = localStorage.getItem("anotherSetting");
+
+  if (savedPat !== null) {
+    document.getElementById("pat").value = savedPat;
+  }
+  if (savedSome !== null) {
+    document.getElementById("someSetting").value = savedSome;
+  }
+  if (savedAnother !== null) {
+    document.getElementById("anotherSetting").value = savedAnother;
+  }
+}
+
+loadSettings();
+
+document.getElementById("pat").addEventListener("input", saveSettings);
+document.getElementById("someSetting").addEventListener("input", saveSettings);
+document.getElementById("anotherSetting").addEventListener("input", saveSettings);
+
+
+
     function showAlertWithMeaning(word, meaning) {
       sayThis(word);
       let existingModal = document.getElementById("custom-alert");

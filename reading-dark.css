@@ -14,16 +14,21 @@ html, body {
   line-height: 1.6;
 }
 
-/* Container for your main content, centered with margin: 0 auto */
+/* Container for main content, centered with margin: 0 auto */
 #container {
   width: 90%;
   max-width: 800px;
-  margin: 40px auto; /* Center the container */
+  margin: 40px auto; 
   padding: 30px;
-  background-color: #2a2a2a; /* Slightly lighter dark background */
+  background-color: #2a2a2a; 
   border: 1px solid #444;
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
-  text-align: left;  /* Ensure text is left-aligned */
+  text-align: left;
+  transition: margin-right 0.3s ease; /* For sliding away when panel opens */
+}
+
+#container.panel-open {
+  margin-right: 300px; /* Slide the container left to reveal the panel */
 }
 
 h1, h2 {
@@ -33,7 +38,8 @@ h1, h2 {
   line-height: 1.2;
 }
 
-.green-btn {
+/* Simple button style */
+button, .green-btn {
   background-color: #3a3a3a;
   color: #e0e0e0;
   border: none;
@@ -45,11 +51,14 @@ h1, h2 {
   transition: background-color 0.3s ease;
 }
 
-.green-btn:hover {
+button:hover, .green-btn:hover {
   background-color: #555;
 }
 
-input[type="text"] {
+/* For text inputs */
+input[type="text"],
+input[type="password"],
+select {
   background-color: #333;
   color: #e0e0e0;
   border: 1px solid #555;
@@ -61,6 +70,7 @@ input[type="text"] {
   border-radius: 4px;
 }
 
+/* The text area for the story */
 #story {
   margin-top: 20px;
   padding: 20px;
@@ -78,18 +88,17 @@ input[type="text"] {
   cursor: pointer;
   transition: color 0.2s ease, background-color 0.2s ease;
 }
-
 .clickable-word:hover {
   color: #ffffff;
   background-color: #444;
   padding: 0 2px;
 }
 
-/* ------------------------------------------
-   Settings Button & Panel (moved from <style>)
-------------------------------------------- */
+/* ===================== */
+/* Settings Panel & Button
+/* ===================== */
 
-/* 🔹 Position the Settings button in the top-right corner */
+/* Position the Settings button in the top-right corner */
 #settingsBtn {
   position: fixed;
   top: 10px;
@@ -101,25 +110,34 @@ input[type="text"] {
   cursor: pointer;
   border-radius: 5px;
   font-size: 14px;
-  z-index: 999; /* Ensure it's above other elements */
+  z-index: 999;
 }
 
 #settingsBtn:hover {
   background: #666;
 }
 
-/* 🔹 Settings panel (hidden by default) on the right side */
+/* Settings panel (slides in from the right) */
 #settingsPanel {
   position: fixed;
   top: 0;
   right: 0;
-  width: 250px;
+  width: 300px;
   height: 100%;
   background: #222;
   color: #eee;
   padding: 20px;
   box-shadow: -3px 0 10px rgba(0, 0, 0, 0.3);
-  display: none; /* Hidden initially */
+
+  /* Start hidden off-screen via transform, then slide in */
+  transform: translateX(100%);
+  transition: transform 0.3s ease;
+  z-index: 998; /* Just below the settings button */
+}
+
+/* When the panel is "open", transform: translateX(0) slides it fully into view */
+#settingsPanel.open {
+  transform: translateX(0);
 }
 
 #settingsPanel h2 {

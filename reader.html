@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <title>Reader</title>
-  <!-- Link the external CSS file -->
+  <!-- Link the external CSS file with your dark theme + settings panel styles -->
   <link rel="stylesheet" href="reading-dark.css">
 </head>
 <body>
@@ -18,14 +18,14 @@
     </div>
   </div>
 
-  <!-- Settings Button -->
+  <!-- Settings Button (top-right corner) -->
   <button id="settingsBtn">⚙ Settings</button>
 
-  <!-- Settings Panel -->
+  <!-- Settings Panel (slides in from the right) -->
   <div id="settingsPanel">
     <h2>Settings</h2>
 
-    <!-- Azure Key -->
+    <!-- Azure Key in the panel -->
     <label for="pat">Azure OpenAI Key:</label>
     <input type="password" id="pat" placeholder="Enter your Azure OpenAI PAT" />
 
@@ -155,7 +155,7 @@ Explain this for children, but don’t sugarcoat it. If it includes things like 
       }
     });
 
-    // Toggle the settings panel
+    // Toggle the settings panel by toggling its "open" class
     const settingsBtn = document.getElementById("settingsBtn");
     const settingsPanel = document.getElementById("settingsPanel");
 

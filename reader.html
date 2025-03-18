@@ -9,6 +9,24 @@
   <div id="container">
     <h1>Reader</h1>
     
+    <!-- Settings Button -->
+<button id="settingsBtn">⚙ Settings</button>
+
+<!-- Hidden Settings Panel -->
+<div id="settingsPanel" style="display: none;">
+    <label>Font Size:</label>
+    <input type="number" id="fontSizeInput" value="16"> px
+
+    <label>Theme:</label>
+    <select id="themeSelect">
+        <option value="dark">Dark</option>
+        <option value="light">Light</option>
+    </select>
+
+    <label>Other Option:</label>
+    <input type="text" id="otherSetting" placeholder="Type here...">
+</div>
+
     <div id="intro">
       <p>Enter your Azure API key.</p>
       <input type="password" id="pat" placeholder="Enter your Azure OpenAI PAT" />
@@ -148,6 +166,21 @@ Explain this for children, but don’t sugarcoat it. If it includes things like 
         reader.readAsText(file);
       }
     });
+
+    document.addEventListener("DOMContentLoaded", function() {
+    const settingsBtn = document.getElementById("settingsBtn");
+    const settingsPanel = document.getElementById("settingsPanel");
+
+    settingsBtn.addEventListener("click", function() {
+        // Toggle visibility of settings panel
+        if (settingsPanel.style.display === "none") {
+            settingsPanel.style.display = "block";
+        } else {
+            settingsPanel.style.display = "none";
+        }
+    });
+});
+
   </script>
 </body>
 </html>

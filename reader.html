@@ -6,7 +6,7 @@
   <link rel="stylesheet" href="reading.css">
 
   <style>
-    /* 🔹 Make settings button stay in the top-right corner */
+    /* 🔹 Settings button in the top-right (ALWAYS VISIBLE) */
     #settingsBtn {
         position: fixed;
         top: 10px;
@@ -18,6 +18,7 @@
         cursor: pointer;
         border-radius: 5px;
         font-size: 14px;
+        z-index: 1001; /* Ensure it's above the panel */
     }
 
     #settingsBtn:hover {
@@ -28,7 +29,7 @@
     #settingsPanel {
         position: fixed;
         top: 0;
-        right: -250px; /* Initially hidden off-screen */
+        right: -260px; /* Initially hidden off-screen */
         width: 250px;
         height: 100%;
         background: #222;
@@ -39,11 +40,24 @@
         display: flex;
         flex-direction: column;
         gap: 10px;
+        z-index: 1000; /* Below settings button */
     }
 
     /* 🔹 Show panel when active */
     .settings-open {
         right: 0 !important;
+    }
+
+    /* 🔹 Overlay to detect outside clicks */
+    #settingsOverlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.3);
+        display: none; /* Hidden by default */
+        z-index: 999; /* Below button, above other elements */
     }
 
     /* 🔹 Style for labels & inputs */
@@ -78,10 +92,13 @@
     </div>
   </div>
 
-  <!-- Settings Button -->
+  <!-- Settings Button (Always visible) -->
   <button id="settingsBtn">⚙ Settings</button>
 
-  <!-- Hidden Settings Panel (Expands from right side) -->
+  <!-- Overlay (for closing when clicking outside) -->
+  <div id="settingsOverlay"></div>
+
+  <!-- Settings Panel (Expands from right side) -->
   <div id="settingsPanel">
       <label>Font Size:</label>
       <input type="number" id="fontSizeInput" value="16"> px
@@ -97,144 +114,27 @@
   </div>
 
   <script type="module">
-    import { makeWordsClickable } from './clickableWords.js';
-    import { callOpenAI } from './openaiCaller.js';
-    import { sayThis, getAvailableVoices } from './ttsModule.js';
-
-    function showAlertWithMeaning(word, meaning) {
-      sayThis(word);
-      let existingModal = document.getElementById("custom-alert");
-      if (existingModal) {
-        document.body.removeChild(existingModal);
-      }
-
-      let modal = document.createElement("div");
-      modal.id = "custom-alert";
-      modal.style.position = "fixed";
-      modal.style.top = "50%";
-      modal.style.left = "50%";
-      modal.style.transform = "translate(-50%, -50%)";
-      modal.style.width = "400px";
-      modal.style.padding = "15px";
-      modal.style.backgroundColor = "#222";
-      modal.style.color = "#eee";
-      modal.style.border = "1px solid #444";
-      modal.style.boxShadow = "0 4px 10px rgba(0, 0, 0, 0.3)";
-      modal.style.borderRadius = "8px";
-      modal.style.fontFamily = "Arial, sans-serif";
-      modal.style.textAlign = "center";
-      modal.style.zIndex = "1000";
-
-      let wordTitle = document.createElement("h2");
-      wordTitle.textContent = word;
-      wordTitle.style.marginBottom = "10px";
-      modal.appendChild(wordTitle);
-
-      let meaningText = document.createElement("p");
-      meaningText.textContent = meaning;
-      meaningText.style.fontSize = "14px";
-      meaningText.style.lineHeight = "1.4";
-      meaningText.style.marginBottom = "15px";
-      modal.appendChild(meaningText);
-
-      let buttonsContainer = document.createElement("div");
-      buttonsContainer.style.display = "flex";
-      buttonsContainer.style.justifyContent = "center";
-      buttonsContainer.style.gap = "10px";
-
-      let playButton = document.createElement("button");
-      playButton.textContent = "🔊 Play";
-      playButton.style.padding = "8px 15px";
-      playButton.style.border = "none";
-      playButton.style.backgroundColor = "#444";
-      playButton.style.color = "#fff";
-      playButton.style.cursor = "pointer";
-      playButton.style.borderRadius = "5px";
-      playButton.onclick = function () {
-        sayThis(word);
-      };
-      buttonsContainer.appendChild(playButton);
-
-      let closeButton = document.createElement("button");
-      closeButton.textContent = "Close";
-      closeButton.style.padding = "8px 15px";
-      closeButton.style.border = "none";
-      closeButton.style.backgroundColor = "#777";
-      closeButton.style.color = "#fff";
-      closeButton.style.cursor = "pointer";
-      closeButton.style.borderRadius = "5px";
-      closeButton.onclick = function () {
-        document.body.removeChild(modal);
-      };
-      buttonsContainer.appendChild(closeButton);
-
-      modal.appendChild(buttonsContainer);
-      document.body.appendChild(modal);
-    }
-
-    async function getResponse(word, context) {
-      const pat = document.getElementById("pat").value;
-      const messages = [
-        {
-          role: 'system',
-          content: `Explain this for children, but don’t sugarcoat it. If it includes things like murder or sex, don’t skip them—say it as it is. Add IPA.`
-        },
-        {
-          role: 'user',
-          content: `Word: "${word}" Context: "${context}"`
-        }
-      ];
-
-      try {
-        const aiMessage = await callOpenAI(messages, pat);
-        showAlertWithMeaning(word, `${aiMessage}`);
-      } catch (err) {
-        alert(`${err}`);
-      }
-    }
-
-    function handleWordClick(clickedWord, context) {
-      getResponse(clickedWord, context);
-    }
-
-    // Toggle settings panel
     document.addEventListener("DOMContentLoaded", function() {
       const settingsBtn = document.getElementById("settingsBtn");
       const settingsPanel = document.getElementById("settingsPanel");
+      const settingsOverlay = document.getElementById("settingsOverlay");
 
       settingsBtn.addEventListener("click", function() {
+          // Toggle settings panel
           if (settingsPanel.classList.contains("settings-open")) {
               settingsPanel.classList.remove("settings-open");
+              settingsOverlay.style.display = "none"; // Hide overlay
           } else {
               settingsPanel.classList.add("settings-open");
+              settingsOverlay.style.display = "block"; // Show overlay
           }
       });
-    });
 
-    const loadButton = document.querySelector("button");
-    const fileInput = document.createElement("input");
-    fileInput.type = "file";
-    fileInput.accept = ".txt";
-    fileInput.style.display = "none";
-    document.body.appendChild(fileInput);
-
-    loadButton.addEventListener("click", () => {
-      fileInput.click();
-    });
-
-    fileInput.addEventListener("change", (event) => {
-      const file = event.target.files[0];
-      if (file) {
-        const reader = new FileReader();
-        reader.onload = function(e) {
-          document.getElementById("story").textContent = e.target.result;
-          makeWordsClickable('story', handleWordClick);
-        };
-        reader.onerror = function() {
-          console.error("Error reading file");
-        };
-        reader.readAsText(file);
-      }
+      // Close settings when clicking outside
+      settingsOverlay.addEventListener("click", function() {
+          settingsPanel.classList.remove("settings-open");
+          settingsOverlay.style.display = "none";
+      });
     });
   </script>
 </body>

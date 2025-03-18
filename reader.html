@@ -3,27 +3,36 @@
 <head>
   <meta charset="UTF-8" />
   <title>Reader</title>
+  <!-- Link the external CSS file with your dark theme + settings panel styles -->
   <link rel="stylesheet" href="reading-dark.css">
 </head>
 <body>
+  <!-- Main Container -->
   <div id="container">
     <h1>Reader</h1>
-    
+
+    <!-- Removed Azure Key from here and moved to Settings panel -->
+
+    <!-- Game Area with story and "Load book" button -->
     <div id="game-area">
       <div id="story"></div>
       <button type="button">Load book</button>
     </div>
   </div>
 
-
+  <!-- Settings Button (top-right corner) -->
   <button id="settingsBtn">⚙ Settings</button>
 
+  <!-- Settings Panel (initially off-screen) -->
   <div id="settingsPanel">
     <h2>Settings</h2>
 
-    <label for="enterAzureKey">Enter your Azure API key:</label>
-    <input type="password" id="pat" placeholder="Enter your Azure OpenAI PAT." />
-    
+    <!-- Now the Azure key is here -->
+    <label for="pat">Azure OpenAI Key:</label>
+    <input type="password" id="pat" placeholder="Enter your Azure OpenAI PAT" />
+
+    <hr>
+
     <label for="someSetting">Some Setting:</label>
     <input type="text" id="someSetting" placeholder="Type something...">
 
@@ -31,6 +40,7 @@
     <input type="text" id="anotherSetting" placeholder="Type something else...">
   </div>
 
+  <!-- Scripts -->
   <script type="module">
     import { makeWordsClickable } from './clickableWords.js';
     import { callOpenAI } from './openaiCaller.js';
@@ -79,12 +89,6 @@
 
       let playButton = document.createElement("button");
       playButton.textContent = "🔊 Play";
-      playButton.style.padding = "8px 15px";
-      playButton.style.border = "none";
-      playButton.style.backgroundColor = "#444";
-      playButton.style.color = "#fff";
-      playButton.style.cursor = "pointer";
-      playButton.style.borderRadius = "5px";
       playButton.onclick = function () {
         sayThis(word);
       };
@@ -92,12 +96,6 @@
 
       let closeButton = document.createElement("button");
       closeButton.textContent = "Close";
-      closeButton.style.padding = "8px 15px";
-      closeButton.style.border = "none";
-      closeButton.style.backgroundColor = "#777";
-      closeButton.style.color = "#fff";
-      closeButton.style.cursor = "pointer";
-      closeButton.style.borderRadius = "5px";
       closeButton.onclick = function () {
         document.body.removeChild(modal);
       };
@@ -125,7 +123,7 @@ Explain this for children, but don’t sugarcoat it. If it includes things like 
         const aiMessage = await callOpenAI(messages, pat);
         showAlertWithMeaning(word, `${aiMessage}`);
       } catch (err) {
-        alert(`${err}`);
+        alert(err);
       }
     }
 
@@ -134,7 +132,7 @@ Explain this for children, but don’t sugarcoat it. If it includes things like 
     }
 
     // File reading logic
-    const loadButton = document.querySelector("button");
+    const loadButton = document.querySelector("#game-area button");
     const fileInput = document.createElement("input");
     fileInput.type = "file";
     fileInput.accept = ".txt";
@@ -160,16 +158,18 @@ Explain this for children, but don’t sugarcoat it. If it includes things like 
       }
     });
 
-    // 🔥 Toggle the settings panel by toggling display
+    // =========================
+    // Slide-in Settings Panel
+    // =========================
     const settingsBtn = document.getElementById("settingsBtn");
     const settingsPanel = document.getElementById("settingsPanel");
+    const mainContainer = document.getElementById("container");
 
     settingsBtn.addEventListener("click", () => {
-      if (settingsPanel.style.display === "none") {
-        settingsPanel.style.display = "block";
-      } else {
-        settingsPanel.style.display = "none";
-      }
+      // Toggle .open on the panel
+      settingsPanel.classList.toggle("open");
+      // Toggle .panel-open on the container to slide it left
+      mainContainer.classList.toggle("panel-open");
     });
   </script>
 </body>

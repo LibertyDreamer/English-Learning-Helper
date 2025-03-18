@@ -3,7 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <title>Reader</title>
-  <link rel="stylesheet" href="reading.css">
+  <!-- Use the external CSS file -->
+  <link rel="stylesheet" href="reading-dark.css">
 </head>
 <body>
   <div id="container">
@@ -16,15 +17,27 @@
 
     <div id="game-area">
       <div id="story"></div>
-      <button type="button">Load book.</button>
+      <button type="button">Load book</button>
     </div>
+  </div>
+
+  <!-- Settings Button -->
+  <button id="settingsBtn">⚙ Settings</button>
+
+  <!-- Settings Panel (fields are here but invisible at first) -->
+  <div id="settingsPanel">
+    <h2>Settings</h2>
+    <label for="someSetting">Some Setting:</label>
+    <input type="text" id="someSetting" placeholder="Type something...">
+
+    <label for="anotherSetting">Another Setting:</label>
+    <input type="text" id="anotherSetting" placeholder="Type something else...">
   </div>
 
   <script type="module">
     import { makeWordsClickable } from './clickableWords.js';
     import { callOpenAI } from './openaiCaller.js';
     import { sayThis, getAvailableVoices } from './ttsModule.js';
-
 
     function showAlertWithMeaning(word, meaning) {
       sayThis(word);
@@ -123,6 +136,7 @@ Explain this for children, but don’t sugarcoat it. If it includes things like 
       getResponse(clickedWord, context);
     }
 
+    // File reading logic
     const loadButton = document.querySelector("button");
     const fileInput = document.createElement("input");
     fileInput.type = "file";
@@ -146,6 +160,18 @@ Explain this for children, but don’t sugarcoat it. If it includes things like 
           console.error("Error reading file");
         };
         reader.readAsText(file);
+      }
+    });
+
+    // 🔥 Toggle the settings panel by toggling display
+    const settingsBtn = document.getElementById("settingsBtn");
+    const settingsPanel = document.getElementById("settingsPanel");
+
+    settingsBtn.addEventListener("click", () => {
+      if (settingsPanel.style.display === "none") {
+        settingsPanel.style.display = "block";
+      } else {
+        settingsPanel.style.display = "none";
       }
     });
   </script>

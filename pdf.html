@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Reader</title>
+  <link rel="stylesheet" href="reading-dark.css">
+</head>
+<body>
+  <div id="container">
+    <h1>Reader</h1>
+
+    <div id="game-area">
+      <div id="story"></div>
+      <button type="button">Load book</button>
+    </div>
+  </div>
+
+  <button id="settingsBtn">⚙ Settings</button>
+
+  <div id="settingsPanel">
+    <h2>Settings</h2>
+
+    <label for="pat">Azure OpenAI Key:</label>
+    <input type="password" id="pat" placeholder="Enter your Azure OpenAI PAT" />
+
+    <hr>
+
+    <label for="AISystemRole">Dictionary Role:</label>
+    <textarea
+      id="AISystemRole"
+      rows="6"
+    >For start just show the word and IPA don't comment it. And now explain this word for 3 years old non native speaker with A0 level.</textarea>
+
+    <hr>
+
+    <!-- List of TTS Voices -->
+    <label for="voiceSelect">TTS Voice:</label>
+    <select id="voiceSelect">
+      <option value="Matthew">Matthew</option>
+      <option value="Joanna">Joanna</option>
+      <option value="Kimberly">Kimberly</option>
+      <option value="Salli">Salli</option>
+      <option value="Amy">Amy</option>
+      <option value="Emma">Emma</option>
+      <option value="Brian">Brian</option>
+      <option value="Russell">Russell</option>
+    </select>
+  </div>
+
+  <script type="module">
+    import { makeWordsClickable } from './clickableWords.js';
+    import { callOpenAI } from './openaiCaller.js';
+    import { sayThis } from './ttsModule.js';
+
+    function loadSettings() {
+      const savedPat = localStorage.getItem("azurePat");
+      const aiRole = localStorage.getItem("AISystemRole");
+      const voiceSelect = localStorage.getItem("voiceSelect");
+
+      if (savedPat !== null) {
+        document.getElementById("pat").value = savedPat;
+      }
+      if (aiRole !== null) {
+        document.getElementById("AISystemRole").value = aiRole;
+      }
+      if (voiceSelect !== null) {
+        document.getElementById("voiceSelect").value = voiceSelect;
+      }
+    }
+
+    loadSettings();
+
+    document.getElementById("pat").addEventListener("input", () => {
+      localStorage.setItem("azurePat", document.getElementById("pat").value);
+    });
+
+    document.getElementById("AISystemRole").addEventListener("input", () => {
+      localStorage.setItem("AISystemRole", document.getElementById("AISystemRole").value);
+    });
+
+    document.getElementById("voiceSelect").addEventListener("input", () => {
+      localStorage.setItem("voiceSelect", document.getElementById("voiceSelect").value);
+    });
+
+    function showAlertWithMeaning(word, meaning) {
+      sayThis(word, document.getElementById("voiceSelect").value);
+      let existingModal = document.getElementById("custom-alert");
+      if (existingModal) {
+        document.body.removeChild(existingModal);
+      }
+
+      let modal = document.createElement("div");
+      modal.id = "custom-alert";
+      modal.style.position = "fixed";
+      modal.style.top = "50%";
+      modal.style.left = "50%";
+      modal.style.transform = "translate(-50%, -50%)";
+      modal.style.width = "400px";
+      modal.style.padding = "15px";
+      modal.style.backgroundColor = "#222";
+      modal.style.color = "#eee";
+      modal.style.border = "1px solid #444";
+      modal.style.boxShadow = "0 4px 10px rgba(0, 0, 0, 0.3)";
+      modal.style.borderRadius = "8px";
+      modal.style.fontFamily = "Arial, sans-serif";
+      modal.style.textAlign = "center";
+      modal.style.zIndex = "10000";
+
+      let wordTitle = document.createElement("h2");
+      wordTitle.textContent = word;
+      wordTitle.style.marginBottom = "10px";
+      modal.appendChild(wordTitle);
+
+      let meaningText = document.createElement("p");
+      meaningText.textContent = meaning;
+      meaningText.style.fontSize = "14px";
+      meaningText.style.lineHeight = "1.4";
+      meaningText.style.marginBottom = "15px";
+      modal.appendChild(meaningText);
+
+      let buttonsContainer = document.createElement("div");
+      buttonsContainer.style.display = "flex";
+      buttonsContainer.style.justifyContent = "center";
+      buttonsContainer.style.gap = "10px";
+
+      let playButton = document.createElement("button");
+      playButton.textContent = "🔊 Play";
+      playButton.onclick = function () {
+        sayThis(word, document.getElementById("voiceSelect").value);
+      };
+      buttonsContainer.appendChild(playButton);
+
+      let closeButton = document.createElement("button");
+      closeButton.textContent = "Close";
+      closeButton.onclick = function () {
+        document.body.removeChild(modal);
+      };
+      buttonsContainer.appendChild(closeButton);
+
+      modal.appendChild(buttonsContainer);
+      document.body.appendChild(modal);
+    }
+
+    async function getResponse(word, context, role, key) {
+      const messages = [
+        { role: 'system', content: role },
+        { role: 'user', content: `Word: "${word}" Context: "${context}"` }
+      ];
+
+      try {
+        const aiMessage = await callOpenAI(messages, key);
+        showAlertWithMeaning(word, aiMessage);
+      } catch (err) {
+        alert(err);
+      }
+    }
+
+    // Toggle the settings panel
+    const settingsBtn = document.getElementById("settingsBtn");
+    const settingsPanel = document.getElementById("settingsPanel");
+
+    settingsBtn.addEventListener("click", () => {
+      settingsPanel.classList.toggle("open");
+    });
+
+    function handleWordClick(clickedWord, context) {
+      getResponse(clickedWord, context, document.getElementById("AISystemRole").value, document.getElementById("pat").value);
+    }
+
+    // File reading logic
+    const loadButton = document.querySelector("#game-area button");
+    const fileInput = document.createElement("input");
+    fileInput.type = "file";
+    fileInput.accept = ".pdf";  // <--- Changed here
+    fileInput.style.display = "none";
+    document.body.appendChild(fileInput);
+
+    loadButton.addEventListener("click", () => {
+      fileInput.click();
+    });
+
+    fileInput.addEventListener("change", (event) => {
+      const file = event.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          // Instead of textContent, embed PDF in an iframe
+          const storyDiv = document.getElementById("story");
+          storyDiv.innerHTML = `
+            <iframe
+              src="${e.target.result}"
+              style="width: 100%; height: 80vh;"
+            ></iframe>
+          `;
+          // Keep the clickableWords call (though it won't parse PDF text)
+          makeWordsClickable('story', handleWordClick);
+        };
+        reader.onerror = function() {
+          console.error("Error reading file");
+        };
+        // Read the PDF as Data URL
+        reader.readAsDataURL(file); // <--- Changed here
+      }
+    });
+  </script>
+</body>
+</html>

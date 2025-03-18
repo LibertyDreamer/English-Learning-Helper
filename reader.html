@@ -31,6 +31,21 @@
   rows="6"
 >For start just show the word and IPA don't comment it. And now explain this word for 3 years old non native speaker with A0 level.</textarea>
 
+<hr>
+
+  <!-- List of TTS Voices -->
+  <label for="voiceSelect">TTS Voice:</label>
+  <select id="voiceSelect">
+    <option value="Matthew">Matthew</option>
+    <option value="Joanna">Joanna</option>
+    <option value="Kimberly">Kimberly</option>
+    <option value="Salli">Salli</option>
+    <option value="Amy">Amy</option>
+    <option value="Emma">Emma</option>
+    <option value="Brian">Brian</option>
+    <option value="Russell">Russell</option>
+  </select>
+    
   </div>
 
   <script type="module">
@@ -42,13 +57,16 @@
 function loadSettings() {
   const savedPat = localStorage.getItem("azurePat");
   const aiRole = localStorage.getItem("AISystemRole");
-  const savedAnother = localStorage.getItem("anotherSetting");
+  const voiceSelect = localStorage.getItem("voiceSelect");
 
   if (savedPat !== null) {
     document.getElementById("pat").value = savedPat;
   }
   if (aiRole !== null) {
     document.getElementById("AISystemRole").value = aiRole;
+  }
+  if (voiceSelect !== null) {
+    document.getElementById("voiceSelect").value = voiceSelect;
   }
 }
 
@@ -62,9 +80,14 @@ document.getElementById("AISystemRole").addEventListener("input", () => {
     localStorage.setItem("AISystemRole", document.getElementById("AISystemRole").value);
 });
 
+document.getElementById("voiceSelect").addEventListener("input", () => {
+    localStorage.setItem("voiceSelect", document.getElementById("voiceSelect").value);
+});
+
+
 
     function showAlertWithMeaning(word, meaning) {
-      sayThis(word);
+      sayThis(word, document.getElementById("voiceSelect").value);
       let existingModal = document.getElementById("custom-alert");
       if (existingModal) {
         document.body.removeChild(existingModal);
@@ -107,7 +130,7 @@ document.getElementById("AISystemRole").addEventListener("input", () => {
       let playButton = document.createElement("button");
       playButton.textContent = "🔊 Play";
       playButton.onclick = function () {
-        sayThis(word);
+        sayThis(word, document.getElementById("voiceSelect").value);
       };
       buttonsContainer.appendChild(playButton);
 

@@ -134,7 +134,7 @@ select {
 
 /* When "open", it slides in from the right (translateX(0)) */
 #settingsPanel.open {
-  translateX(0%);
+  translateX(0);
 }
 
 #settingsPanel h2 {

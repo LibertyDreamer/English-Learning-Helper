@@ -86,7 +86,7 @@ select {
 .clickable-word:hover {
   color: #ffffff;
   background-color: #444;
-  padding: 0 2px;
+  padding: 0 0px;
 }
 
 /* ===============================

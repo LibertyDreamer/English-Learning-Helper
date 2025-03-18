@@ -15,10 +15,8 @@
     </div>
   </div>
 
-  <!-- Settings Button -->
   <button id="settingsBtn">⚙ Settings</button>
 
-  <!-- Settings Panel -->
   <div id="settingsPanel">
     <h2>Settings</h2>
 
@@ -53,14 +51,9 @@ function loadSettings() {
   if (aiRole !== null) {
     document.getElementById("AISystemRole").value = aiRole;
   }
-  if (savedAnother !== null) {
-    document.getElementById("anotherSetting").value = savedAnother;
-  }
 }
 
 loadSettings();
-
-
 
 document.getElementById("pat").addEventListener("input", () => {
     localStorage.setItem("azurePat", document.getElementById("pat").value);
@@ -69,12 +62,6 @@ document.getElementById("pat").addEventListener("input", () => {
 document.getElementById("AISystemRole").addEventListener("input", () => {
     localStorage.setItem("AISystemRole", document.getElementById("AISystemRole").value);
 });
-
-document.getElementById("anotherSetting").addEventListener("input", () => {
-    localStorage.setItem("anotherSetting", document.getElementById("anotherSetting").value);
-});
-
-
 
 
     function showAlertWithMeaning(word, meaning) {

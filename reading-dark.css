@@ -135,3 +135,19 @@ button:hover {
 #settingsPanel h2 {
   margin-top: 0;
 }
+
+#settingsPanel textarea {
+  background-color: #333;
+  color: #e0e0e0;
+  border: 1px solid #555;
+  padding: 8px 12px;
+  margin: 5px 0;
+  width: 100%;           /* Fill the panel width */
+  box-sizing: border-box;/* Prevent overflow from padding */
+  resize: vertical;      /* Allow vertical resizing */
+  font-family: 'Merriweather', serif;
+  border-radius: 4px;
+  line-height: 1.4;      /* Better readability */
+}
+
+

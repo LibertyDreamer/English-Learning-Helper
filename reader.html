@@ -141,6 +141,20 @@ Explain this for children, but don’t sugarcoat it. If it includes things like 
       getResponse(clickedWord, context);
     }
 
+     document.addEventListener("DOMContentLoaded", function() {
+    const settingsBtn = document.getElementById("settingsBtn");
+    const settingsPanel = document.getElementById("settingsPanel");
+
+    settingsBtn.addEventListener("click", function() {
+        // Toggle visibility of settings panel
+        if (settingsPanel.style.display === "none") {
+            settingsPanel.style.display = "block";
+        } else {
+            settingsPanel.style.display = "none";
+        }
+    });
+});
+    
     const loadButton = document.querySelector("button");
     const fileInput = document.createElement("input");
     fileInput.type = "file";
@@ -166,21 +180,6 @@ Explain this for children, but don’t sugarcoat it. If it includes things like 
         reader.readAsText(file);
       }
     });
-
-    document.addEventListener("DOMContentLoaded", function() {
-    const settingsBtn = document.getElementById("settingsBtn");
-    const settingsPanel = document.getElementById("settingsPanel");
-
-    settingsBtn.addEventListener("click", function() {
-        // Toggle visibility of settings panel
-        if (settingsPanel.style.display === "none") {
-            settingsPanel.style.display = "block";
-        } else {
-            settingsPanel.style.display = "none";
-        }
-    });
-});
-
   </script>
 </body>
 </html>

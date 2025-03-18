@@ -27,8 +27,13 @@
 
     <hr>
 
-    <label for="someSetting">Some Setting:</label>
-    <input type="text" id="someSetting" placeholder="Type something...">
+    <label for="AISystemRole">AISystemRole:</label>
+<textarea
+  id="AISystemRole"
+  rows="4"
+  placeholder="Type something...">You are a dictionary. Explain meaning of these words in this exact context.
+Explain this for children, but don’t sugarcoat it. If it includes things like murder or sex, etc, don’t skip them—say it as it is. Add IPA.</textarea>
+
 
     <label for="anotherSetting">Another Setting:</label>
     <input type="text" id="anotherSetting" placeholder="Type something else...">
@@ -42,14 +47,14 @@
 
 function loadSettings() {
   const savedPat = localStorage.getItem("azurePat");
-  const savedSome = localStorage.getItem("someSetting");
+  const aiRole = localStorage.getItem("AISystemRole");
   const savedAnother = localStorage.getItem("anotherSetting");
 
   if (savedPat !== null) {
     document.getElementById("pat").value = savedPat;
   }
-  if (savedSome !== null) {
-    document.getElementById("someSetting").value = savedSome;
+  if (aiRole !== null) {
+    document.getElementById("AISystemRole").value = aiRole;
   }
   if (savedAnother !== null) {
     document.getElementById("anotherSetting").value = savedAnother;
@@ -64,8 +69,8 @@ document.getElementById("pat").addEventListener("input", () => {
     localStorage.setItem("azurePat", document.getElementById("pat").value);
 });
 
-document.getElementById("someSetting").addEventListener("input", () => {
-    localStorage.setItem("someSetting", document.getElementById("someSetting").value);
+document.getElementById("AISystemRole").addEventListener("input", () => {
+    localStorage.setItem("AISystemRole", document.getElementById("AISystemRole").value);
 });
 
 document.getElementById("anotherSetting").addEventListener("input", () => {

@@ -7,13 +7,11 @@
   <link rel="stylesheet" href="reading-dark.css">
 </head>
 <body>
-  <!-- Main Container -->
+  <!-- Main Container (always centered) -->
   <div id="container">
     <h1>Reader</h1>
 
-    <!-- Removed Azure Key from here and moved to Settings panel -->
-
-    <!-- Game Area with story and "Load book" button -->
+    <!-- Game Area -->
     <div id="game-area">
       <div id="story"></div>
       <button type="button">Load book</button>
@@ -23,11 +21,11 @@
   <!-- Settings Button (top-right corner) -->
   <button id="settingsBtn">⚙ Settings</button>
 
-  <!-- Settings Panel (initially off-screen) -->
+  <!-- Settings Panel (slides in from the right) -->
   <div id="settingsPanel">
     <h2>Settings</h2>
 
-    <!-- Now the Azure key is here -->
+    <!-- Azure Key in the panel -->
     <label for="pat">Azure OpenAI Key:</label>
     <input type="password" id="pat" placeholder="Enter your Azure OpenAI PAT" />
 
@@ -40,11 +38,10 @@
     <input type="text" id="anotherSetting" placeholder="Type something else...">
   </div>
 
-  <!-- Scripts -->
   <script type="module">
     import { makeWordsClickable } from './clickableWords.js';
     import { callOpenAI } from './openaiCaller.js';
-    import { sayThis, getAvailableVoices } from './ttsModule.js';
+    import { sayThis } from './ttsModule.js';
 
     function showAlertWithMeaning(word, meaning) {
       sayThis(word);
@@ -68,7 +65,7 @@
       modal.style.borderRadius = "8px";
       modal.style.fontFamily = "Arial, sans-serif";
       modal.style.textAlign = "center";
-      modal.style.zIndex = "1000";
+      modal.style.zIndex = "10000";
 
       let wordTitle = document.createElement("h2");
       wordTitle.textContent = word;
@@ -121,7 +118,7 @@ Explain this for children, but don’t sugarcoat it. If it includes things like 
 
       try {
         const aiMessage = await callOpenAI(messages, pat);
-        showAlertWithMeaning(word, `${aiMessage}`);
+        showAlertWithMeaning(word, aiMessage);
       } catch (err) {
         alert(err);
       }
@@ -158,18 +155,12 @@ Explain this for children, but don’t sugarcoat it. If it includes things like 
       }
     });
 
-    // =========================
-    // Slide-in Settings Panel
-    // =========================
+    // Toggle the settings panel by toggling its "open" class
     const settingsBtn = document.getElementById("settingsBtn");
     const settingsPanel = document.getElementById("settingsPanel");
-    const mainContainer = document.getElementById("container");
 
     settingsBtn.addEventListener("click", () => {
-      // Toggle .open on the panel
       settingsPanel.classList.toggle("open");
-      // Toggle .panel-open on the container to slide it left
-      mainContainer.classList.toggle("panel-open");
     });
   </script>
 </body>

@@ -145,21 +145,14 @@ document.getElementById("voiceSelect").addEventListener("input", () => {
       document.body.appendChild(modal);
     }
 
-    async function getResponse(word, context, role) {
-      const pat = document.getElementById("pat").value;
+    async function getResponse(word, context, role, key) {
       const messages = [
-        {
-          role: 'system',
-          content:'${role}'
-        },
-        {
-          role: 'user',
-          content: `Word: "${word}" Context: "${context}"`
-        }
+        { role: 'system', content: role },
+        { role: 'user', content: `Word: "${word}" Context: "${context}"` }
       ];
 
       try {
-        const aiMessage = await callOpenAI(messages, pat);
+        const aiMessage = await callOpenAI(messages, key);
         showAlertWithMeaning(word, aiMessage);
       } catch (err) {
         alert(err);
@@ -176,7 +169,7 @@ document.getElementById("voiceSelect").addEventListener("input", () => {
 
 
     function handleWordClick(clickedWord, context) {
-      getResponse(clickedWord, context, document.getElementById("AISystemRole").value);
+      getResponse(clickedWord, context, document.getElementById("AISystemRole").value, document.getElementById("pat").value);
     }
 
     // File reading logic

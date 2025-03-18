@@ -23,25 +23,11 @@
   <script type="module">
     import { makeWordsClickable } from './clickableWords.js';
     import { callOpenAI } from './openaiCaller.js';
-
-   async function fuu(word) {
-    if (!word) {
-        console.error("No text provided.");
-        return;
-    }
-
-    const ttsUrl = "https://api.streamelements.com/kappa/v2/speech?voice=Salli&text=" + encodeURIComponent(word);
-
-    try {
-        const audio = new Audio(ttsUrl);
-        audio.play();
-    } catch (error) {
-        console.error("TTS Error:", error);
-    }
-}
+    import { sayThis, getAvailableVoices } from './ttsModule.js';
 
 
     function showAlertWithMeaning(word, meaning) {
+      sayThis(word);
       let existingModal = document.getElementById("custom-alert");
       if (existingModal) {
         document.body.removeChild(existingModal);
@@ -90,7 +76,7 @@
       playButton.style.cursor = "pointer";
       playButton.style.borderRadius = "5px";
       playButton.onclick = function () {
-        fuu(word);
+        sayThis(word);
       };
       buttonsContainer.appendChild(playButton);
 
@@ -116,8 +102,8 @@
       const messages = [
         {
           role: 'system',
-          content: `You are a dictionary. Explain meaning of this word or words inside this exact context.
-It should be A0-A1 explanation like for kids but it's for adult. Add IPA.`
+          content: `You are a dictionary. Explain meaning of these words in this exact context.
+Explain this for children, but don’t sugarcoat it. If it includes things like murder or sex, etc, don’t skip them—say it as it is. Add IPA.`
         },
         {
           role: 'user',
@@ -134,7 +120,6 @@ It should be A0-A1 explanation like for kids but it's for adult. Add IPA.`
     }
 
     function handleWordClick(clickedWord, context) {
-      fuu(clickedWord);
       getResponse(clickedWord, context);
     }
 

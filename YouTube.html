@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YouTube Word Search</title>
+</head>
+<body>
+    <h1>YouTube Word Search</h1>
+    <input type="text" id="searchWord" placeholder="Enter a word">
+    <button onclick="searchVideos()">Search</button>
+    <br><br>
+    <iframe id="player" width="560" height="315" frameborder="0" allowfullscreen></iframe>
+    <br>
+    <button onclick="prevVideo()">Previous</button>
+    <button onclick="nextVideo()">Next</button>
+    
+    <script>
+        let videos = [];
+        let currentIndex = 0;
+        const API_KEY = 'AIzaSyAPN3gNelsiw2rTnWJhgm1KUuOQk5vCiQk'; 
+
+        async function searchVideos() {
+            const word = document.getElementById("searchWord").value;
+            if (!word) return;
+
+            const url = `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${encodeURIComponent(word)}&type=video&key=${API_KEY}&maxResults=10`;
+            
+            const response = await fetch(url);
+            const data = await response.json();
+            
+            if (data.items.length > 0) {
+                videos = data.items.map(item => item.id.videoId);
+                currentIndex = 0;
+                updatePlayer();
+            } else {
+                alert("No results found!");
+            }
+        }
+
+        function updatePlayer() {
+            if (videos.length > 0) {
+                document.getElementById("player").src = `https://www.youtube.com/embed/${videos[currentIndex]}`;
+            }
+        }
+
+        function nextVideo() {
+            if (currentIndex < videos.length - 1) {
+                currentIndex++;
+                updatePlayer();
+            }
+        }
+
+        function prevVideo() {
+            if (currentIndex > 0) {
+                currentIndex--;
+                updatePlayer();
+            }
+        }
+    </script>
+</body>
+</html>

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>YouTube Word Search</title>
+    <title>YouTube Subtitle Search</title>
 </head>
 <body>
     <h1>YouTube Subtitle Search</h1>
@@ -25,21 +25,23 @@
             const word = document.getElementById("searchWord").value;
             if (!word) return;
             
+            // Search for videos
             const url = `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${encodeURIComponent(word)}&type=video&key=${API_KEY}&maxResults=10`;
             const response = await fetch(url);
             const data = await response.json();
             
             if (data.items.length > 0) {
-                videos = data.items.map(item => item.id.videoId);
+                let videoIds = data.items.map(item => item.id.videoId);
+                
+                // Get only videos that have captions
+                videos = await filterVideosWithCaptions(videoIds);
                 timestamps = await Promise.all(videos.map(videoId => getWordTimestamp(videoId, word)));
                 
                 // Remove videos with no matching captions
-                let validVideos = videos.filter((_, i) => timestamps[i] !== null);
-                let validTimestamps = timestamps.filter(ts => ts !== null);
+                videos = videos.filter((_, i) => timestamps[i] !== null);
+                timestamps = timestamps.filter(ts => ts !== null);
                 
-                if (validVideos.length > 0) {
-                    videos = validVideos;
-                    timestamps = validTimestamps;
+                if (videos.length > 0) {
                     currentIndex = 0;
                     updatePlayer();
                 } else {
@@ -48,6 +50,20 @@
             } else {
                 alert("No results found!");
             }
+        }
+
+        async function filterVideosWithCaptions(videoIds) {
+            let validVideos = [];
+            for (let videoId of videoIds) {
+                try {
+                    const response = await fetch(`https://www.googleapis.com/youtube/v3/captions?part=snippet&videoId=${videoId}&key=${API_KEY}`);
+                    const data = await response.json();
+                    if (data.items.length > 0) validVideos.push(videoId);
+                } catch (error) {
+                    console.warn("Error fetching captions for video", videoId);
+                }
+            }
+            return validVideos;
         }
 
         async function getWordTimestamp(videoId, word) {

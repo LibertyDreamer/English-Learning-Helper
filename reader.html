@@ -141,6 +141,14 @@ document.getElementById("voiceSelect").addEventListener("input", () => {
       };
       buttonsContainer.appendChild(closeButton);
 
+      let deepLearning = document.createElement("button");
+      deepLearning.textContent = "Deep learning";
+      deepLearning.onclick = function () {
+        window.open("https://youglish.com/pronounce/${word}/english", "_blank");
+      };
+      buttonsContainer.appendChild(deepLearning);
+
+
       modal.appendChild(buttonsContainer);
       document.body.appendChild(modal);
     }

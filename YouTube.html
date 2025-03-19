@@ -60,7 +60,7 @@
             if (videos.length > 0) {
                 const videoId = videos[currentIndex];
                 const startTime = timestamps[currentIndex] || 0;
-                document.getElementById("player").src = `https://www.youtube.com/embed/${videoId}?start=${startTime}`;
+                document.getElementById("player").src = `https://www.youtube.com/embed/${videoId}?start=${startTime}&autoplay=1`;
             }
         }
 

@@ -29,7 +29,7 @@
 <textarea
   id="AISystemRole"
   rows="6"
->For start just show the word and IPA don't comment it. And now explain this word for 3 years old non native speaker with A0 level.</textarea>
+>First, show only the word and its IPA pronunciation without additional comments. Then, explain the meaning of the word clearly and simply, suitable for a 3-year-old non-native speaker at A0 level.</textarea>
 
 <hr>
 
@@ -134,6 +134,13 @@ document.getElementById("voiceSelect").addEventListener("input", () => {
       };
       buttonsContainer.appendChild(playButton);
 
+      let deepLearning = document.createElement("button");
+      deepLearning.textContent = "Deep learning";
+      deepLearning.onclick = function () {
+        window.open(`https://youglish.com/pronounce/${word}/english`, "_blank");
+      };
+      buttonsContainer.appendChild(deepLearning);
+
       let closeButton = document.createElement("button");
       closeButton.textContent = "Close";
       closeButton.onclick = function () {
@@ -141,12 +148,6 @@ document.getElementById("voiceSelect").addEventListener("input", () => {
       };
       buttonsContainer.appendChild(closeButton);
 
-      let deepLearning = document.createElement("button");
-      deepLearning.textContent = "Deep learning";
-      deepLearning.onclick = function () {
-        window.open(`https://youglish.com/pronounce/${word}/english`, "_blank");
-      };
-      buttonsContainer.appendChild(deepLearning);
 
 
       modal.appendChild(buttonsContainer);

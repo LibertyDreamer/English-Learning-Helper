@@ -70,7 +70,7 @@ Offer hints on how the user can answer.
     </select>
     <hr>
 
-    <!-- Load Story Button (moved from main area) -->
+    <!-- Load Story Button (in settings panel) -->
     <button id="load-story-btn">Load Story</button>
   </div>
 
@@ -91,11 +91,11 @@ Offer hints on how the user can answer.
   <!-- Hidden file input for loading a text file -->
   <input type="file" id="file-input" accept=".txt" style="display:none;" />
 
-  <!-- JavaScript Modules -->
   <script type="module">
     import { makeWordsClickable } from './clickableWords.js';
     import { callOpenAI } from './openaiCaller.js';
     import { sayThis } from './ttsModule.js';
+    import { showDictionaryModal, openCenteredWindow } from './dictionaryModal.js';
 
     /********************************************************
      * 1) PROMPT PRESETS
@@ -121,15 +121,13 @@ Keep the tone dark and suspenseful.`
       const voiceSelect = localStorage.getItem("voiceSelect");
       const theme = localStorage.getItem("theme");
       const savedPreset = localStorage.getItem("promptPreset");
+      const customPrompt = localStorage.getItem("customGameSystemMessage");
 
       if (savedPat !== null) {
         document.getElementById("pat").value = savedPat;
       }
       if (aiRole !== null) {
         document.getElementById("AISystemRole").value = aiRole;
-      }
-      if (gamePrompt !== null) {
-        document.getElementById("gameSystemMessage").value = gamePrompt;
       }
       if (voiceSelect !== null) {
         document.getElementById("voiceSelect").value = voiceSelect;
@@ -140,6 +138,13 @@ Keep the tone dark and suspenseful.`
       }
       if (savedPreset !== null) {
         document.getElementById("promptPresetSelect").value = savedPreset;
+        if (savedPreset === "custom" && customPrompt !== null) {
+          document.getElementById("gameSystemMessage").value = customPrompt;
+        } else if (savedPreset !== "custom" && promptPresets[savedPreset]) {
+          document.getElementById("gameSystemMessage").value = promptPresets[savedPreset];
+        }
+      } else {
+        document.getElementById("promptPresetSelect").value = "custom";
       }
     }
     loadSettings();
@@ -153,9 +158,10 @@ Keep the tone dark and suspenseful.`
     document.getElementById("gameSystemMessage").addEventListener("input", () => {
       const newPrompt = document.getElementById("gameSystemMessage").value;
       localStorage.setItem("gameSystemMessage", newPrompt);
-      // When user manually edits, set preset to custom
-      document.getElementById("promptPresetSelect").value = "custom";
-      localStorage.setItem("promptPreset", "custom");
+      // If preset is custom, store it separately
+      if (document.getElementById("promptPresetSelect").value === "custom") {
+        localStorage.setItem("customGameSystemMessage", newPrompt);
+      }
     });
     document.getElementById("voiceSelect").addEventListener("input", () => {
       localStorage.setItem("voiceSelect", document.getElementById("voiceSelect").value);
@@ -171,6 +177,9 @@ Keep the tone dark and suspenseful.`
       if (presetKey !== "custom" && promptPresets[presetKey]) {
         document.getElementById("gameSystemMessage").value = promptPresets[presetKey];
         localStorage.setItem("gameSystemMessage", promptPresets[presetKey]);
+      } else if (presetKey === "custom") {
+        const customPrompt = localStorage.getItem("customGameSystemMessage") || "";
+        document.getElementById("gameSystemMessage").value = customPrompt;
       }
     });
 
@@ -217,7 +226,7 @@ Keep the tone dark and suspenseful.`
     });
 
     /********************************************************
-     * 4) LOAD STORY FILE (from settings panel)
+     * 4) LOAD STORY FILE (in settings panel)
      ********************************************************/
     const loadStoryBtn = document.getElementById("load-story-btn");
     const fileInput = document.getElementById("file-input");
@@ -244,7 +253,7 @@ Keep the tone dark and suspenseful.`
     });
 
     /********************************************************
-     * 5) DICTIONARY HANDLER & MODAL
+     * 5) DICTIONARY HANDLER & MODAL (using dictionaryModal.js)
      ********************************************************/
     async function handleWordClick(clickedWord, context) {
       const pat = document.getElementById("pat").value.trim();
@@ -264,99 +273,10 @@ Keep the tone dark and suspenseful.`
       ];
       try {
         const aiMessage = await callOpenAI(message, pat);
-        showAlertWithMeaning(clickedWord, aiMessage);
+        showDictionaryModal(clickedWord, aiMessage, sayThis, document.getElementById("voiceSelect"));
       } catch (err) {
         alert("Error: " + err);
       }
-    }
-
-    // Helper function to open a new centered window
-    function openCenteredWindow(url, title, w, h) {
-      const dualScreenLeft = window.screenLeft !== undefined ? window.screenLeft : screen.left;
-      const dualScreenTop = window.screenTop !== undefined ? window.screenTop : screen.top;
-      const windowWidth = window.innerWidth || document.documentElement.clientWidth || screen.width;
-      const windowHeight = window.innerHeight || document.documentElement.clientHeight || screen.height;
-      const left = (windowWidth - w) / 2 + dualScreenLeft;
-      const top = (windowHeight - h) / 2 + dualScreenTop;
-      const newWindow = window.open(
-        url,
-        title,
-        `scrollbars=yes,width=${w},height=${h},top=${top},left=${left}`
-      );
-      if (newWindow && newWindow.focus) {
-        newWindow.focus();
-      }
-    }
-
-    // The themable dictionary modal
-    function showAlertWithMeaning(word, meaning) {
-      sayThis(word, document.getElementById("voiceSelect").value);
-      const existingModal = document.getElementById("custom-alert");
-      if (existingModal) {
-        document.body.removeChild(existingModal);
-      }
-      const modal = document.createElement("div");
-      modal.id = "custom-alert";
-      modal.classList.add("custom-alert");
-
-      const wordTitle = document.createElement("h2");
-      wordTitle.textContent = word;
-      modal.appendChild(wordTitle);
-
-      const meaningText = document.createElement("p");
-      meaningText.textContent = meaning;
-      modal.appendChild(meaningText);
-
-      const buttonsContainer = document.createElement("div");
-      buttonsContainer.classList.add("modal-buttons");
-
-      const playButton = document.createElement("button");
-      playButton.textContent = "🔊 Play";
-      playButton.onclick = () => {
-        sayThis(word, document.getElementById("voiceSelect").value);
-      };
-      buttonsContainer.appendChild(playButton);
-
-      const deepLearningButton = document.createElement("button");
-      deepLearningButton.textContent = "Deep learning";
-      deepLearningButton.onclick = () => {
-        openCenteredWindow(`https://youglish.com/pronounce/${word}/english`, "Youglish", 800, 600);
-      };
-      buttonsContainer.appendChild(deepLearningButton);
-
-      const oxfordButton = document.createElement("button");
-      oxfordButton.textContent = "Oxford";
-      oxfordButton.onclick = () => {
-        openCenteredWindow(
-          `https://www.oxfordlearnersdictionaries.com/us/definition/english/${word}?q=${word}`,
-          "Oxford",
-          800,
-          600
-        );
-      };
-      buttonsContainer.appendChild(oxfordButton);
-
-      const cambridgeButton = document.createElement("button");
-      cambridgeButton.textContent = "Cambridge";
-      cambridgeButton.onclick = () => {
-        openCenteredWindow(
-          `https://dictionary.cambridge.org/us/dictionary/english/${word}`,
-          "Cambridge",
-          800,
-          600
-        );
-      };
-      buttonsContainer.appendChild(cambridgeButton);
-
-      const closeButton = document.createElement("button");
-      closeButton.textContent = "Close";
-      closeButton.onclick = () => {
-        document.body.removeChild(modal);
-      };
-      buttonsContainer.appendChild(closeButton);
-
-      modal.appendChild(buttonsContainer);
-      document.body.appendChild(modal);
     }
   </script>
 </body>

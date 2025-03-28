@@ -1,4 +1,3 @@
-/* reading-dark.css */
 /* Dark Reading Style: Elegant and comfortable reading on a dark background */
 
 @import url('https://fonts.googleapis.com/css2?family=Merriweather:wght@300;400;700&display=swap');
@@ -53,9 +52,9 @@ button:hover {
 #settingsPanel input[type="text"],
 #settingsPanel input[type="password"],
 #settingsPanel select {
-  box-sizing: border-box;  /* So padding doesn't push them beyond container */
-  width: 100%;             /* Fill the panel width */
-  max-width: 100%;         /* Don’t exceed the panel boundary */
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 100%;
   background-color: #333;
   color: #e0e0e0;
   border: 1px solid #555;
@@ -105,7 +104,7 @@ button:hover {
   cursor: pointer;
   border-radius: 5px;
   font-size: 14px;
-  z-index: 9999; /* Above the panel */
+  z-index: 9999;
 }
 #settingsBtn:hover {
   background: #666;
@@ -115,21 +114,21 @@ button:hover {
 #settingsPanel {
   position: fixed;
   top: 0;
-  right: -30%;       /* Start 280px off-screen */
+  right: -30%;
   width: 20%;
   height: 100%;
   background: #222;
   color: #eee;
   padding: 20px;
   box-shadow: -3px 0 10px rgba(0, 0, 0, 0.3);
-  transition: right 0.3s ease;  /* Slide animation using "right" */
-  overflow-y: auto;             /* Scroll if content is tall */
+  transition: right 0.3s ease;
+  overflow-y: auto;
   z-index: 9998;
 }
 
 /* Slide the panel fully into view */
 #settingsPanel.open {
-  right: 0%;  /* Moves from -280px to 0 */
+  right: 0%;
 }
 
 #settingsPanel h2 {
@@ -142,12 +141,10 @@ button:hover {
   border: 1px solid #555;
   padding: 8px 12px;
   margin: 5px 0;
-  width: 100%;           /* Fill the panel width */
-  box-sizing: border-box;/* Prevent overflow from padding */
-  resize: vertical;      /* Allow vertical resizing */
+  width: 100%;
+  box-sizing: border-box;
+  resize: vertical;
   font-family: 'Merriweather', serif;
   border-radius: 4px;
-  line-height: 1.4;      /* Better readability */
+  line-height: 1.4;
 }
-
-

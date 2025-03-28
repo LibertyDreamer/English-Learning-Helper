@@ -68,6 +68,10 @@ Offer hints on how the user can answer.
       <option value="fantasy.css">Fantasy</option>
       <option value="horror.css">Horror</option>
     </select>
+    <hr>
+
+    <!-- Load Story Button (moved from main area) -->
+    <button id="load-story-btn">Load Story</button>
   </div>
 
   <div id="container">
@@ -81,7 +85,6 @@ Offer hints on how the user can answer.
         <input type="text" id="player-input" placeholder="Type anything here.">
         <button id="send-btn">Send</button>
       </div>
-      <button id="load-story-btn" style="margin-top:10px;">Load Story</button>
     </div>
   </div>
 
@@ -97,16 +100,15 @@ Offer hints on how the user can answer.
     /********************************************************
      * 1) PROMPT PRESETS
      ********************************************************/
-    // Example prompt presets. Feel free to add, remove, or rename.
     const promptPresets = {
-      "funny-space": `You are a text-based game engine. The setting is a comedic space opera. 
-Your job is to engage the user in a silly space adventure. 
-Encourage them to practice English by using 'somebody' and 'anybody', etc. 
-Make it comedic, but also keep them on track with usage.`,
-      "zombie-apocalypse": `You are a text-based game engine. The setting is a zombie apocalypse. 
-The user must practice 'something/anything' and 'some/any' in their responses. 
-If they use correct grammar, they survive. If not, the zombies get closer! 
-Offer them hints, but never reveal you're teaching grammar.`
+      "funny-space": `You are a text-based game engine. The setting is a comedic space opera.
+Your job is to engage the user in a silly space adventure.
+Encourage them to practice English by using 'somebody' and 'anybody', etc.
+Keep it humorous and playful.`,
+      "zombie-apocalypse": `You are a text-based game engine. The setting is a zombie apocalypse.
+The user must practice 'something/anything' and 'some/any' in their responses.
+Correct usage means survival; incorrect usage means the zombies are closing in!
+Keep the tone dark and suspenseful.`
     };
 
     /********************************************************
@@ -118,7 +120,6 @@ Offer them hints, but never reveal you're teaching grammar.`
       const gamePrompt = localStorage.getItem("gameSystemMessage");
       const voiceSelect = localStorage.getItem("voiceSelect");
       const theme = localStorage.getItem("theme");
-      // We can also store which preset was selected
       const savedPreset = localStorage.getItem("promptPreset");
 
       if (savedPat !== null) {
@@ -138,13 +139,11 @@ Offer them hints, but never reveal you're teaching grammar.`
         document.getElementById("themeStylesheet").href = theme;
       }
       if (savedPreset !== null) {
-        // If we have a known preset, set the combo box to that
         document.getElementById("promptPresetSelect").value = savedPreset;
       }
     }
     loadSettings();
 
-    // Save typed settings
     document.getElementById("pat").addEventListener("input", () => {
       localStorage.setItem("azurePat", document.getElementById("pat").value);
     });
@@ -152,8 +151,9 @@ Offer them hints, but never reveal you're teaching grammar.`
       localStorage.setItem("AISystemRole", document.getElementById("AISystemRole").value);
     });
     document.getElementById("gameSystemMessage").addEventListener("input", () => {
-      localStorage.setItem("gameSystemMessage", document.getElementById("gameSystemMessage").value);
-      // Also set preset select to "custom" because user typed something
+      const newPrompt = document.getElementById("gameSystemMessage").value;
+      localStorage.setItem("gameSystemMessage", newPrompt);
+      // When user manually edits, set preset to custom
       document.getElementById("promptPresetSelect").value = "custom";
       localStorage.setItem("promptPreset", "custom");
     });
@@ -165,20 +165,16 @@ Offer them hints, but never reveal you're teaching grammar.`
       localStorage.setItem("theme", theme);
       document.getElementById("themeStylesheet").href = theme;
     });
-
-    // Prompt Preset Select
     document.getElementById("promptPresetSelect").addEventListener("change", () => {
       const presetKey = document.getElementById("promptPresetSelect").value;
       localStorage.setItem("promptPreset", presetKey);
       if (presetKey !== "custom" && promptPresets[presetKey]) {
-        // Load the preset into the text area
         document.getElementById("gameSystemMessage").value = promptPresets[presetKey];
-        // Save that text to localStorage
         localStorage.setItem("gameSystemMessage", promptPresets[presetKey]);
       }
     });
 
-    // Toggle the settings panel
+    // Toggle settings panel
     document.getElementById("settingsBtn").addEventListener("click", () => {
       document.getElementById("settingsPanel").classList.toggle("open");
     });
@@ -186,7 +182,6 @@ Offer them hints, but never reveal you're teaching grammar.`
     /********************************************************
      * 3) GAME CONVERSATION LOGIC
      ********************************************************/
-    // We'll store conversation messages here (excluding the system message).
     let messages = [];
 
     const sendMessageButton = document.getElementById("send-btn");
@@ -196,39 +191,33 @@ Offer them hints, but never reveal you're teaching grammar.`
         alert("Please enter your Azure OpenAI PAT in Settings!");
         return;
       }
-      const inputField = document.getElementById('player-input');
+      const inputField = document.getElementById("player-input");
       const userSentence = inputField.value.trim();
       if (!userSentence) {
         alert("Input is empty, man!");
         return;
       }
-
-      // Build the conversation array with the system message from settings
       const gamePrompt = document.getElementById("gameSystemMessage").value;
       const fullConversation = [
-        { role: 'system', content: gamePrompt },
+        { role: "system", content: gamePrompt },
         ...messages,
-        { role: 'user', content: userSentence }
+        { role: "user", content: userSentence }
       ];
 
       try {
         const aiMessage = await callOpenAI(fullConversation, pat);
-        // Update conversation memory
-        messages.push({ role: 'user', content: userSentence });
-        messages.push({ role: 'assistant', content: aiMessage });
-
-        // Display the AI's response
+        messages.push({ role: "user", content: userSentence });
+        messages.push({ role: "assistant", content: aiMessage });
         document.getElementById("story").textContent = aiMessage;
-        // Make words clickable
-        makeWordsClickable('story', handleWordClick);
+        makeWordsClickable("story", handleWordClick);
       } catch (err) {
         alert("Error: " + err);
       }
-      inputField.value = '';
+      inputField.value = "";
     });
 
     /********************************************************
-     * 4) LOAD STORY FILE
+     * 4) LOAD STORY FILE (from settings panel)
      ********************************************************/
     const loadStoryBtn = document.getElementById("load-story-btn");
     const fileInput = document.getElementById("file-input");
@@ -243,12 +232,9 @@ Offer them hints, but never reveal you're teaching grammar.`
         const reader = new FileReader();
         reader.onload = function(e) {
           const storyText = e.target.result;
-          // Insert the story as if the "assistant" started with it
-          messages.push({ role: 'assistant', content: storyText });
-
-          // Show it in the #story area
+          messages.push({ role: "assistant", content: storyText });
           document.getElementById("story").textContent = storyText;
-          makeWordsClickable('story', handleWordClick);
+          makeWordsClickable("story", handleWordClick);
         };
         reader.onerror = function() {
           alert("Error reading file");
@@ -268,13 +254,13 @@ Offer them hints, but never reveal you're teaching grammar.`
       }
       const message = [
         {
-          role: 'system',
-          content: document.getElementById("AISystemRole").value
+          role: "system",
+          content: document.getElementById("AISystemRole").value,
         },
         {
-          role: 'user',
-          content: `Word: "${clickedWord}" Context: "${context}"`
-        }
+          role: "user",
+          content: `Word: "${clickedWord}" Context: "${context}"`,
+        },
       ];
       try {
         const aiMessage = await callOpenAI(message, pat);
@@ -302,37 +288,28 @@ Offer them hints, but never reveal you're teaching grammar.`
       }
     }
 
-    // The dictionary modal
+    // The themable dictionary modal
     function showAlertWithMeaning(word, meaning) {
-      // TTS
       sayThis(word, document.getElementById("voiceSelect").value);
-
-      // Remove existing modal if any
       const existingModal = document.getElementById("custom-alert");
       if (existingModal) {
         document.body.removeChild(existingModal);
       }
-
-      // Create the modal
       const modal = document.createElement("div");
       modal.id = "custom-alert";
       modal.classList.add("custom-alert");
 
-      // Title
       const wordTitle = document.createElement("h2");
       wordTitle.textContent = word;
       modal.appendChild(wordTitle);
 
-      // Meaning
       const meaningText = document.createElement("p");
       meaningText.textContent = meaning;
       modal.appendChild(meaningText);
 
-      // Buttons
       const buttonsContainer = document.createElement("div");
       buttonsContainer.classList.add("modal-buttons");
 
-      // TTS playback button
       const playButton = document.createElement("button");
       playButton.textContent = "🔊 Play";
       playButton.onclick = () => {
@@ -340,7 +317,6 @@ Offer them hints, but never reveal you're teaching grammar.`
       };
       buttonsContainer.appendChild(playButton);
 
-      // Deep learning (Youglish)
       const deepLearningButton = document.createElement("button");
       deepLearningButton.textContent = "Deep learning";
       deepLearningButton.onclick = () => {
@@ -348,7 +324,6 @@ Offer them hints, but never reveal you're teaching grammar.`
       };
       buttonsContainer.appendChild(deepLearningButton);
 
-      // Oxford dictionary
       const oxfordButton = document.createElement("button");
       oxfordButton.textContent = "Oxford";
       oxfordButton.onclick = () => {
@@ -361,7 +336,6 @@ Offer them hints, but never reveal you're teaching grammar.`
       };
       buttonsContainer.appendChild(oxfordButton);
 
-      // Cambridge dictionary
       const cambridgeButton = document.createElement("button");
       cambridgeButton.textContent = "Cambridge";
       cambridgeButton.onclick = () => {
@@ -374,7 +348,6 @@ Offer them hints, but never reveal you're teaching grammar.`
       };
       buttonsContainer.appendChild(cambridgeButton);
 
-      // Close button
       const closeButton = document.createElement("button");
       closeButton.textContent = "Close";
       closeButton.onclick = () => {

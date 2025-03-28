@@ -1,69 +1,119 @@
-/* fantasy.css */
-/* Base Fantasy Theme */
-@import url('https://fonts.googleapis.com/css2?family=Cinzel&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&display=swap');
 
-body {
-  background: radial-gradient(ellipse at center, #2b1b0f 0%, #000000 70%);
-  color: #d4af37; /* Antique gold */
-  font-family: 'Cinzel', serif;
+html, body {
   margin: 0;
   padding: 0;
+  background-color: #f9f6f1;
+  color: #4b3621;
+  font-family: 'Cinzel', serif;
+  font-size: 16px;
+  line-height: 1.6;
 }
 
 #container {
   width: 90%;
   max-width: 800px;
   margin: 40px auto;
-  padding: 20px;
-  border: 3px solid #d4af37;
-  box-shadow: 0 0 20px rgba(212, 175, 55, 0.5);
+  padding: 30px;
+  background-color: #fdf7e3;
+  border: 1px solid #bfa37a;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
 }
 
 h1, h2 {
-  color: #c28840;
-  margin: 0 0 10px;
-  text-shadow: 2px 2px 4px #000;
+  text-align: center;
+  color: #4b3621;
+  margin-bottom: 15px;
 }
 
-.green-btn {
-  background-color: transparent;
-  color: #d4af37;
-  border: 2px solid #d4af37;
-  padding: 10px 20px;
-  margin: 5px;
-  cursor: pointer;
-}
-
-.green-btn:hover {
-  background-color: rgba(212, 175, 55, 0.2);
-  box-shadow: 0 0 10px #d4af37;
-}
-
-input[type="text"] {
-  background-color: rgba(0, 0, 0, 0.7);
-  color: #d4af37;
-  border: 2px solid #d4af37;
+input[type="text"],
+input[type="password"],
+textarea,
+select {
+  width: 100%;
   padding: 8px;
+  background-color: #fff8e8;
+  color: #4b3621;
+  border: 1px solid #bfa37a;
   margin: 5px 0;
-  width: 400px;
+  box-sizing: border-box;
+  font-family: 'Cinzel', serif;
+}
+
+textarea {
+  resize: vertical;
+}
+
+button {
+  background-color: #e0d6b7;
+  color: #4b3621;
+  border: 1px solid #bfa37a;
+  padding: 8px 16px;
+  margin: 5px 0;
+  cursor: pointer;
+  font-family: 'Cinzel', serif;
+  transition: background-color 0.2s ease;
+}
+
+button:hover {
+  background-color: #d3c1a8;
 }
 
 #story {
   margin-top: 20px;
-  line-height: 1.4;
-  padding: 15px;
+  padding: 20px;
+  background-color: #fffaf0;
+  border: 1px solid #bfa37a;
+  box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.2);
   min-height: 150px;
-  border: 2px dashed #d4af37;
-  background-color: rgba(0, 0, 0, 0.5);
+  font-size: 1.1em;
+  text-align: justify;
+  white-space: pre-wrap;
 }
 
 .clickable-word {
   cursor: pointer;
+  transition: color 0.2s ease;
 }
 
 .clickable-word:hover {
-  color: #ffffff;
-  background-color: #444;
-  padding: 0 2px;
+  color: #a65c03;
 }
 
+#settingsBtn {
+  position: fixed;
+  top: 10px;
+  right: 10px;
+  background: #bfa37a;
+  color: #4b3621;
+  border: 1px solid #4b3621;
+  padding: 8px 12px;
+  cursor: pointer;
+  border-radius: 5px;
+  font-size: 14px;
+  z-index: 9999;
+}
+
+#settingsPanel {
+  position: fixed;
+  top: 0;
+  right: -30%;
+  width: 25%;
+  height: 100%;
+  background: #f9f6f1;
+  color: #4b3621;
+  padding: 20px;
+  border-left: 1px solid #bfa37a;
+  box-shadow: -3px 0 10px rgba(0, 0, 0, 0.3);
+  transition: right 0.3s ease;
+  overflow-y: auto;
+  z-index: 9998;
+}
+
+#settingsPanel.open {
+  right: 0;
+}
+
+#settingsPanel h2 {
+  margin-top: 0;
+}

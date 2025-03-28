@@ -11,11 +11,6 @@ html, body {
   line-height: 1.5;
 }
 
-a {
-  color: #0f0;
-  text-decoration: none;
-}
-
 #container {
   width: 90%;
   max-width: 800px;
@@ -46,10 +41,6 @@ select {
   font-family: 'Source Code Pro', monospace;
 }
 
-textarea {
-  resize: vertical;
-}
-
 button {
   background-color: #222;
   color: #0f0;
@@ -60,7 +51,6 @@ button {
   font-family: 'Source Code Pro', monospace;
   transition: background-color 0.2s ease;
 }
-
 button:hover {
   background-color: #333;
 }
@@ -80,7 +70,6 @@ button:hover {
   cursor: pointer;
   transition: color 0.2s ease;
 }
-
 .clickable-word:hover {
   color: #fff;
 }
@@ -96,7 +85,6 @@ button:hover {
   cursor: pointer;
   z-index: 9999;
 }
-
 #settingsPanel {
   position: fixed;
   top: 0;
@@ -112,11 +100,40 @@ button:hover {
   overflow-y: auto;
   z-index: 9998;
 }
-
 #settingsPanel.open {
   right: 0;
 }
-
 #settingsPanel h2 {
   margin-top: 0;
+}
+
+/* ===== Modal (Dictionary Popup) ===== */
+.custom-alert {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 400px;
+  padding: 15px;
+  background-color: #000;
+  color: #0f0;
+  border: 1px solid #0f0;
+  box-shadow: 0 4px 10px rgba(0, 255, 0, 0.5);
+  border-radius: 4px;
+  font-family: 'Source Code Pro', monospace;
+  text-align: center;
+  z-index: 10000;
+}
+.custom-alert h2 {
+  margin-bottom: 10px;
+}
+.custom-alert p {
+  margin-bottom: 15px;
+  font-size: 14px;
+  line-height: 1.4;
+}
+.modal-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
 }

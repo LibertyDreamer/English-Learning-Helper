@@ -1,65 +1,133 @@
-/* oldpc.css */
-/* Base Old PC Theme */
-body {
-  background-color: black;
-  color: #00ff00;
-  font-family: monospace;
+/* Old PC / Emacs Hacker Style */
+/* A dark, terminal-inspired theme with neon-green accents */
+
+@import url('https://fonts.googleapis.com/css2?family=Source+Code+Pro:wght@400;700&display=swap');
+
+html, body {
   margin: 0;
   padding: 0;
+  width: 100%;
+  background-color: #000;
+  color: #0f0;
+  font-family: 'Source Code Pro', monospace;
+  font-size: 16px;
+  line-height: 1.5;
 }
 
+a {
+  color: #0f0;
+  text-decoration: none;
+}
+
+/* Main container with a retro terminal look */
 #container {
   width: 90%;
   max-width: 800px;
   margin: 40px auto;
   padding: 20px;
-  border: 3px solid #00ff00;
-  box-shadow: 0 0 20px rgba(0, 255, 0, 0.5);
+  background-color: #111;
+  border: 1px solid #0f0;
+  box-shadow: 0 0 10px #0f0;
 }
 
+/* Headings styled like old system messages */
 h1, h2 {
-  color: #00ff00;
-  margin: 0 0 10px;
+  color: #0f0;
+  text-align: center;
+  margin: 0 0 15px 0;
 }
 
-.green-btn {
-  background-color: transparent;
-  color: #00ff00;
-  border: 2px solid #00ff00;
-  padding: 10px 20px;
-  margin: 5px;
-  cursor: pointer;
-}
-
-.green-btn:hover {
-  background-color: #003300;
-  box-shadow: 0 0 10px #00ff00;
-}
-
-input[type="text"] {
-  background-color: black;
-  color: #00ff00;
-  border: 2px solid #00ff00;
+/* Input and button styling for a command-line feel */
+input[type="text"],
+input[type="password"],
+textarea,
+select {
+  width: 100%;
   padding: 8px;
+  background-color: #222;
+  color: #0f0;
+  border: 1px solid #0f0;
   margin: 5px 0;
-  width: 400px;
+  box-sizing: border-box;
+  font-family: 'Source Code Pro', monospace;
 }
 
+textarea {
+  resize: vertical;
+}
+
+/* Buttons styled as terminal commands */
+button {
+  background-color: #222;
+  color: #0f0;
+  border: 1px solid #0f0;
+  padding: 8px 16px;
+  margin: 5px 0;
+  cursor: pointer;
+  font-family: 'Source Code Pro', monospace;
+  transition: background-color 0.2s ease;
+}
+
+button:hover {
+  background-color: #333;
+}
+
+/* Story area styled as an output terminal */
 #story {
   margin-top: 20px;
-  line-height: 1.4;
   padding: 15px;
+  background-color: #000;
+  border: 1px solid #0f0;
+  box-shadow: inset 0 0 5px #0f0;
   min-height: 150px;
-  border: 2px dashed #00ff00;
-  background-color: rgba(0, 0, 0, 0.5);
+  font-size: 1.1em;
+  white-space: pre-wrap;
 }
 
+/* Clickable words: underlined and change color on hover */
 .clickable-word {
+  text-decoration: underline;
   cursor: pointer;
+  transition: color 0.2s ease;
 }
 
 .clickable-word:hover {
-  color: #ffffff;
-  background-color: #444;
-  padding: 0 2px;
+  color: #fff;
+}
+
+/* Settings Panel & Button (slide-in) */
+#settingsBtn {
+  position: fixed;
+  top: 10px;
+  right: 10px;
+  background-color: #222;
+  color: #0f0;
+  border: 1px solid #0f0;
+  padding: 6px 12px;
+  cursor: pointer;
+  z-index: 9999;
+}
+
+#settingsPanel {
+  position: fixed;
+  top: 0;
+  right: -30%;
+  width: 25%;
+  height: 100%;
+  background-color: #111;
+  color: #0f0;
+  padding: 20px;
+  border-left: 1px solid #0f0;
+  box-shadow: -3px 0 10px #0f0;
+  transition: right 0.3s ease;
+  overflow-y: auto;
+  z-index: 9998;
+}
+
+#settingsPanel.open {
+  right: 0;
+}
+
+#settingsPanel h2 {
+  margin-top: 0;
 }

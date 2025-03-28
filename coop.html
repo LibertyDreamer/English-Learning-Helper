@@ -2,12 +2,11 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Adventure Game - Co-Op (Wait for Host ID)</title>
-  <!-- Default theme is Old PC -->
+  <title>Adventure Game - Multiplayer via Firebase</title>
   <link id="themeStylesheet" rel="stylesheet" href="oldpc.css">
-
-  <!-- PeerJS from unpkg (make sure it's a valid version) -->
-  <script src="https://unpkg.com/peerjs@1.4.7/dist/peerjs.min.js"></script>
+  <!-- Firebase SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/9.20.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.20.0/firebase-database-compat.js"></script>
 </head>
 <body>
   <button id="settingsBtn">⚙ Settings</button>
@@ -15,18 +14,6 @@
     <h2>Settings</h2>
     <label for="pat">Azure OpenAI Key:</label>
     <input type="password" id="pat" placeholder="Enter your Azure OpenAI PAT" />
-    <hr>
-
-    <!-- Host Mode and Connection Settings -->
-    <label for="hostMode">Host Mode:</label>
-    <input type="checkbox" id="hostMode" />
-    <br>
-    <label for="hostId">Host ID (for clients):</label>
-    <input type="text" id="hostId" placeholder="Enter host ID if joining as client" />
-    <br>
-    <div id="myPeerIdContainer" style="display:none;">
-      Your Peer ID: <span id="myPeerId"></span>
-    </div>
     <hr>
 
     <!-- Dictionary Role -->
@@ -40,11 +27,11 @@ First, show only the word and its IPA pronunciation without additional comments.
     <label for="promptPresetSelect">Game Prompt Preset:</label>
     <select id="promptPresetSelect">
       <option value="custom">Custom</option>
-      <option value="funny-space" data-prompt="You are a text-based game engine. The setting is a comedic space opera. Your job is to engage the user in a silly space adventure. Encourage them to practice English by using 'somebody' and 'anybody', etc. Keep it humorous and playful.">Funny Space Adventure</option>
-      <option value="zombie-apocalypse" data-prompt="You are a text-based game engine. The setting is a zombie apocalypse. The user must practice 'something/anything' and 'some/any' in their responses. Correct usage means survival; incorrect usage means the zombies are closing in! Keep the tone dark and suspenseful.">Zombie Apocalypse</option>
-      <option value="default" data-prompt="You are a text-based game engine for learning English. HIGH PRIORITY -> Don't tell about grammar or the theme to the user, it has to be just a game! Choose one random word for every session and repeat it really often! Themes for teaching today are somebody and anybody, something and anything, some and any. The user must type a sentence relevant to today's themes using the required words. If they use the correct usage, continue the story in a fun, light-hearted way. If they use the wrong usage, continue the story in a dark, creepy way, possibly leading to their demise. Every time the user makes a right or wrong decision, make it obvious in your story! The setting is a comedic and extremely dark space adventure. I want this game to feel like a real game! Vocabulary for A0 - A1. Ultraviolence is included! Offer hints on how the user can answer.">Default</option>
+      <option value="funny-space" data-prompt="You are a text-based game engine. The setting is a comedic space opera. Your job is to engage the user in a silly space adventure.">Funny Space Adventure</option>
+      <option value="zombie-apocalypse" data-prompt="You are a text-based game engine. The setting is a zombie apocalypse. The user must practice 'something/anything' and 'some/any' in their responses.">Zombie Apocalypse</option>
+      <option value="default" data-prompt="You are a text-based game engine for learning English. HIGH PRIORITY -> Don't tell about grammar or the theme to the user.">Default</option>
     </select>
-
+    
     <label for="gameSystemMessage">Game Prompt:</label>
     <textarea id="gameSystemMessage" rows="8">
 You are a text-based game engine for learning English.
@@ -75,7 +62,7 @@ You are a text-based game engine for learning English.
     </select>
     <hr>
 
-    <!-- Load Story Button (in settings panel) -->
+    <!-- Load Story Button -->
     <button id="load-story-btn">Load Story</button>
   </div>
 
@@ -103,145 +90,44 @@ You are a text-based game engine for learning English.
     import { showDictionaryModal } from './dictionaryModal.js';
 
     /********************************************************
-     *  P2P Setup using PeerJS for Co-Op
+     * Firebase Setup
      ********************************************************/
-    let isHost = false;
-    let peer = null;
-    let connection = null; // for a single client -> host connection
-    let connections = []; // for the host to track multiple clients
+    // Replace with your Firebase config (from your Firebase project settings)
+    const firebaseConfig = {
+      apiKey: "YOUR_API_KEY",
+      authDomain: "YOUR_PROJECT.firebaseapp.com",
+      databaseURL: "https://YOUR_PROJECT.firebaseio.com",
+      projectId: "YOUR_PROJECT",
+      storageBucket: "YOUR_PROJECT.appspot.com",
+      messagingSenderId: "YOUR_SENDER_ID",
+      appId: "YOUR_APP_ID"
+    };
 
-    const hostModeCheckbox = document.getElementById("hostMode");
-    const hostIdInput = document.getElementById("hostId");
-    const myPeerIdContainer = document.getElementById("myPeerIdContainer");
-    const peerIdDisplay = document.getElementById("myPeerId");
+    // Initialize Firebase
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+    const messagesRef = db.ref("messages");
 
-    function initPeer() {
-      isHost = hostModeCheckbox.checked;
-      console.log("[initPeer] isHost =", isHost);
-
-      // Create a new Peer with debugging turned on
-      peer = new Peer({
-        debug: 3 // This will log PeerJS' internal events in the console
-      });
-
-      // The 'open' event is fired when this peer is ready to connect
-      peer.on('open', (id) => {
-        console.log('[peer.on("open")] My peer ID is:', id);
-
-        if (isHost) {
-          // If we are the host, show our Peer ID so clients can connect
-          myPeerIdContainer.style.display = "block";
-          peerIdDisplay.textContent = id;
-        } else {
-          // If we are a client, hide that container
-          myPeerIdContainer.style.display = "none";
-        }
-      });
-
-      // For host: listen for incoming connections from clients
-      peer.on('connection', (conn) => {
-        console.log('[peer.on("connection")] New client connection from:', conn.peer);
-        connections.push(conn);
-
-        conn.on('open', () => {
-          console.log(`[conn.on("open")] Connection open with client: ${conn.peer}`);
-        });
-
-        conn.on('data', (data) => {
-          console.log(`[conn.on("data")] from client ${conn.peer}:`, data);
-          handlePeerData(data, conn);
-        });
-
-        conn.on('error', (err) => {
-          console.error(`[conn.on("error")] from ${conn.peer}:`, err);
-        });
-
-        conn.on('close', () => {
-          console.log(`[conn.on("close")] Connection closed by client: ${conn.peer}`);
-        });
-      });
-
-      // Listen for errors or disconnections
-      peer.on('error', (err) => {
-        console.error('[peer.on("error")]:', err);
-      });
-      peer.on('disconnected', () => {
-        console.log('[peer.on("disconnected")] The peer is disconnected');
-      });
-      peer.on('close', () => {
-        console.log('[peer.on("close")] The peer is destroyed');
-      });
-
-      // CHANGED FOR HOST ID INPUT:
-      // We do NOT connect automatically if not host.
-      // Instead, wait for the user to type the Host ID in the input field.
-      hostIdInput.addEventListener("input", () => {
-        // Only do this if we are a client, not the host.
-        if (isHost) return;
-
-        const newHostId = hostIdInput.value.trim();
-        if (!newHostId) {
-          console.log("[hostIdInput] Host ID is empty, skipping connect.");
-          return;
-        }
-
-        // If we're already connected or connecting, skip. 
-        // If you want to handle reconnection, you'd do that differently.
-        if (connection && connection.open) {
-          console.log("[hostIdInput] Already connected to a host. If you want to reconnect, reload or handle it here.");
-          return;
-        }
-
-        console.log("[hostIdInput] Attempting to connect to hostId =", newHostId);
-        connection = peer.connect(newHostId);
-
-        connection.on('open', () => {
-          console.log('[connection.on("open")] Connected to host:', newHostId);
-        });
-
-        connection.on('data', (data) => {
-          console.log('[connection.on("data")] from host:', data);
-          handlePeerData(data);
-        });
-
-        connection.on('error', (err) => {
-          console.error('[connection.on("error")]:', err);
-        });
-
-        connection.on('close', () => {
-          console.log('[connection.on("close")] The connection was closed');
-        });
-      });
+    // Generate a random client ID if not stored already
+    let clientId = localStorage.getItem("clientId");
+    if (!clientId) {
+      clientId = "User-" + Math.floor(Math.random() * 10000);
+      localStorage.setItem("clientId", clientId);
     }
+    console.log("Your client ID is:", clientId);
 
-    // Reinitialize PeerJS if the host mode changes
-    hostModeCheckbox.addEventListener("change", () => {
-      if (peer) {
-        console.log("[hostModeCheckbox] Destroying old peer instance");
-        peer.destroy();
-      }
-      initPeer();
+    // Listen for new messages and update the story display
+    messagesRef.on("child_added", snapshot => {
+      const data = snapshot.val();
+      const sender = data.sender;
+      const message = data.message;
+      const storyEl = document.getElementById("story");
+      // Append new message to the story (avoid duplicates if desired)
+      storyEl.textContent += "\n" + sender + ": " + message;
     });
-
-    // Initialize PeerJS on page load
-    window.addEventListener("load", () => {
-      initPeer();
-    });
-
-    // Handle incoming data (from clients or host)
-    function handlePeerData(data, conn = null) {
-      if (data.type === "userMessage") {
-        // For host: store and display incoming client messages
-        messages.push({ role: "user", content: data.message, sender: data.sender });
-        document.getElementById("story").textContent += "\n" + data.sender + ": " + data.message;
-      } else if (data.type === "aiMessage") {
-        // For clients: update display with the AI response
-        document.getElementById("story").textContent += "\nAI: " + data.message;
-      }
-    }
 
     /********************************************************
-     * 1) SETTINGS PANEL: LOAD/SAVE & THEME SWITCHING
+     * SETTINGS PANEL: LOAD/SAVE & THEME SWITCHING
      ********************************************************/
     function loadSettings() {
       const savedPat = localStorage.getItem("azurePat");
@@ -289,7 +175,6 @@ You are a text-based game engine for learning English.
     document.getElementById("gameSystemMessage").addEventListener("input", () => {
       const newPrompt = document.getElementById("gameSystemMessage").value;
       localStorage.setItem("gameSystemMessage", newPrompt);
-      // If preset is custom, store it separately
       if (document.getElementById("promptPresetSelect").value === "custom") {
         localStorage.setItem("customGameSystemMessage", newPrompt);
       }
@@ -316,19 +201,16 @@ You are a text-based game engine for learning English.
         document.getElementById("gameSystemMessage").value = customPrompt;
       }
     });
-
-    // Toggle settings panel
     document.getElementById("settingsBtn").addEventListener("click", () => {
       document.getElementById("settingsPanel").classList.toggle("open");
     });
 
     /********************************************************
-     * 2) GAME CONVERSATION LOGIC with Co-Op
+     * GAME CONVERSATION LOGIC with Firebase
      ********************************************************/
     let messages = [];
 
-    const sendMessageButton = document.getElementById("send-btn");
-    sendMessageButton.addEventListener("click", async () => {
+    document.getElementById("send-btn").addEventListener("click", async () => {
       const pat = document.getElementById("pat").value.trim();
       if (!pat) {
         alert("Please enter your Azure OpenAI PAT in Settings!");
@@ -340,57 +222,29 @@ You are a text-based game engine for learning English.
         alert("Input is empty!");
         return;
       }
-
-      if (isHost) {
-        // Host: store and display message, then send to AI
-        console.log("[sendMessage] Host is sending a message to AI:", userSentence);
-        messages.push({ role: "user", content: userSentence, sender: "Host" });
-        document.getElementById("story").textContent += "\nHost: " + userSentence;
-
-        // Example: send full conversation to AI right away
-        const gamePrompt = document.getElementById("gameSystemMessage").value;
-        const fullConversation = [
-          { role: "system", content: gamePrompt },
-          ...messages,
-          { role: "user", content: userSentence }
-        ];
-
-        try {
-          const aiMessage = await callOpenAI(fullConversation, pat);
-          console.log("[sendMessage] AI response:", aiMessage);
-          messages.push({ role: "assistant", content: aiMessage });
-          document.getElementById("story").textContent += "\nAI: " + aiMessage;
-          // Broadcast AI response to all clients
-          connections.forEach(conn => {
-            conn.send({ type: "aiMessage", message: aiMessage });
-          });
-        } catch (err) {
-          console.error("[sendMessage] Error calling OpenAI:", err);
-          alert("Error: " + err);
-        }
-      } else {
-        // Client: forward message to the host
-        console.log("[sendMessage] Client is sending message to host:", userSentence);
-        if (connection && connection.open) {
-          connection.send({ type: "userMessage", message: userSentence, sender: peer.id });
-          document.getElementById("story").textContent += "\n" + peer.id + ": " + userSentence;
-        } else {
-          alert("Not connected to host. Please type a valid Host ID first.");
-        }
-      }
+      
+      // Store message locally (for AI conversation, etc.)
+      messages.push({ role: "user", content: userSentence, sender: clientId });
+      // Display the user's message in the story area
+      document.getElementById("story").textContent += "\n" + clientId + ": " + userSentence;
+      
+      // Push the message to Firebase so all clients receive it
+      messagesRef.push({ sender: clientId, message: userSentence });
+      
+      // (Optional) If you want one client to act as the main AI server,
+      // call OpenAI here and push the AI response as well.
+      
       inputField.value = "";
     });
 
     /********************************************************
-     * 3) LOAD STORY FILE (in settings panel)
+     * LOAD STORY FILE (in settings panel)
      ********************************************************/
     const loadStoryBtn = document.getElementById("load-story-btn");
     const fileInput = document.getElementById("file-input");
-
     loadStoryBtn.addEventListener("click", () => {
       fileInput.click();
     });
-
     fileInput.addEventListener("change", (event) => {
       const file = event.target.files[0];
       if (file) {
@@ -409,7 +263,7 @@ You are a text-based game engine for learning English.
     });
 
     /********************************************************
-     * 4) DICTIONARY HANDLER & MODAL (using dictionaryModal.js)
+     * DICTIONARY HANDLER & MODAL (using dictionaryModal.js)
      ********************************************************/
     async function handleWordClick(clickedWord, context) {
       const pat = document.getElementById("pat").value.trim();
@@ -418,7 +272,6 @@ You are a text-based game engine for learning English.
         return;
       }
       console.log("[handleWordClick] Looking up word:", clickedWord, "Context:", context);
-
       const message = [
         {
           role: "system",

@@ -53,9 +53,9 @@ Offer hints on how the user can answer.
     </div>
     <div id="game-area">
       <div id="story">Starts the story, just write "let's go" and send.</div>
-      <div style="margin-top:10px;">
+      <div class="input-area">
         <input type="text" id="player-input" placeholder="Type anything here.">
-        <button class="green-btn" id="send-btn">Send</button>
+        <button id="send-btn">Send</button>
       </div>
     </div>
   </div>
@@ -128,7 +128,7 @@ Offer hints on how the user can answer.
         return;
       }
 
-      // Build the full conversation for the AI by prefixing the game prompt
+      // Build the full conversation by prefixing the game prompt
       const gamePrompt = document.getElementById("gameSystemMessage").value;
       const fullConversation = [
         { role: 'system', content: gamePrompt },
@@ -143,7 +143,7 @@ Offer hints on how the user can answer.
         messages.push({ role: 'assistant', content: aiMessage });
         // Display the AI's response in the story area
         document.getElementById("story").textContent = aiMessage;
-        // Make words in the story clickable (for dictionary lookup)
+        // Make words in the story clickable for dictionary lookups
         makeWordsClickable('story', handleWordClick);
       } catch (err) {
         alert("Error: " + err);
@@ -211,12 +211,12 @@ Offer hints on how the user can answer.
       modal.style.transform = "translate(-50%, -50%)";
       modal.style.width = "400px";
       modal.style.padding = "15px";
-      modal.style.backgroundColor = "#222";
-      modal.style.color = "#eee";
-      modal.style.border = "1px solid #444";
-      modal.style.boxShadow = "0 4px 10px rgba(0, 0, 0, 0.3)";
-      modal.style.borderRadius = "8px";
-      modal.style.fontFamily = "Arial, sans-serif";
+      modal.style.backgroundColor = "#000";
+      modal.style.color = "#0f0";
+      modal.style.border = "1px solid #0f0";
+      modal.style.boxShadow = "0 4px 10px rgba(0, 255, 0, 0.5)";
+      modal.style.borderRadius = "4px";
+      modal.style.fontFamily = '"Courier New", monospace';
       modal.style.textAlign = "center";
       modal.style.zIndex = "10000";
 
@@ -237,6 +237,7 @@ Offer hints on how the user can answer.
       buttonsContainer.style.justifyContent = "center";
       buttonsContainer.style.gap = "10px";
 
+      // TTS playback button
       const playButton = document.createElement("button");
       playButton.textContent = "🔊 Play";
       playButton.onclick = () => {
@@ -244,6 +245,15 @@ Offer hints on how the user can answer.
       };
       buttonsContainer.appendChild(playButton);
 
+      // Deep learning button to open Youglish
+      const deepLearningButton = document.createElement("button");
+      deepLearningButton.textContent = "Deep learning";
+      deepLearningButton.onclick = () => {
+        openCenteredWindow(`https://youglish.com/pronounce/${word}/english`, "Youglish", 800, 600);
+      };
+      buttonsContainer.appendChild(deepLearningButton);
+
+      // Oxford dictionary button
       const oxfordButton = document.createElement("button");
       oxfordButton.textContent = "Oxford";
       oxfordButton.onclick = () => {
@@ -256,6 +266,7 @@ Offer hints on how the user can answer.
       };
       buttonsContainer.appendChild(oxfordButton);
 
+      // Cambridge dictionary button
       const cambridgeButton = document.createElement("button");
       cambridgeButton.textContent = "Cambridge";
       cambridgeButton.onclick = () => {
@@ -268,6 +279,7 @@ Offer hints on how the user can answer.
       };
       buttonsContainer.appendChild(cambridgeButton);
 
+      // Close modal button
       const closeButton = document.createElement("button");
       closeButton.textContent = "Close";
       closeButton.onclick = () => {

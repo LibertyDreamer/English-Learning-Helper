@@ -3,34 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <title>Space Adventure Game</title>
-  <link rel="stylesheet" href="oldpc.css">
-  <style>
-    /* Example styles for the settings panel and modal */
-    #settingsPanel {
-      position: fixed;
-      top: 10%;
-      right: -300px;
-      width: 280px;
-      padding: 15px;
-      background-color: #333;
-      color: #eee;
-      border: 1px solid #444;
-      transition: right 0.3s ease;
-      z-index: 1000;
-    }
-    #settingsPanel.open {
-      right: 10px;
-    }
-    #settingsBtn {
-      position: fixed;
-      top: 10px;
-      right: 10px;
-      z-index: 1100;
-    }
-    #custom-alert {
-      background-color: #222;
-    }
-  </style>
+  <link rel="stylesheet" href="reading-dark.css">
 </head>
 <body>
   <button id="settingsBtn">⚙ Settings</button>
@@ -42,6 +15,22 @@
     <label for="AISystemRole">Dictionary Role:</label>
     <textarea id="AISystemRole" rows="6">
 First, show only the word and its IPA pronunciation without additional comments. Then, explain the meaning of the word clearly and simply, suitable for a 3-year-old non-native speaker at A0 level.
+    </textarea>
+    <hr>
+    <label for="gameSystemMessage">Game Prompt:</label>
+    <textarea id="gameSystemMessage" rows="8">
+You are a text-based game engine for learning English.
+HIGH PRIORITY -> Don't tell about grammar or the theme to the user, it has to be just a game!
+Chose one random word for every session and repeat it really often!
+Themes for teaching today are somebody and anybody, something and anything, some and any.
+The user must type a sentence relevant to today's themes using the required words.
+If they use the correct usage, continue the story in a fun, light-hearted way.
+If they use the wrong usage, continue the story in a dark, creepy way, possibly leading to their demise.
+Every time the user makes a right or wrong decision, make it obvious in your story!
+The setting is a comedic and extremely dark space adventure.
+I want this game to feel like a real game!
+Vocabulary for A0 - A1. Ultraviolence is included!
+Offer hints on how the user can answer.
     </textarea>
     <hr>
     <label for="voiceSelect">TTS Voice:</label>
@@ -59,40 +48,31 @@ First, show only the word and its IPA pronunciation without additional comments.
 
   <div id="container">
     <h1>Space Adventure</h1>
-
-    <!-- Intro text only (PAT is now entered in settings) -->
     <div id="intro">
-      <p>Welcome to your space adventure! You can also load a text file to explore its words.</p>
+      <p>Welcome to your space adventure! Type a sentence to start the story.</p>
     </div>
-
     <div id="game-area">
-      <!-- Story display area -->
       <div id="story">Starts the story, just write "let's go" and send.</div>
-      <!-- Game conversation controls -->
       <div style="margin-top:10px;">
         <input type="text" id="player-input" placeholder="Type anything here.">
         <button class="green-btn" id="send-btn">Send</button>
       </div>
-      <!-- Button to load a text file for reading -->
-      <button id="load-book-btn" style="margin-top:10px;">Load book</button>
     </div>
   </div>
 
-  <!-- Hidden file input for loading a book/text -->
-  <input type="file" id="file-input" accept=".txt" style="display:none" />
-
-  <!-- External JavaScript module imports -->
+  <!-- JavaScript Modules -->
   <script type="module">
     import { makeWordsClickable } from './clickableWords.js';
     import { callOpenAI } from './openaiCaller.js';
     import { sayThis } from './ttsModule.js';
 
     /********************************************************
-     * SETTINGS PANEL: LOAD AND SAVE TO LOCALSTORAGE
+     * SETTINGS PANEL: LOAD/SAVE TO LOCALSTORAGE
      ********************************************************/
     function loadSettings() {
       const savedPat = localStorage.getItem("azurePat");
       const aiRole = localStorage.getItem("AISystemRole");
+      const gamePrompt = localStorage.getItem("gameSystemMessage");
       const voiceSelect = localStorage.getItem("voiceSelect");
 
       if (savedPat !== null) {
@@ -100,6 +80,9 @@ First, show only the word and its IPA pronunciation without additional comments.
       }
       if (aiRole !== null) {
         document.getElementById("AISystemRole").value = aiRole;
+      }
+      if (gamePrompt !== null) {
+        document.getElementById("gameSystemMessage").value = gamePrompt;
       }
       if (voiceSelect !== null) {
         document.getElementById("voiceSelect").value = voiceSelect;
@@ -113,11 +96,14 @@ First, show only the word and its IPA pronunciation without additional comments.
     document.getElementById("AISystemRole").addEventListener("input", () => {
       localStorage.setItem("AISystemRole", document.getElementById("AISystemRole").value);
     });
+    document.getElementById("gameSystemMessage").addEventListener("input", () => {
+      localStorage.setItem("gameSystemMessage", document.getElementById("gameSystemMessage").value);
+    });
     document.getElementById("voiceSelect").addEventListener("input", () => {
       localStorage.setItem("voiceSelect", document.getElementById("voiceSelect").value);
     });
 
-    // Toggle settings panel visibility
+    // Toggle the settings panel
     document.getElementById("settingsBtn").addEventListener("click", () => {
       document.getElementById("settingsPanel").classList.toggle("open");
     });
@@ -125,24 +111,8 @@ First, show only the word and its IPA pronunciation without additional comments.
     /********************************************************
      * GAME CONVERSATION LOGIC
      ********************************************************/
-    // Conversation memory for the game story
-    let messages = [
-      {
-        role: 'system',
-        content: `You are a text-based game engine for learning English.
-HIGH PRIORITY -> Don't tell about grammar or the theme to user, for user it has to be just a game, it's really important!
-Chose one random word for every session and repeat it really often, I mean really!
-Themes for teaching today is somebody and anybody, something and anything, some and any.
-The user must type a sentence which is relevant to todays themes. You have to make them use the relevant words.
-If they use the correct usage in context, continue the story in a fun, light-hearted way.
-If they use the wrong usage, continue the story in a dark, creepy way, possibly leading to their dead.
-Every time the user makes a right or wrong decision between learning themes, make it obvious that the choice was right or wrong through your story!
-The setting is a comedic and extremely dark space adventure.
-I want this game to feel like a real game!
-Vocabulary for A0 - A1. Ultraviolence is included!
-Offer hints on how the user can answer.`
-      }
-    ];
+    // Conversation memory (without the system message)
+    let messages = [];
 
     const sendMessageButton = document.getElementById("send-btn");
     sendMessageButton.addEventListener("click", async () => {
@@ -158,30 +128,31 @@ Offer hints on how the user can answer.`
         return;
       }
 
-      // Add the user's sentence to the conversation memory
-      messages.push({
-        role: 'user',
-        content: userSentence
-      });
-      inputField.value = '';
+      // Build the full conversation for the AI by prefixing the game prompt
+      const gamePrompt = document.getElementById("gameSystemMessage").value;
+      const fullConversation = [
+        { role: 'system', content: gamePrompt },
+        ...messages,
+        { role: 'user', content: userSentence }
+      ];
 
       try {
-        // Call the AI to continue the story
-        const aiMessage = await callOpenAI(messages, pat);
-        messages.push({
-          role: 'assistant',
-          content: aiMessage
-        });
+        const aiMessage = await callOpenAI(fullConversation, pat);
+        // Update conversation memory (store only user and assistant messages)
+        messages.push({ role: 'user', content: userSentence });
+        messages.push({ role: 'assistant', content: aiMessage });
+        // Display the AI's response in the story area
         document.getElementById("story").textContent = aiMessage;
-        // Make the story text clickable (each word)
+        // Make words in the story clickable (for dictionary lookup)
         makeWordsClickable('story', handleWordClick);
       } catch (err) {
         alert("Error: " + err);
       }
+      inputField.value = '';
     });
 
     /********************************************************
-     * DICTIONARY (WORD CLICK) HANDLER & MODAL
+     * DICTIONARY HANDLER & MODAL
      ********************************************************/
     async function handleWordClick(clickedWord, context) {
       const pat = document.getElementById("pat").value.trim();
@@ -189,8 +160,6 @@ Offer hints on how the user can answer.`
         alert("Please enter your Azure OpenAI PAT in Settings!");
         return;
       }
-
-      // Build a conversation for the dictionary query using the AISystemRole from settings
       const message = [
         {
           role: 'system',
@@ -201,7 +170,6 @@ Offer hints on how the user can answer.`
           content: `Word: "${clickedWord}" Context: "${context}"`
         }
       ];
-
       try {
         const aiMessage = await callOpenAI(message, pat);
         showAlertWithMeaning(clickedWord, aiMessage);
@@ -210,7 +178,7 @@ Offer hints on how the user can answer.`
       }
     }
 
-    // Helper function to open a new centered window (for dictionary sites)
+    // Helper function to open a new centered window
     function openCenteredWindow(url, title, w, h) {
       const dualScreenLeft = window.screenLeft !== undefined ? window.screenLeft : screen.left;
       const dualScreenTop = window.screenTop !== undefined ? window.screenTop : screen.top;
@@ -228,17 +196,13 @@ Offer hints on how the user can answer.`
       }
     }
 
-    // Modal window to show dictionary explanation
+    // Modal window to display dictionary explanation
     function showAlertWithMeaning(word, meaning) {
-      // Use TTS to play the word
       sayThis(word, document.getElementById("voiceSelect").value);
-
-      // Remove existing modal if present
       const existingModal = document.getElementById("custom-alert");
       if (existingModal) {
         document.body.removeChild(existingModal);
       }
-
       const modal = document.createElement("div");
       modal.id = "custom-alert";
       modal.style.position = "fixed";
@@ -273,7 +237,6 @@ Offer hints on how the user can answer.`
       buttonsContainer.style.justifyContent = "center";
       buttonsContainer.style.gap = "10px";
 
-      // Button: TTS playback
       const playButton = document.createElement("button");
       playButton.textContent = "🔊 Play";
       playButton.onclick = () => {
@@ -281,7 +244,6 @@ Offer hints on how the user can answer.`
       };
       buttonsContainer.appendChild(playButton);
 
-      // Button: open Oxford dictionary in centered window
       const oxfordButton = document.createElement("button");
       oxfordButton.textContent = "Oxford";
       oxfordButton.onclick = () => {
@@ -294,7 +256,6 @@ Offer hints on how the user can answer.`
       };
       buttonsContainer.appendChild(oxfordButton);
 
-      // Button: open Cambridge dictionary in centered window
       const cambridgeButton = document.createElement("button");
       cambridgeButton.textContent = "Cambridge";
       cambridgeButton.onclick = () => {
@@ -307,7 +268,6 @@ Offer hints on how the user can answer.`
       };
       buttonsContainer.appendChild(cambridgeButton);
 
-      // Button: close modal
       const closeButton = document.createElement("button");
       closeButton.textContent = "Close";
       closeButton.onclick = () => {
@@ -318,7 +278,6 @@ Offer hints on how the user can answer.`
       modal.appendChild(buttonsContainer);
       document.body.appendChild(modal);
     }
-
   </script>
 </body>
 </html>

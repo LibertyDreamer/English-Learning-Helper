@@ -2,99 +2,363 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Co-op Space Adventure</title>
-  <!-- Google Font -->
-  <link rel="preconnect" href="https://fonts.gstatic.com" />
-  <link
-    href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap"
-    rel="stylesheet"
-  />
-  <!-- Custom CSS -->
-  <link rel="stylesheet" href="coop.css" />
+  <title>Adventure Game - Co-Op</title>
+  <!-- Default theme is Old PC -->
+  <link id="themeStylesheet" rel="stylesheet" href="oldpc.css">
+  <!-- Include PeerJS from CDN -->
+  <script src="https://unpkg.com/peerjs@1.3.2/dist/peerjs.min.js"></script>
 </head>
 <body>
+  <button id="settingsBtn">⚙ Settings</button>
+  <div id="settingsPanel">
+    <h2>Settings</h2>
+    <label for="pat">Azure OpenAI Key:</label>
+    <input type="password" id="pat" placeholder="Enter your Azure OpenAI PAT" />
+    <hr>
+
+    <!-- Host Mode and Connection Settings -->
+    <label for="hostMode">Host Mode:</label>
+    <input type="checkbox" id="hostMode" />
+    <br>
+    <label for="hostId">Host ID (for clients):</label>
+    <input type="text" id="hostId" placeholder="Enter host ID if joining as client" />
+    <br>
+    <div id="myPeerIdContainer" style="display:none;">
+      Your Peer ID: <span id="myPeerId"></span>
+    </div>
+    <hr>
+
+    <!-- Dictionary Role -->
+    <label for="AISystemRole">Dictionary Role:</label>
+    <textarea id="AISystemRole" rows="6">
+First, show only the word and its IPA pronunciation without additional comments. Then, explain the meaning of the word clearly and simply, suitable for a 3-year-old non-native speaker at A0 level.
+    </textarea>
+    <hr>
+
+    <!-- Game Prompt Preset -->
+    <label for="promptPresetSelect">Game Prompt Preset:</label>
+    <select id="promptPresetSelect">
+      <option value="custom">Custom</option>
+      <option value="funny-space" data-prompt="You are a text-based game engine. The setting is a comedic space opera. Your job is to engage the user in a silly space adventure. Encourage them to practice English by using 'somebody' and 'anybody', etc. Keep it humorous and playful.">Funny Space Adventure</option>
+      <option value="zombie-apocalypse" data-prompt="You are a text-based game engine. The setting is a zombie apocalypse. The user must practice 'something/anything' and 'some/any' in their responses. Correct usage means survival; incorrect usage means the zombies are closing in! Keep the tone dark and suspenseful.">Zombie Apocalypse</option>
+      <option value="default" data-prompt="You are a text-based game engine for learning English. HIGH PRIORITY -> Don't tell about grammar or the theme to the user, it has to be just a game! Choose one random word for every session and repeat it really often! Themes for teaching today are somebody and anybody, something and anything, some and any. The user must type a sentence relevant to today's themes using the required words. If they use the correct usage, continue the story in a fun, light-hearted way. If they use the wrong usage, continue the story in a dark, creepy way, possibly leading to their demise. Every time the user makes a right or wrong decision, make it obvious in your story! The setting is a comedic and extremely dark space adventure. I want this game to feel like a real game! Vocabulary for A0 - A1. Ultraviolence is included! Offer hints on how the user can answer.">Default</option>
+    </select>
+
+    <label for="gameSystemMessage">Game Prompt:</label>
+    <textarea id="gameSystemMessage" rows="8">
+You are a text-based game engine for learning English.
+    </textarea>
+    <hr>
+
+    <!-- TTS Voice -->
+    <label for="voiceSelect">TTS Voice:</label>
+    <select id="voiceSelect">
+      <option value="Matthew">Matthew</option>
+      <option value="Joanna">Joanna</option>
+      <option value="Kimberly">Kimberly</option>
+      <option value="Salli">Salli</option>
+      <option value="Amy">Amy</option>
+      <option value="Emma">Emma</option>
+      <option value="Brian">Brian</option>
+      <option value="Russell">Russell</option>
+    </select>
+    <hr>
+
+    <!-- Theme Switcher -->
+    <label for="themeSelect">Theme:</label>
+    <select id="themeSelect">
+      <option value="reading-dark.css">Reader</option>
+      <option value="oldpc.css" selected>Old PC</option>
+      <option value="fantasy.css">Fantasy</option>
+      <option value="horror.css">Horror</option>
+    </select>
+    <hr>
+
+    <!-- Load Story Button (in settings panel) -->
+    <button id="load-story-btn">Load Story</button>
+  </div>
+
   <div id="container">
-    <!-- USERNAME PANEL -->
-    <div id="user-panel">
-      <h1>Co-op Space Adventure</h1>
-      <div class="username-box">
-        <label for="username">Enter your username:</label>
-        <input type="text" id="username" placeholder="Username" />
-        <button id="save-username-btn">Save</button>
-      </div>
+    <h1>Adventure</h1>
+    <div id="intro">
+      <p>Welcome to your adventure! Type a sentence to start the story.</p>
     </div>
-
-    <!-- STORY WINDOW -->
-    <div id="story">
-      <h2>Story</h2>
-      <div id="story-content">
-        <!-- Dynamic story text will appear here -->
-        <p>Welcome to the cosmic darkness, traveler...</p>
+    <div id="game-area">
+      <div id="story">Starts the story, just write "let's go" and send.</div>
+      <div class="input-area">
+        <input type="text" id="player-input" placeholder="Type anything here.">
+        <button id="send-btn">Send</button>
       </div>
-    </div>
-
-    <!-- CHAT WINDOW -->
-    <div id="chat">
-      <h2>Chat</h2>
-      <div id="chat-messages">
-        <!-- Chat messages go here -->
-        <p><strong>System:</strong> Greetings, explorers!</p>
-      </div>
-      <div id="chat-input">
-        <input type="text" id="chat-text" placeholder="Type a message..." />
-        <button id="chat-send-btn">Send</button>
-      </div>
-    </div>
-
-    <!-- DECISION PANEL -->
-    <div id="decision-panel">
-      <h2>Your Decision</h2>
-      <div class="decision-box">
-        <input
-          type="text"
-          id="decision-input"
-          placeholder="Enter your action/decision..."
-        />
-        <button id="decision-send-btn">Go!</button>
-      </div>
-    </div>
-
-    <!-- EVERYONE'S DECISIONS -->
-    <div id="shared-decisions">
-      <h2>All Players' Decisions</h2>
-      <ul id="decision-list">
-        <!-- List of all decisions from players will appear here -->
-        <li>Player1: Explore the derelict ship</li>
-        <li>Player2: Check the cargo hold</li>
-        <li>Player3: Check the cargo hold</li>
-        <li>Player4: Check the cargo hold</li>
-        <li>Player5: Check the cargo hold</li>
-      </ul>
     </div>
   </div>
 
-  <!-- (Optional) Example JS for demonstration -->
-  <script>
-    document.getElementById('save-username-btn').addEventListener('click', () => {
-      const username = document.getElementById('username').value.trim();
-      if (username) {
-        alert("Username saved: " + username);
+  <!-- Hidden file input for loading a text file -->
+  <input type="file" id="file-input" accept=".txt" style="display:none;" />
+
+  <script type="module">
+    import { makeWordsClickable } from './clickableWords.js';
+    import { callOpenAI } from './openaiCaller.js';
+    import { sayThis } from './ttsModule.js';
+    import { showDictionaryModal, openCenteredWindow } from './dictionaryModal.js';
+
+    /********************************************************
+     *  P2P Setup using PeerJS for Co-Op
+     ********************************************************/
+    let isHost = false;
+    let peer = null;
+    let connection = null; // for clients
+    let connections = []; // for host to track multiple clients
+    const hostModeCheckbox = document.getElementById("hostMode");
+    const hostIdInput = document.getElementById("hostId");
+    const myPeerIdContainer = document.getElementById("myPeerIdContainer");
+    const peerIdDisplay = document.getElementById("myPeerId");
+
+    function initPeer() {
+      isHost = hostModeCheckbox.checked;
+      peer = new Peer();
+      peer.on('open', id => {
+        console.log("My peer ID is: " + id);
+        if (isHost) {
+          myPeerIdContainer.style.display = "block";
+          peerIdDisplay.textContent = id;
+        }
+        // For clients, attempt to connect if a host ID is provided
+        if (!isHost) {
+          const hostId = hostIdInput.value.trim();
+          if (hostId) {
+            connection = peer.connect(hostId);
+            connection.on('open', () => {
+              console.log("Connected to host: " + hostId);
+            });
+            connection.on('data', handlePeerData);
+          }
+        }
+      });
+
+      // For host: listen for incoming connections from clients
+      if (isHost) {
+        peer.on('connection', (conn) => {
+          connections.push(conn);
+          conn.on('data', (data) => {
+            handlePeerData(data, conn);
+          });
+        });
+      }
+    }
+
+    // Reinitialize PeerJS if the host mode changes
+    hostModeCheckbox.addEventListener("change", () => {
+      if (peer) {
+        peer.destroy();
+      }
+      initPeer();
+    });
+
+    // Initialize PeerJS on page load
+    window.addEventListener("load", () => {
+      initPeer();
+    });
+
+    // Handle incoming data (from clients or host)
+    function handlePeerData(data, conn = null) {
+      if (data.type === "userMessage") {
+        // For host: store and display incoming client messages
+        messages.push({ role: "user", content: data.message, sender: data.sender });
+        document.getElementById("story").textContent += "\n" + data.sender + ": " + data.message;
+      } else if (data.type === "aiMessage") {
+        // For clients: update display with the AI response
+        document.getElementById("story").textContent += "\nAI: " + data.message;
+      }
+    }
+
+    /********************************************************
+     * 1) SETTINGS PANEL: LOAD/SAVE & THEME SWITCHING
+     ********************************************************/
+    function loadSettings() {
+      const savedPat = localStorage.getItem("azurePat");
+      const aiRole = localStorage.getItem("AISystemRole");
+      const voiceSelect = localStorage.getItem("voiceSelect");
+      const theme = localStorage.getItem("theme");
+      const savedPreset = localStorage.getItem("promptPreset");
+      const customPrompt = localStorage.getItem("customGameSystemMessage");
+
+      if (savedPat !== null) {
+        document.getElementById("pat").value = savedPat;
+      }
+      if (aiRole !== null) {
+        document.getElementById("AISystemRole").value = aiRole;
+      }
+      if (voiceSelect !== null) {
+        document.getElementById("voiceSelect").value = voiceSelect;
+      }
+      if (theme !== null) {
+        document.getElementById("themeSelect").value = theme;
+        document.getElementById("themeStylesheet").href = theme;
+      }
+      if (savedPreset !== null) {
+        const select = document.getElementById("promptPresetSelect");
+        select.value = savedPreset;
+        if (savedPreset === "custom" && customPrompt !== null) {
+          document.getElementById("gameSystemMessage").value = customPrompt;
+        } else if (savedPreset !== "custom") {
+          const selectedOption = select.options[select.selectedIndex];
+          const presetText = selectedOption.getAttribute("data-prompt") || "";
+          document.getElementById("gameSystemMessage").value = presetText;
+        }
+      } else {
+        document.getElementById("promptPresetSelect").value = "custom";
+      }
+    }
+    loadSettings();
+
+    document.getElementById("pat").addEventListener("input", () => {
+      localStorage.setItem("azurePat", document.getElementById("pat").value);
+    });
+    document.getElementById("AISystemRole").addEventListener("input", () => {
+      localStorage.setItem("AISystemRole", document.getElementById("AISystemRole").value);
+    });
+    document.getElementById("gameSystemMessage").addEventListener("input", () => {
+      const newPrompt = document.getElementById("gameSystemMessage").value;
+      localStorage.setItem("gameSystemMessage", newPrompt);
+      // If preset is custom, store it separately
+      if (document.getElementById("promptPresetSelect").value === "custom") {
+        localStorage.setItem("customGameSystemMessage", newPrompt);
+      }
+    });
+    document.getElementById("voiceSelect").addEventListener("input", () => {
+      localStorage.setItem("voiceSelect", document.getElementById("voiceSelect").value);
+    });
+    document.getElementById("themeSelect").addEventListener("change", () => {
+      const theme = document.getElementById("themeSelect").value;
+      localStorage.setItem("theme", theme);
+      document.getElementById("themeStylesheet").href = theme;
+    });
+    document.getElementById("promptPresetSelect").addEventListener("change", () => {
+      const select = document.getElementById("promptPresetSelect");
+      const presetKey = select.value;
+      localStorage.setItem("promptPreset", presetKey);
+      if (presetKey !== "custom") {
+        const selectedOption = select.options[select.selectedIndex];
+        const presetText = selectedOption.getAttribute("data-prompt") || "";
+        document.getElementById("gameSystemMessage").value = presetText;
+        localStorage.setItem("gameSystemMessage", presetText);
+      } else {
+        const customPrompt = localStorage.getItem("customGameSystemMessage") || "";
+        document.getElementById("gameSystemMessage").value = customPrompt;
       }
     });
 
-    document.getElementById('chat-send-btn').addEventListener('click', () => {
-      const message = document.getElementById('chat-text').value.trim();
-      if (message) {
-        alert("Sent chat message: " + message);
+    // Toggle settings panel
+    document.getElementById("settingsBtn").addEventListener("click", () => {
+      document.getElementById("settingsPanel").classList.toggle("open");
+    });
+
+    /********************************************************
+     * 2) GAME CONVERSATION LOGIC with Co-Op
+     ********************************************************/
+    let messages = [];
+
+    const sendMessageButton = document.getElementById("send-btn");
+    sendMessageButton.addEventListener("click", async () => {
+      const pat = document.getElementById("pat").value.trim();
+      if (!pat) {
+        alert("Please enter your Azure OpenAI PAT in Settings!");
+        return;
+      }
+      const inputField = document.getElementById("player-input");
+      const userSentence = inputField.value.trim();
+      if (!userSentence) {
+        alert("Input is empty, man!");
+        return;
+      }
+      // For host, add the message locally and send to AI; for clients, forward the message to host.
+      if (isHost) {
+        messages.push({ role: "user", content: userSentence, sender: "Host" });
+        document.getElementById("story").textContent += "\nHost: " + userSentence;
+        // Here you could wait for all players’ inputs before proceeding.
+        // For simplicity, we immediately combine the conversation.
+        const gamePrompt = document.getElementById("gameSystemMessage").value;
+        const fullConversation = [
+          { role: "system", content: gamePrompt },
+          ...messages,
+          { role: "user", content: userSentence }
+        ];
+        try {
+          const aiMessage = await callOpenAI(fullConversation, pat);
+          messages.push({ role: "assistant", content: aiMessage });
+          document.getElementById("story").textContent += "\nAI: " + aiMessage;
+          // Broadcast the AI response to all connected clients
+          connections.forEach(conn => {
+            conn.send({ type: "aiMessage", message: aiMessage });
+          });
+        } catch (err) {
+          alert("Error: " + err);
+        }
+      } else {
+        // Client sends its message to the host
+        if (connection && connection.open) {
+          connection.send({ type: "userMessage", message: userSentence, sender: peer.id });
+          document.getElementById("story").textContent += "\n" + peer.id + ": " + userSentence;
+        } else {
+          alert("Not connected to host.");
+        }
+      }
+      inputField.value = "";
+    });
+
+    /********************************************************
+     * 3) LOAD STORY FILE (in settings panel)
+     ********************************************************/
+    const loadStoryBtn = document.getElementById("load-story-btn");
+    const fileInput = document.getElementById("file-input");
+
+    loadStoryBtn.addEventListener("click", () => {
+      fileInput.click();
+    });
+
+    fileInput.addEventListener("change", (event) => {
+      const file = event.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          const storyText = e.target.result;
+          messages.push({ role: "assistant", content: storyText });
+          document.getElementById("story").textContent = storyText;
+          makeWordsClickable("story", handleWordClick);
+        };
+        reader.onerror = function() {
+          alert("Error reading file");
+        };
+        reader.readAsText(file);
       }
     });
 
-    document.getElementById('decision-send-btn').addEventListener('click', () => {
-      const decision = document.getElementById('decision-input').value.trim();
-      if (decision) {
-        alert("Decision made: " + decision);
+    /********************************************************
+     * 4) DICTIONARY HANDLER & MODAL (using dictionaryModal.js)
+     ********************************************************/
+    async function handleWordClick(clickedWord, context) {
+      const pat = document.getElementById("pat").value.trim();
+      if (!pat) {
+        alert("Please enter your Azure OpenAI PAT in Settings!");
+        return;
       }
-    });
+      const message = [
+        {
+          role: "system",
+          content: document.getElementById("AISystemRole").value,
+        },
+        {
+          role: "user",
+          content: `Word: "${clickedWord}" Context: "${context}"`,
+        },
+      ];
+      try {
+        const aiMessage = await callOpenAI(message, pat);
+        showDictionaryModal(clickedWord, aiMessage, sayThis, document.getElementById("voiceSelect"));
+      } catch (err) {
+        alert("Error: " + err);
+      }
+    }
   </script>
 </body>
 </html>

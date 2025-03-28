@@ -4,32 +4,128 @@
   <meta charset="UTF-8" />
   <title>Space Adventure Game</title>
   <link rel="stylesheet" href="oldpc.css">
+  <style>
+    /* Example styles for the settings panel and modal */
+    #settingsPanel {
+      position: fixed;
+      top: 10%;
+      right: -300px;
+      width: 280px;
+      padding: 15px;
+      background-color: #333;
+      color: #eee;
+      border: 1px solid #444;
+      transition: right 0.3s ease;
+      z-index: 1000;
+    }
+    #settingsPanel.open {
+      right: 10px;
+    }
+    #settingsBtn {
+      position: fixed;
+      top: 10px;
+      right: 10px;
+      z-index: 1100;
+    }
+    #custom-alert {
+      background-color: #222;
+    }
+  </style>
 </head>
 <body>
+  <button id="settingsBtn">⚙ Settings</button>
+  <div id="settingsPanel">
+    <h2>Settings</h2>
+    <label for="pat">Azure OpenAI Key:</label>
+    <input type="password" id="pat" placeholder="Enter your Azure OpenAI PAT" />
+    <hr>
+    <label for="AISystemRole">Dictionary Role:</label>
+    <textarea id="AISystemRole" rows="6">
+First, show only the word and its IPA pronunciation without additional comments. Then, explain the meaning of the word clearly and simply, suitable for a 3-year-old non-native speaker at A0 level.
+    </textarea>
+    <hr>
+    <label for="voiceSelect">TTS Voice:</label>
+    <select id="voiceSelect">
+      <option value="Matthew">Matthew</option>
+      <option value="Joanna">Joanna</option>
+      <option value="Kimberly">Kimberly</option>
+      <option value="Salli">Salli</option>
+      <option value="Amy">Amy</option>
+      <option value="Emma">Emma</option>
+      <option value="Brian">Brian</option>
+      <option value="Russell">Russell</option>
+    </select>
+  </div>
+
   <div id="container">
     <h1>Space Adventure</h1>
 
+    <!-- Intro text only (PAT is now entered in settings) -->
     <div id="intro">
-      <p>Enter your Azure API key.</p>
-      <input id="pat" placeholder="Enter your Azure OpenAI PAT" />
+      <p>Welcome to your space adventure! You can also load a text file to explore its words.</p>
     </div>
 
     <div id="game-area">
-      <div id="story">Starts the story, just write let's go and send.</div>
+      <!-- Story display area -->
+      <div id="story">Starts the story, just write "let's go" and send.</div>
+      <!-- Game conversation controls -->
       <div style="margin-top:10px;">
         <input type="text" id="player-input" placeholder="Type anything here.">
         <button class="green-btn" id="send-btn">Send</button>
       </div>
+      <!-- Button to load a text file for reading -->
+      <button id="load-book-btn" style="margin-top:10px;">Load book</button>
     </div>
   </div>
 
-  <!-- Load the external JavaScript module -->
+  <!-- Hidden file input for loading a book/text -->
+  <input type="file" id="file-input" accept=".txt" style="display:none" />
+
+  <!-- External JavaScript module imports -->
   <script type="module">
     import { makeWordsClickable } from './clickableWords.js';
     import { callOpenAI } from './openaiCaller.js';
+    import { sayThis } from './ttsModule.js';
 
-    // We'll store the conversation with the AI in this array of messages.
-    // This is the "game" memory so the AI remembers the story in one session.
+    /********************************************************
+     * SETTINGS PANEL: LOAD AND SAVE TO LOCALSTORAGE
+     ********************************************************/
+    function loadSettings() {
+      const savedPat = localStorage.getItem("azurePat");
+      const aiRole = localStorage.getItem("AISystemRole");
+      const voiceSelect = localStorage.getItem("voiceSelect");
+
+      if (savedPat !== null) {
+        document.getElementById("pat").value = savedPat;
+      }
+      if (aiRole !== null) {
+        document.getElementById("AISystemRole").value = aiRole;
+      }
+      if (voiceSelect !== null) {
+        document.getElementById("voiceSelect").value = voiceSelect;
+      }
+    }
+    loadSettings();
+
+    document.getElementById("pat").addEventListener("input", () => {
+      localStorage.setItem("azurePat", document.getElementById("pat").value);
+    });
+    document.getElementById("AISystemRole").addEventListener("input", () => {
+      localStorage.setItem("AISystemRole", document.getElementById("AISystemRole").value);
+    });
+    document.getElementById("voiceSelect").addEventListener("input", () => {
+      localStorage.setItem("voiceSelect", document.getElementById("voiceSelect").value);
+    });
+
+    // Toggle settings panel visibility
+    document.getElementById("settingsBtn").addEventListener("click", () => {
+      document.getElementById("settingsPanel").classList.toggle("open");
+    });
+
+    /********************************************************
+     * GAME CONVERSATION LOGIC
+     ********************************************************/
+    // Conversation memory for the game story
     let messages = [
       {
         role: 'system',
@@ -40,31 +136,65 @@ Themes for teaching today is somebody and anybody, something and anything, some 
 The user must type a sentence which is relevant to todays themes. You have to make them use the relevant words.
 If they use the correct usage in context, continue the story in a fun, light-hearted way.
 If they use the wrong usage, continue the story in a dark, creepy way, possibly leading to their dead.
-Every time then user make right or wrong decision between learning themes make it obvious that choose was right or wrong throw your story!
+Every time the user makes a right or wrong decision between learning themes, make it obvious that the choice was right or wrong through your story!
 The setting is a comedic and extremely dark space adventure.
-I want this game feels like real game!
+I want this game to feel like a real game!
 Vocabulary for A0 - A1. Ultraviolence is included!
-Offer hints how user can answer.`
+Offer hints on how the user can answer.`
       }
     ];
 
-    /********************************************************
-     * 1) WORD CLICK HANDLER
-     ********************************************************/
-    // Must be async if we're going to use "await" inside it
-    async function handleWordClick(clickedWord, context) {
-      const pat = document.getElementById("pat").value;
+    const sendMessageButton = document.getElementById("send-btn");
+    sendMessageButton.addEventListener("click", async () => {
+      const pat = document.getElementById("pat").value.trim();
       if (!pat) {
-        alert("Please enter your Azure OpenAI PAT!");
+        alert("Please enter your Azure OpenAI PAT in Settings!");
+        return;
+      }
+      const inputField = document.getElementById('player-input');
+      const userSentence = inputField.value.trim();
+      if (!userSentence) {
+        alert("Input is empty, man!");
         return;
       }
 
-      // We build a small conversation array for the dictionary query
+      // Add the user's sentence to the conversation memory
+      messages.push({
+        role: 'user',
+        content: userSentence
+      });
+      inputField.value = '';
+
+      try {
+        // Call the AI to continue the story
+        const aiMessage = await callOpenAI(messages, pat);
+        messages.push({
+          role: 'assistant',
+          content: aiMessage
+        });
+        document.getElementById("story").textContent = aiMessage;
+        // Make the story text clickable (each word)
+        makeWordsClickable('story', handleWordClick);
+      } catch (err) {
+        alert("Error: " + err);
+      }
+    });
+
+    /********************************************************
+     * DICTIONARY (WORD CLICK) HANDLER & MODAL
+     ********************************************************/
+    async function handleWordClick(clickedWord, context) {
+      const pat = document.getElementById("pat").value.trim();
+      if (!pat) {
+        alert("Please enter your Azure OpenAI PAT in Settings!");
+        return;
+      }
+
+      // Build a conversation for the dictionary query using the AISystemRole from settings
       const message = [
         {
           role: 'system',
-          content: `You are a dictionary. Explain meaning of this word or words inside this exact context.
-It should be A0-A1 explanation like for kids but it's for adult. Add IPA.`
+          content: document.getElementById("AISystemRole").value
         },
         {
           role: 'user',
@@ -74,59 +204,121 @@ It should be A0-A1 explanation like for kids but it's for adult. Add IPA.`
 
       try {
         const aiMessage = await callOpenAI(message, pat);
-        alert(aiMessage);
+        showAlertWithMeaning(clickedWord, aiMessage);
       } catch (err) {
         alert("Error: " + err);
       }
     }
 
-    /********************************************************
-     * 2) SEND MESSAGE BUTTON
-     ********************************************************/
-    const sendMessageButton = document.getElementById("send-btn");
+    // Helper function to open a new centered window (for dictionary sites)
+    function openCenteredWindow(url, title, w, h) {
+      const dualScreenLeft = window.screenLeft !== undefined ? window.screenLeft : screen.left;
+      const dualScreenTop = window.screenTop !== undefined ? window.screenTop : screen.top;
+      const windowWidth = window.innerWidth || document.documentElement.clientWidth || screen.width;
+      const windowHeight = window.innerHeight || document.documentElement.clientHeight || screen.height;
+      const left = (windowWidth - w) / 2 + dualScreenLeft;
+      const top = (windowHeight - h) / 2 + dualScreenTop;
+      const newWindow = window.open(
+        url,
+        title,
+        `scrollbars=yes,width=${w},height=${h},top=${top},left=${left}`
+      );
+      if (newWindow && newWindow.focus) {
+        newWindow.focus();
+      }
+    }
 
-    // Make sure to wrap in an async function if calling `await`
-    sendMessageButton.addEventListener("click", async () => {
-      const pat = document.getElementById("pat").value.trim();
-      if (!pat) {
-        alert("Please enter your Azure OpenAI PAT!");
-        return;
+    // Modal window to show dictionary explanation
+    function showAlertWithMeaning(word, meaning) {
+      // Use TTS to play the word
+      sayThis(word, document.getElementById("voiceSelect").value);
+
+      // Remove existing modal if present
+      const existingModal = document.getElementById("custom-alert");
+      if (existingModal) {
+        document.body.removeChild(existingModal);
       }
 
-      const inputField = document.getElementById('player-input');
-      const userSentence = inputField.value.trim();
-      if (!userSentence) {
-        alert("Input is empty, man!");
-        return;
-      }
+      const modal = document.createElement("div");
+      modal.id = "custom-alert";
+      modal.style.position = "fixed";
+      modal.style.top = "50%";
+      modal.style.left = "50%";
+      modal.style.transform = "translate(-50%, -50%)";
+      modal.style.width = "400px";
+      modal.style.padding = "15px";
+      modal.style.backgroundColor = "#222";
+      modal.style.color = "#eee";
+      modal.style.border = "1px solid #444";
+      modal.style.boxShadow = "0 4px 10px rgba(0, 0, 0, 0.3)";
+      modal.style.borderRadius = "8px";
+      modal.style.fontFamily = "Arial, sans-serif";
+      modal.style.textAlign = "center";
+      modal.style.zIndex = "10000";
 
-      // Add the user's sentence as a new user message
-      messages.push({
-        role: 'user',
-        content: userSentence
-      });
+      const wordTitle = document.createElement("h2");
+      wordTitle.textContent = word;
+      wordTitle.style.marginBottom = "10px";
+      modal.appendChild(wordTitle);
 
-      // Clear the input
-      inputField.value = '';
+      const meaningText = document.createElement("p");
+      meaningText.textContent = meaning;
+      meaningText.style.fontSize = "14px";
+      meaningText.style.lineHeight = "1.4";
+      meaningText.style.marginBottom = "15px";
+      modal.appendChild(meaningText);
 
-      // Call the AI to continue the story
-      try {
-        const aiMessage = await callOpenAI(messages, pat);
-        // Push the AI's response into the conversation
-        messages.push({
-          role: 'assistant',
-          content: aiMessage
-        });
+      const buttonsContainer = document.createElement("div");
+      buttonsContainer.style.display = "flex";
+      buttonsContainer.style.justifyContent = "center";
+      buttonsContainer.style.gap = "10px";
 
-        // Display the AI's response in the story div
-        document.getElementById("story").textContent = aiMessage;
+      // Button: TTS playback
+      const playButton = document.createElement("button");
+      playButton.textContent = "🔊 Play";
+      playButton.onclick = () => {
+        sayThis(word, document.getElementById("voiceSelect").value);
+      };
+      buttonsContainer.appendChild(playButton);
 
-        // Make the loaded text clickable
-        makeWordsClickable('story', handleWordClick);
-      } catch (err) {
-        alert("Error: " + err);
-      }
-    });
+      // Button: open Oxford dictionary in centered window
+      const oxfordButton = document.createElement("button");
+      oxfordButton.textContent = "Oxford";
+      oxfordButton.onclick = () => {
+        openCenteredWindow(
+          `https://www.oxfordlearnersdictionaries.com/us/definition/english/${word}?q=${word}`,
+          "Oxford",
+          800,
+          600
+        );
+      };
+      buttonsContainer.appendChild(oxfordButton);
+
+      // Button: open Cambridge dictionary in centered window
+      const cambridgeButton = document.createElement("button");
+      cambridgeButton.textContent = "Cambridge";
+      cambridgeButton.onclick = () => {
+        openCenteredWindow(
+          `https://dictionary.cambridge.org/us/dictionary/english/${word}`,
+          "Cambridge",
+          800,
+          600
+        );
+      };
+      buttonsContainer.appendChild(cambridgeButton);
+
+      // Button: close modal
+      const closeButton = document.createElement("button");
+      closeButton.textContent = "Close";
+      closeButton.onclick = () => {
+        document.body.removeChild(modal);
+      };
+      buttonsContainer.appendChild(closeButton);
+
+      modal.appendChild(buttonsContainer);
+      document.body.appendChild(modal);
+    }
+
   </script>
 </body>
 </html>

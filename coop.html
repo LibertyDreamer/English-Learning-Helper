@@ -2,10 +2,11 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Adventure Game - Co-Op</title>
+  <title>Adventure Game - Co-Op (with logs)</title>
   <!-- Default theme is Old PC -->
   <link id="themeStylesheet" rel="stylesheet" href="oldpc.css">
-  <!-- Include PeerJS from CDN -->
+
+  <!-- PeerJS from unpkg (make sure it's a valid version) -->
   <script src="https://unpkg.com/peerjs@1.4.7/dist/peerjs.min.js"></script>
 </head>
 <body>
@@ -99,7 +100,7 @@ You are a text-based game engine for learning English.
     import { makeWordsClickable } from './clickableWords.js';
     import { callOpenAI } from './openaiCaller.js';
     import { sayThis } from './ttsModule.js';
-    import { showDictionaryModal, openCenteredWindow } from './dictionaryModal.js';
+    import { showDictionaryModal } from './dictionaryModal.js';
 
     /********************************************************
      *  P2P Setup using PeerJS for Co-Op
@@ -113,42 +114,99 @@ You are a text-based game engine for learning English.
     const myPeerIdContainer = document.getElementById("myPeerIdContainer");
     const peerIdDisplay = document.getElementById("myPeerId");
 
+    // For debugging, we set debug: 3 in the Peer constructor
     function initPeer() {
       isHost = hostModeCheckbox.checked;
-      peer = new Peer();
-      peer.on('open', id => {
-        console.log("My peer ID is: " + id);
+
+      console.log("[initPeer] isHost =", isHost);
+
+      // Create a new Peer with debugging turned on
+      peer = new Peer({
+        debug: 3 // This will log PeerJS' internal events in the console
+      });
+
+      // The 'open' event is fired when this peer is ready to connect
+      peer.on('open', (id) => {
+        console.log('[peer.on("open")] My peer ID is:', id);
+
         if (isHost) {
           myPeerIdContainer.style.display = "block";
           peerIdDisplay.textContent = id;
+        } else {
+          myPeerIdContainer.style.display = "none";
         }
+
         // For clients, attempt to connect if a host ID is provided
         if (!isHost) {
           const hostId = hostIdInput.value.trim();
+          console.log('[peer.on("open")] Attempting client connect to hostId =', hostId);
+
           if (hostId) {
             connection = peer.connect(hostId);
+            console.log("[initPeer] client peer.connect(hostId) called");
+
             connection.on('open', () => {
-              console.log("Connected to host: " + hostId);
+              console.log('[connection.on("open")] Connected to host:', hostId);
             });
-            connection.on('data', handlePeerData);
+
+            connection.on('data', (data) => {
+              console.log('[connection.on("data")] from host:', data);
+              handlePeerData(data);
+            });
+
+            connection.on('error', (err) => {
+              console.error('[connection.on("error")]:', err);
+            });
+
+            connection.on('close', () => {
+              console.log('[connection.on("close")] The connection was closed');
+            });
           }
         }
       });
 
       // For host: listen for incoming connections from clients
-      if (isHost) {
-        peer.on('connection', (conn) => {
-          connections.push(conn);
-          conn.on('data', (data) => {
-            handlePeerData(data, conn);
-          });
+      peer.on('connection', (conn) => {
+        console.log('[peer.on("connection")] New client connection from:', conn.peer);
+        connections.push(conn);
+
+        // When the connection opens
+        conn.on('open', () => {
+          console.log(`[conn.on("open")] Connection open with client: ${conn.peer}`);
         });
-      }
+
+        // When we receive data from a client
+        conn.on('data', (data) => {
+          console.log(`[conn.on("data")] from client ${conn.peer}:`, data);
+          handlePeerData(data, conn);
+        });
+
+        conn.on('error', (err) => {
+          console.error(`[conn.on("error")] from ${conn.peer}:`, err);
+        });
+
+        conn.on('close', () => {
+          console.log(`[conn.on("close")] Connection closed by client: ${conn.peer}`);
+        });
+      });
+
+      peer.on('error', (err) => {
+        console.error('[peer.on("error")]:', err);
+      });
+
+      peer.on('disconnected', () => {
+        console.log('[peer.on("disconnected")] The peer is disconnected');
+      });
+
+      peer.on('close', () => {
+        console.log('[peer.on("close")] The peer is destroyed');
+      });
     }
 
     // Reinitialize PeerJS if the host mode changes
     hostModeCheckbox.addEventListener("change", () => {
       if (peer) {
+        console.log("[hostModeCheckbox] Destroying old peer instance");
         peer.destroy();
       }
       initPeer();
@@ -268,23 +326,27 @@ You are a text-based game engine for learning English.
       const inputField = document.getElementById("player-input");
       const userSentence = inputField.value.trim();
       if (!userSentence) {
-        alert("Input is empty, man!");
+        alert("Input is empty!");
         return;
       }
       // For host, add the message locally and send to AI; for clients, forward the message to host.
       if (isHost) {
+        console.log("[sendMessage] Host is sending a message to AI:", userSentence);
         messages.push({ role: "user", content: userSentence, sender: "Host" });
         document.getElementById("story").textContent += "\nHost: " + userSentence;
-        // Here you could wait for all players’ inputs before proceeding.
-        // For simplicity, we immediately combine the conversation.
+        
+        // Here you might want to wait for all players' inputs before proceeding
+        // but for simplicity, we do it immediately.
         const gamePrompt = document.getElementById("gameSystemMessage").value;
         const fullConversation = [
           { role: "system", content: gamePrompt },
           ...messages,
           { role: "user", content: userSentence }
         ];
+
         try {
           const aiMessage = await callOpenAI(fullConversation, pat);
+          console.log("[sendMessage] AI response:", aiMessage);
           messages.push({ role: "assistant", content: aiMessage });
           document.getElementById("story").textContent += "\nAI: " + aiMessage;
           // Broadcast the AI response to all connected clients
@@ -292,10 +354,12 @@ You are a text-based game engine for learning English.
             conn.send({ type: "aiMessage", message: aiMessage });
           });
         } catch (err) {
+          console.error("[sendMessage] Error calling OpenAI:", err);
           alert("Error: " + err);
         }
       } else {
         // Client sends its message to the host
+        console.log("[sendMessage] Client is sending message to host:", userSentence);
         if (connection && connection.open) {
           connection.send({ type: "userMessage", message: userSentence, sender: peer.id });
           document.getElementById("story").textContent += "\n" + peer.id + ": " + userSentence;
@@ -342,6 +406,7 @@ You are a text-based game engine for learning English.
         alert("Please enter your Azure OpenAI PAT in Settings!");
         return;
       }
+      console.log("[handleWordClick] Looking up word:", clickedWord, "Context:", context);
       const message = [
         {
           role: "system",
@@ -354,8 +419,10 @@ You are a text-based game engine for learning English.
       ];
       try {
         const aiMessage = await callOpenAI(message, pat);
+        console.log("[handleWordClick] Dictionary AI response:", aiMessage);
         showDictionaryModal(clickedWord, aiMessage, sayThis, document.getElementById("voiceSelect"));
       } catch (err) {
+        console.error("[handleWordClick] Error calling OpenAI:", err);
         alert("Error: " + err);
       }
     }

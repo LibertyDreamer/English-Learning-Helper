@@ -133,6 +133,22 @@ document.getElementById("voiceSelect").addEventListener("input", () => {
         sayThis(word, document.getElementById("voiceSelect").value);
       };
       buttonsContainer.appendChild(playButton);
+      
+let oxfordButton = document.createElement("button");
+oxfordButton.textContent = "Oxford";
+oxfordButton.onclick = function () {
+  window.open(`https://www.oxfordlearnersdictionaries.com/us/definition/english/${word}?q=${word}`, "_blank");
+};
+buttonsContainer.appendChild(oxfordButton);
+
+let cambridgeButton = document.createElement("button");
+cambridgeButton.textContent = "Cambridge";
+cambridgeButton.onclick = function () {
+  window.open(`https://dictionary.cambridge.org/us/dictionary/english/${word}`, "_blank");
+};
+buttonsContainer.appendChild(cambridgeButton);
+
+
 
       let deepLearning = document.createElement("button");
       deepLearning.textContent = "Deep learning";

@@ -1,66 +1,118 @@
-/* horror.css */
-/* Base Horror Theme */
-body {
-  background: radial-gradient(ellipse at center, #0d0d0d 0%, #000000 80%);
-  color: #ff0000; /* blood red */
-  font-family: 'Courier New', monospace;
+@import url('https://fonts.googleapis.com/css2?family=Creepster&display=swap');
+
+html, body {
   margin: 0;
   padding: 0;
+  background-color: #000;
+  color: #d00;
+  font-family: 'Creepster', cursive;
+  font-size: 16px;
+  line-height: 1.5;
 }
 
 #container {
   width: 90%;
   max-width: 800px;
   margin: 40px auto;
-  padding: 20px;
-  border: 3px solid #ff0000;
-  box-shadow: 0 0 20px rgba(255, 0, 0, 0.7);
+  padding: 30px;
+  background-color: #100;
+  border: 1px solid #d00;
+  box-shadow: 0 4px 10px rgba(208, 0, 0, 0.5);
 }
 
 h1, h2 {
-  color: #ff4d4d;
-  margin: 0 0 10px;
-  text-shadow: 2px 2px 4px #000;
+  text-align: center;
+  color: #d00;
+  margin-bottom: 15px;
 }
 
-.green-btn {
-  background-color: transparent;
-  color: #ff0000;
-  border: 2px solid #ff0000;
-  padding: 10px 20px;
-  margin: 5px;
-  cursor: pointer;
-}
-
-.green-btn:hover {
-  background-color: rgba(255, 0, 0, 0.2);
-  box-shadow: 0 0 10px #ff0000;
-}
-
-input[type="text"] {
-  background-color: rgba(0, 0, 0, 0.8);
-  color: #ff0000;
-  border: 2px solid #ff0000;
+input[type="text"],
+input[type="password"],
+textarea,
+select {
+  width: 100%;
   padding: 8px;
+  background-color: #200;
+  color: #d00;
+  border: 1px solid #d00;
   margin: 5px 0;
-  width: 400px;
+  box-sizing: border-box;
+  font-family: 'Creepster', cursive;
+}
+
+textarea {
+  resize: vertical;
+}
+
+button {
+  background-color: #300;
+  color: #d00;
+  border: 1px solid #d00;
+  padding: 8px 16px;
+  margin: 5px 0;
+  cursor: pointer;
+  font-family: 'Creepster', cursive;
+  transition: background-color 0.2s ease;
+}
+
+button:hover {
+  background-color: #400;
 }
 
 #story {
   margin-top: 20px;
-  line-height: 1.4;
-  padding: 15px;
+  padding: 20px;
+  background-color: #000;
+  border: 1px solid #d00;
+  box-shadow: inset 0 2px 5px rgba(208, 0, 0, 0.5);
   min-height: 150px;
-  border: 2px dashed #ff0000;
-  background-color: rgba(0, 0, 0, 0.5);
+  font-size: 1.1em;
+  white-space: pre-wrap;
 }
 
 .clickable-word {
   cursor: pointer;
+  transition: color 0.2s ease;
 }
 
 .clickable-word:hover {
-  color: #ffffff;
-  background-color: #444;
-  padding: 0 2px;
+  color: #fff;
+}
+
+#settingsBtn {
+  position: fixed;
+  top: 10px;
+  right: 10px;
+  background: #300;
+  color: #d00;
+  border: 1px solid #d00;
+  padding: 8px 12px;
+  cursor: pointer;
+  border-radius: 5px;
+  font-size: 14px;
+  z-index: 9999;
+}
+
+#settingsPanel {
+  position: fixed;
+  top: 0;
+  right: -30%;
+  width: 25%;
+  height: 100%;
+  background: #100;
+  color: #d00;
+  padding: 20px;
+  border-left: 1px solid #d00;
+  box-shadow: -3px 0 10px rgba(208, 0, 0, 0.5);
+  transition: right 0.3s ease;
+  overflow-y: auto;
+  z-index: 9998;
+}
+
+#settingsPanel.open {
+  right: 0;
+}
+
+#settingsPanel h2 {
+  margin-top: 0;
 }

@@ -25,26 +25,26 @@
 
     <hr>
 
-<label for="AISystemRole">Dictionary Role:</label>
-<textarea
-  id="AISystemRole"
-  rows="6"
->First, show only the word and its IPA pronunciation without additional comments. Then, explain the meaning of the word clearly and simply, suitable for a 3-year-old non-native speaker at A0 level.</textarea>
+    <label for="AISystemRole">Dictionary Role:</label>
+    <textarea
+      id="AISystemRole"
+      rows="6"
+    >First, show only the word and its IPA pronunciation without additional comments. Then, explain the meaning of the word clearly and simply, suitable for a 3-year-old non-native speaker at A0 level.</textarea>
 
-<hr>
+    <hr>
 
-  <!-- List of TTS Voices -->
-  <label for="voiceSelect">TTS Voice:</label>
-  <select id="voiceSelect">
-    <option value="Matthew">Matthew</option>
-    <option value="Joanna">Joanna</option>
-    <option value="Kimberly">Kimberly</option>
-    <option value="Salli">Salli</option>
-    <option value="Amy">Amy</option>
-    <option value="Emma">Emma</option>
-    <option value="Brian">Brian</option>
-    <option value="Russell">Russell</option>
-  </select>
+    <!-- List of TTS Voices -->
+    <label for="voiceSelect">TTS Voice:</label>
+    <select id="voiceSelect">
+      <option value="Matthew">Matthew</option>
+      <option value="Joanna">Joanna</option>
+      <option value="Kimberly">Kimberly</option>
+      <option value="Salli">Salli</option>
+      <option value="Amy">Amy</option>
+      <option value="Emma">Emma</option>
+      <option value="Brian">Brian</option>
+      <option value="Russell">Russell</option>
+    </select>
     
   </div>
 
@@ -53,38 +53,67 @@
     import { callOpenAI } from './openaiCaller.js';
     import { sayThis } from './ttsModule.js';
 
+    // A helper function to open a new, centered window
+    function openCenteredWindow(url, title, w, h) {
+      // Fix for multi-screen setups
+      const dualScreenLeft = window.screenLeft !== undefined ? window.screenLeft : screen.left;
+      const dualScreenTop = window.screenTop !== undefined ? window.screenTop : screen.top;
 
-function loadSettings() {
-  const savedPat = localStorage.getItem("azurePat");
-  const aiRole = localStorage.getItem("AISystemRole");
-  const voiceSelect = localStorage.getItem("voiceSelect");
+      const windowWidth = window.innerWidth
+        ? window.innerWidth
+        : document.documentElement.clientWidth
+        ? document.documentElement.clientWidth
+        : screen.width;
 
-  if (savedPat !== null) {
-    document.getElementById("pat").value = savedPat;
-  }
-  if (aiRole !== null) {
-    document.getElementById("AISystemRole").value = aiRole;
-  }
-  if (voiceSelect !== null) {
-    document.getElementById("voiceSelect").value = voiceSelect;
-  }
-}
+      const windowHeight = window.innerHeight
+        ? window.innerHeight
+        : document.documentElement.clientHeight
+        ? document.documentElement.clientHeight
+        : screen.height;
 
-loadSettings();
+      const left = (windowWidth - w) / 2 + dualScreenLeft;
+      const top = (windowHeight - h) / 2 + dualScreenTop;
 
-document.getElementById("pat").addEventListener("input", () => {
-    localStorage.setItem("azurePat", document.getElementById("pat").value);
-});
+      const newWindow = window.open(
+        url,
+        title,
+        `scrollbars=yes,width=${w},height=${h},top=${top},left=${left}`
+      );
 
-document.getElementById("AISystemRole").addEventListener("input", () => {
-    localStorage.setItem("AISystemRole", document.getElementById("AISystemRole").value);
-});
+      if (newWindow && newWindow.focus) {
+        newWindow.focus();
+      }
+    }
 
-document.getElementById("voiceSelect").addEventListener("input", () => {
-    localStorage.setItem("voiceSelect", document.getElementById("voiceSelect").value);
-});
+    function loadSettings() {
+      const savedPat = localStorage.getItem("azurePat");
+      const aiRole = localStorage.getItem("AISystemRole");
+      const voiceSelect = localStorage.getItem("voiceSelect");
 
+      if (savedPat !== null) {
+        document.getElementById("pat").value = savedPat;
+      }
+      if (aiRole !== null) {
+        document.getElementById("AISystemRole").value = aiRole;
+      }
+      if (voiceSelect !== null) {
+        document.getElementById("voiceSelect").value = voiceSelect;
+      }
+    }
 
+    loadSettings();
+
+    document.getElementById("pat").addEventListener("input", () => {
+      localStorage.setItem("azurePat", document.getElementById("pat").value);
+    });
+
+    document.getElementById("AISystemRole").addEventListener("input", () => {
+      localStorage.setItem("AISystemRole", document.getElementById("AISystemRole").value);
+    });
+
+    document.getElementById("voiceSelect").addEventListener("input", () => {
+      localStorage.setItem("voiceSelect", document.getElementById("voiceSelect").value);
+    });
 
     function showAlertWithMeaning(word, meaning) {
       sayThis(word, document.getElementById("voiceSelect").value);
@@ -127,44 +156,55 @@ document.getElementById("voiceSelect").addEventListener("input", () => {
       buttonsContainer.style.justifyContent = "center";
       buttonsContainer.style.gap = "10px";
 
+      // Button: Play TTS again
       let playButton = document.createElement("button");
       playButton.textContent = "🔊 Play";
       playButton.onclick = function () {
         sayThis(word, document.getElementById("voiceSelect").value);
       };
       buttonsContainer.appendChild(playButton);
-      
-let oxfordButton = document.createElement("button");
-oxfordButton.textContent = "Oxford";
-oxfordButton.onclick = function () {
-  window.open(`https://www.oxfordlearnersdictionaries.com/us/definition/english/${word}?q=${word}`, "_blank");
-};
-buttonsContainer.appendChild(oxfordButton);
 
-let cambridgeButton = document.createElement("button");
-cambridgeButton.textContent = "Cambridge";
-cambridgeButton.onclick = function () {
-  window.open(`https://dictionary.cambridge.org/us/dictionary/english/${word}`, "_blank");
-};
-buttonsContainer.appendChild(cambridgeButton);
-
-
-
+      // Button: open Youglish in a new window (optional)
       let deepLearning = document.createElement("button");
       deepLearning.textContent = "Deep learning";
       deepLearning.onclick = function () {
-        window.open(`https://youglish.com/pronounce/${word}/english`, "_blank");
+        openCenteredWindow(`https://youglish.com/pronounce/${word}/english`, "Youglish", 800, 600);
       };
       buttonsContainer.appendChild(deepLearning);
 
+      // Button: open Oxford in a new centered window
+      let oxfordButton = document.createElement("button");
+      oxfordButton.textContent = "Oxford";
+      oxfordButton.onclick = function () {
+        openCenteredWindow(
+          `https://www.oxfordlearnersdictionaries.com/us/definition/english/${word}?q=${word}`,
+          "Oxford",
+          800,
+          600
+        );
+      };
+      buttonsContainer.appendChild(oxfordButton);
+
+      // Button: open Cambridge in a new centered window
+      let cambridgeButton = document.createElement("button");
+      cambridgeButton.textContent = "Cambridge";
+      cambridgeButton.onclick = function () {
+        openCenteredWindow(
+          `https://dictionary.cambridge.org/us/dictionary/english/${word}`,
+          "Cambridge",
+          800,
+          600
+        );
+      };
+      buttonsContainer.appendChild(cambridgeButton);
+
+      // Button: close the modal
       let closeButton = document.createElement("button");
       closeButton.textContent = "Close";
       closeButton.onclick = function () {
         document.body.removeChild(modal);
       };
       buttonsContainer.appendChild(closeButton);
-
-
 
       modal.appendChild(buttonsContainer);
       document.body.appendChild(modal);
@@ -191,7 +231,6 @@ buttonsContainer.appendChild(cambridgeButton);
     settingsBtn.addEventListener("click", () => {
       settingsPanel.classList.toggle("open");
     });
-
 
     function handleWordClick(clickedWord, context) {
       getResponse(clickedWord, context, document.getElementById("AISystemRole").value, document.getElementById("pat").value);

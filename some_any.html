@@ -25,9 +25,9 @@ First, show only the word and its IPA pronunciation without additional comments.
     <label for="promptPresetSelect">Game Prompt Preset:</label>
     <select id="promptPresetSelect">
       <option value="custom">Custom</option>
-      <option value="funny-space">Funny Space Adventure</option>
-      <option value="zombie-apocalypse">Zombie Apocalypse</option>
-      <option value="default">Default</option>
+      <option value="funny-space" data-prompt="You are a text-based game engine. The setting is a comedic space opera. Your job is to engage the user in a silly space adventure. Encourage them to practice English by using 'somebody' and 'anybody', etc. Keep it humorous and playful.">Funny Space Adventure</option>
+      <option value="zombie-apocalypse" data-prompt="You are a text-based game engine. The setting is a zombie apocalypse. The user must practice 'something/anything' and 'some/any' in their responses. Correct usage means survival; incorrect usage means the zombies are closing in! Keep the tone dark and suspenseful.">Zombie Apocalypse</option>
+      <option value="default" data-prompt="You are a text-based game engine for learning English. HIGH PRIORITY -> Don't tell about grammar or the theme to the user, it has to be just a game! Choose one random word for every session and repeat it really often! Themes for teaching today are somebody and anybody, something and anything, some and any. The user must type a sentence relevant to today's themes using the required words. If they use the correct usage, continue the story in a fun, light-hearted way. If they use the wrong usage, continue the story in a dark, creepy way, possibly leading to their demise. Every time the user makes a right or wrong decision, make it obvious in your story! The setting is a comedic and extremely dark space adventure. I want this game to feel like a real game! Vocabulary for A0 - A1. Ultraviolence is included! Offer hints on how the user can answer.">Default</option>
     </select>
 
     <label for="gameSystemMessage">Game Prompt:</label>
@@ -88,38 +88,11 @@ You are a text-based game engine for learning English.
     import { showDictionaryModal, openCenteredWindow } from './dictionaryModal.js';
 
     /********************************************************
-     * 1) PROMPT PRESETS
-     ********************************************************/
-    const promptPresets = {
-      "funny-space": `You are a text-based game engine. The setting is a comedic space opera.
-Your job is to engage the user in a silly space adventure.
-Encourage them to practice English by using 'somebody' and 'anybody', etc.
-Keep it humorous and playful.`,
-      "zombie-apocalypse": `You are a text-based game engine. The setting is a zombie apocalypse.
-The user must practice 'something/anything' and 'some/any' in their responses.
-Correct usage means survival; incorrect usage means the zombies are closing in!
-Keep the tone dark and suspenseful.`,
-      "default": ` You are a text-based game engine for learning English.
-HIGH PRIORITY -> Don't tell about grammar or the theme to the user, it has to be just a game!
-Chose one random word for every session and repeat it really often!
-Themes for teaching today are somebody and anybody, something and anything, some and any.
-The user must type a sentence relevant to today's themes using the required words.
-If they use the correct usage, continue the story in a fun, light-hearted way.
-If they use the wrong usage, continue the story in a dark, creepy way, possibly leading to their demise.
-Every time the user makes a right or wrong decision, make it obvious in your story!
-The setting is a comedic and extremely dark space adventure.
-I want this game to feel like a real game!
-Vocabulary for A0 - A1. Ultraviolence is included!
-Offer hints on how the user can answer.`
-    };
-
-    /********************************************************
-     * 2) SETTINGS PANEL: LOAD/SAVE & THEME SWITCHING
+     * 1) SETTINGS PANEL: LOAD/SAVE & THEME SWITCHING
      ********************************************************/
     function loadSettings() {
       const savedPat = localStorage.getItem("azurePat");
       const aiRole = localStorage.getItem("AISystemRole");
-      const gamePrompt = localStorage.getItem("gameSystemMessage");
       const voiceSelect = localStorage.getItem("voiceSelect");
       const theme = localStorage.getItem("theme");
       const savedPreset = localStorage.getItem("promptPreset");
@@ -139,11 +112,14 @@ Offer hints on how the user can answer.`
         document.getElementById("themeStylesheet").href = theme;
       }
       if (savedPreset !== null) {
-        document.getElementById("promptPresetSelect").value = savedPreset;
+        const select = document.getElementById("promptPresetSelect");
+        select.value = savedPreset;
         if (savedPreset === "custom" && customPrompt !== null) {
           document.getElementById("gameSystemMessage").value = customPrompt;
-        } else if (savedPreset !== "custom" && promptPresets[savedPreset]) {
-          document.getElementById("gameSystemMessage").value = promptPresets[savedPreset];
+        } else if (savedPreset !== "custom") {
+          const selectedOption = select.options[select.selectedIndex];
+          const presetText = selectedOption.getAttribute("data-prompt") || "";
+          document.getElementById("gameSystemMessage").value = presetText;
         }
       } else {
         document.getElementById("promptPresetSelect").value = "custom";
@@ -174,12 +150,15 @@ Offer hints on how the user can answer.`
       document.getElementById("themeStylesheet").href = theme;
     });
     document.getElementById("promptPresetSelect").addEventListener("change", () => {
-      const presetKey = document.getElementById("promptPresetSelect").value;
+      const select = document.getElementById("promptPresetSelect");
+      const presetKey = select.value;
       localStorage.setItem("promptPreset", presetKey);
-      if (presetKey !== "custom" && promptPresets[presetKey]) {
-        document.getElementById("gameSystemMessage").value = promptPresets[presetKey];
-        localStorage.setItem("gameSystemMessage", promptPresets[presetKey]);
-      } else if (presetKey === "custom") {
+      if (presetKey !== "custom") {
+        const selectedOption = select.options[select.selectedIndex];
+        const presetText = selectedOption.getAttribute("data-prompt") || "";
+        document.getElementById("gameSystemMessage").value = presetText;
+        localStorage.setItem("gameSystemMessage", presetText);
+      } else {
         const customPrompt = localStorage.getItem("customGameSystemMessage") || "";
         document.getElementById("gameSystemMessage").value = customPrompt;
       }
@@ -191,7 +170,7 @@ Offer hints on how the user can answer.`
     });
 
     /********************************************************
-     * 3) GAME CONVERSATION LOGIC
+     * 2) GAME CONVERSATION LOGIC
      ********************************************************/
     let messages = [];
 
@@ -228,7 +207,7 @@ Offer hints on how the user can answer.`
     });
 
     /********************************************************
-     * 4) LOAD STORY FILE (in settings panel)
+     * 3) LOAD STORY FILE (in settings panel)
      ********************************************************/
     const loadStoryBtn = document.getElementById("load-story-btn");
     const fileInput = document.getElementById("file-input");
@@ -255,7 +234,7 @@ Offer hints on how the user can answer.`
     });
 
     /********************************************************
-     * 5) DICTIONARY HANDLER & MODAL (using dictionaryModal.js)
+     * 4) DICTIONARY HANDLER & MODAL (using dictionaryModal.js)
      ********************************************************/
     async function handleWordClick(clickedWord, context) {
       const pat = document.getElementById("pat").value.trim();

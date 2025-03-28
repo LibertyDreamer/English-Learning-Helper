@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Adventure Game - Co-Op (with logs)</title>
+  <title>Adventure Game - Co-Op (Wait for Host ID)</title>
   <!-- Default theme is Old PC -->
   <link id="themeStylesheet" rel="stylesheet" href="oldpc.css">
 
@@ -107,17 +107,16 @@ You are a text-based game engine for learning English.
      ********************************************************/
     let isHost = false;
     let peer = null;
-    let connection = null; // for clients
-    let connections = []; // for host to track multiple clients
+    let connection = null; // for a single client -> host connection
+    let connections = []; // for the host to track multiple clients
+
     const hostModeCheckbox = document.getElementById("hostMode");
     const hostIdInput = document.getElementById("hostId");
     const myPeerIdContainer = document.getElementById("myPeerIdContainer");
     const peerIdDisplay = document.getElementById("myPeerId");
 
-    // For debugging, we set debug: 3 in the Peer constructor
     function initPeer() {
       isHost = hostModeCheckbox.checked;
-
       console.log("[initPeer] isHost =", isHost);
 
       // Create a new Peer with debugging turned on
@@ -130,38 +129,12 @@ You are a text-based game engine for learning English.
         console.log('[peer.on("open")] My peer ID is:', id);
 
         if (isHost) {
+          // If we are the host, show our Peer ID so clients can connect
           myPeerIdContainer.style.display = "block";
           peerIdDisplay.textContent = id;
         } else {
+          // If we are a client, hide that container
           myPeerIdContainer.style.display = "none";
-        }
-
-        // For clients, attempt to connect if a host ID is provided
-        if (!isHost) {
-          const hostId = hostIdInput.value.trim();
-          console.log('[peer.on("open")] Attempting client connect to hostId =', hostId);
-
-          if (hostId) {
-            connection = peer.connect(hostId);
-            console.log("[initPeer] client peer.connect(hostId) called");
-
-            connection.on('open', () => {
-              console.log('[connection.on("open")] Connected to host:', hostId);
-            });
-
-            connection.on('data', (data) => {
-              console.log('[connection.on("data")] from host:', data);
-              handlePeerData(data);
-            });
-
-            connection.on('error', (err) => {
-              console.error('[connection.on("error")]:', err);
-            });
-
-            connection.on('close', () => {
-              console.log('[connection.on("close")] The connection was closed');
-            });
-          }
         }
       });
 
@@ -170,12 +143,10 @@ You are a text-based game engine for learning English.
         console.log('[peer.on("connection")] New client connection from:', conn.peer);
         connections.push(conn);
 
-        // When the connection opens
         conn.on('open', () => {
           console.log(`[conn.on("open")] Connection open with client: ${conn.peer}`);
         });
 
-        // When we receive data from a client
         conn.on('data', (data) => {
           console.log(`[conn.on("data")] from client ${conn.peer}:`, data);
           handlePeerData(data, conn);
@@ -190,16 +161,56 @@ You are a text-based game engine for learning English.
         });
       });
 
+      // Listen for errors or disconnections
       peer.on('error', (err) => {
         console.error('[peer.on("error")]:', err);
       });
-
       peer.on('disconnected', () => {
         console.log('[peer.on("disconnected")] The peer is disconnected');
       });
-
       peer.on('close', () => {
         console.log('[peer.on("close")] The peer is destroyed');
+      });
+
+      // CHANGED FOR HOST ID INPUT:
+      // We do NOT connect automatically if not host.
+      // Instead, wait for the user to type the Host ID in the input field.
+      hostIdInput.addEventListener("input", () => {
+        // Only do this if we are a client, not the host.
+        if (isHost) return;
+
+        const newHostId = hostIdInput.value.trim();
+        if (!newHostId) {
+          console.log("[hostIdInput] Host ID is empty, skipping connect.");
+          return;
+        }
+
+        // If we're already connected or connecting, skip. 
+        // If you want to handle reconnection, you'd do that differently.
+        if (connection && connection.open) {
+          console.log("[hostIdInput] Already connected to a host. If you want to reconnect, reload or handle it here.");
+          return;
+        }
+
+        console.log("[hostIdInput] Attempting to connect to hostId =", newHostId);
+        connection = peer.connect(newHostId);
+
+        connection.on('open', () => {
+          console.log('[connection.on("open")] Connected to host:', newHostId);
+        });
+
+        connection.on('data', (data) => {
+          console.log('[connection.on("data")] from host:', data);
+          handlePeerData(data);
+        });
+
+        connection.on('error', (err) => {
+          console.error('[connection.on("error")]:', err);
+        });
+
+        connection.on('close', () => {
+          console.log('[connection.on("close")] The connection was closed');
+        });
       });
     }
 
@@ -329,14 +340,14 @@ You are a text-based game engine for learning English.
         alert("Input is empty!");
         return;
       }
-      // For host, add the message locally and send to AI; for clients, forward the message to host.
+
       if (isHost) {
+        // Host: store and display message, then send to AI
         console.log("[sendMessage] Host is sending a message to AI:", userSentence);
         messages.push({ role: "user", content: userSentence, sender: "Host" });
         document.getElementById("story").textContent += "\nHost: " + userSentence;
-        
-        // Here you might want to wait for all players' inputs before proceeding
-        // but for simplicity, we do it immediately.
+
+        // Example: send full conversation to AI right away
         const gamePrompt = document.getElementById("gameSystemMessage").value;
         const fullConversation = [
           { role: "system", content: gamePrompt },
@@ -349,7 +360,7 @@ You are a text-based game engine for learning English.
           console.log("[sendMessage] AI response:", aiMessage);
           messages.push({ role: "assistant", content: aiMessage });
           document.getElementById("story").textContent += "\nAI: " + aiMessage;
-          // Broadcast the AI response to all connected clients
+          // Broadcast AI response to all clients
           connections.forEach(conn => {
             conn.send({ type: "aiMessage", message: aiMessage });
           });
@@ -358,13 +369,13 @@ You are a text-based game engine for learning English.
           alert("Error: " + err);
         }
       } else {
-        // Client sends its message to the host
+        // Client: forward message to the host
         console.log("[sendMessage] Client is sending message to host:", userSentence);
         if (connection && connection.open) {
           connection.send({ type: "userMessage", message: userSentence, sender: peer.id });
           document.getElementById("story").textContent += "\n" + peer.id + ": " + userSentence;
         } else {
-          alert("Not connected to host.");
+          alert("Not connected to host. Please type a valid Host ID first.");
         }
       }
       inputField.value = "";
@@ -407,6 +418,7 @@ You are a text-based game engine for learning English.
         return;
       }
       console.log("[handleWordClick] Looking up word:", clickedWord, "Context:", context);
+
       const message = [
         {
           role: "system",

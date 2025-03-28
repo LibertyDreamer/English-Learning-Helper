@@ -3,8 +3,6 @@
 html, body {
   margin: 0;
   padding: 0;
-  width: 100%;
-  overflow-x: hidden;
   background-color: #1e1e1e;
   color: #e0e0e0;
   font-family: 'Merriweather', serif;
@@ -19,14 +17,12 @@ html, body {
   background-color: #2a2a2a;
   border: 1px solid #444;
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
-  text-align: left;
 }
 
 h1, h2 {
   color: #f0f0f0;
-  margin-bottom: 15px;
   text-align: center;
-  line-height: 1.2;
+  margin-bottom: 15px;
 }
 
 button {
@@ -69,6 +65,7 @@ button:hover {
   line-height: 1.8;
   font-size: 1.1em;
   text-align: justify;
+  white-space: pre-wrap;
 }
 
 .clickable-word {
@@ -112,15 +109,12 @@ button:hover {
   overflow-y: auto;
   z-index: 9998;
 }
-
 #settingsPanel.open {
   right: 0%;
 }
-
 #settingsPanel h2 {
   margin-top: 0;
 }
-
 #settingsPanel textarea {
   background-color: #333;
   color: #e0e0e0;
@@ -133,4 +127,35 @@ button:hover {
   font-family: 'Merriweather', serif;
   border-radius: 4px;
   line-height: 1.4;
+}
+
+/* ===== Modal (Dictionary Popup) ===== */
+.custom-alert {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 400px;
+  padding: 15px;
+  background-color: #222;
+  color: #eee;
+  border: 1px solid #444;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+  border-radius: 8px;
+  font-family: 'Merriweather', serif;
+  text-align: center;
+  z-index: 10000;
+}
+.custom-alert h2 {
+  margin-bottom: 10px;
+}
+.custom-alert p {
+  margin-bottom: 15px;
+  font-size: 14px;
+  line-height: 1.4;
+}
+.modal-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
 }

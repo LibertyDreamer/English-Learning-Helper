@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Game</title>
+  <title>Space Adventure Game</title>
   <!-- Default theme is Old PC -->
   <link id="themeStylesheet" rel="stylesheet" href="oldpc.css">
 </head>
@@ -13,11 +13,22 @@
     <label for="pat">Azure OpenAI Key:</label>
     <input type="password" id="pat" placeholder="Enter your Azure OpenAI PAT" />
     <hr>
+
+    <!-- Dictionary Role -->
     <label for="AISystemRole">Dictionary Role:</label>
     <textarea id="AISystemRole" rows="6">
 First, show only the word and its IPA pronunciation without additional comments. Then, explain the meaning of the word clearly and simply, suitable for a 3-year-old non-native speaker at A0 level.
     </textarea>
     <hr>
+
+    <!-- Game Prompt Preset -->
+    <label for="promptPresetSelect">Game Prompt Preset:</label>
+    <select id="promptPresetSelect">
+      <option value="custom">Custom</option>
+      <option value="funny-space">Funny Space Adventure</option>
+      <option value="zombie-apocalypse">Zombie Apocalypse</option>
+    </select>
+
     <label for="gameSystemMessage">Game Prompt:</label>
     <textarea id="gameSystemMessage" rows="8">
 You are a text-based game engine for learning English.
@@ -34,6 +45,8 @@ Vocabulary for A0 - A1. Ultraviolence is included!
 Offer hints on how the user can answer.
     </textarea>
     <hr>
+
+    <!-- TTS Voice -->
     <label for="voiceSelect">TTS Voice:</label>
     <select id="voiceSelect">
       <option value="Matthew">Matthew</option>
@@ -46,6 +59,8 @@ Offer hints on how the user can answer.
       <option value="Russell">Russell</option>
     </select>
     <hr>
+
+    <!-- Theme Switcher -->
     <label for="themeSelect">Theme:</label>
     <select id="themeSelect">
       <option value="reading-dark.css">Reader</option>
@@ -56,9 +71,9 @@ Offer hints on how the user can answer.
   </div>
 
   <div id="container">
-    <h1>Personal Adventure</h1>
+    <h1>Space Adventure</h1>
     <div id="intro">
-      <p>Welcome to your personal adventure creator! Type a sentence to start the story.</p>
+      <p>Welcome to your space adventure! Type a sentence to start the story.</p>
     </div>
     <div id="game-area">
       <div id="story">Starts the story, just write "let's go" and send.</div>
@@ -66,8 +81,12 @@ Offer hints on how the user can answer.
         <input type="text" id="player-input" placeholder="Type anything here.">
         <button id="send-btn">Send</button>
       </div>
+      <button id="load-story-btn" style="margin-top:10px;">Load Story</button>
     </div>
   </div>
+
+  <!-- Hidden file input for loading a text file -->
+  <input type="file" id="file-input" accept=".txt" style="display:none;" />
 
   <!-- JavaScript Modules -->
   <script type="module">
@@ -76,7 +95,22 @@ Offer hints on how the user can answer.
     import { sayThis } from './ttsModule.js';
 
     /********************************************************
-     * SETTINGS PANEL: LOAD/SAVE TO LOCALSTORAGE & THEME SWITCHING
+     * 1) PROMPT PRESETS
+     ********************************************************/
+    // Example prompt presets. Feel free to add, remove, or rename.
+    const promptPresets = {
+      "funny-space": `You are a text-based game engine. The setting is a comedic space opera. 
+Your job is to engage the user in a silly space adventure. 
+Encourage them to practice English by using 'somebody' and 'anybody', etc. 
+Make it comedic, but also keep them on track with usage.`,
+      "zombie-apocalypse": `You are a text-based game engine. The setting is a zombie apocalypse. 
+The user must practice 'something/anything' and 'some/any' in their responses. 
+If they use correct grammar, they survive. If not, the zombies get closer! 
+Offer them hints, but never reveal you're teaching grammar.`
+    };
+
+    /********************************************************
+     * 2) SETTINGS PANEL: LOAD/SAVE & THEME SWITCHING
      ********************************************************/
     function loadSettings() {
       const savedPat = localStorage.getItem("azurePat");
@@ -84,6 +118,8 @@ Offer hints on how the user can answer.
       const gamePrompt = localStorage.getItem("gameSystemMessage");
       const voiceSelect = localStorage.getItem("voiceSelect");
       const theme = localStorage.getItem("theme");
+      // We can also store which preset was selected
+      const savedPreset = localStorage.getItem("promptPreset");
 
       if (savedPat !== null) {
         document.getElementById("pat").value = savedPat;
@@ -101,9 +137,14 @@ Offer hints on how the user can answer.
         document.getElementById("themeSelect").value = theme;
         document.getElementById("themeStylesheet").href = theme;
       }
+      if (savedPreset !== null) {
+        // If we have a known preset, set the combo box to that
+        document.getElementById("promptPresetSelect").value = savedPreset;
+      }
     }
     loadSettings();
 
+    // Save typed settings
     document.getElementById("pat").addEventListener("input", () => {
       localStorage.setItem("azurePat", document.getElementById("pat").value);
     });
@@ -112,6 +153,9 @@ Offer hints on how the user can answer.
     });
     document.getElementById("gameSystemMessage").addEventListener("input", () => {
       localStorage.setItem("gameSystemMessage", document.getElementById("gameSystemMessage").value);
+      // Also set preset select to "custom" because user typed something
+      document.getElementById("promptPresetSelect").value = "custom";
+      localStorage.setItem("promptPreset", "custom");
     });
     document.getElementById("voiceSelect").addEventListener("input", () => {
       localStorage.setItem("voiceSelect", document.getElementById("voiceSelect").value);
@@ -122,15 +166,27 @@ Offer hints on how the user can answer.
       document.getElementById("themeStylesheet").href = theme;
     });
 
+    // Prompt Preset Select
+    document.getElementById("promptPresetSelect").addEventListener("change", () => {
+      const presetKey = document.getElementById("promptPresetSelect").value;
+      localStorage.setItem("promptPreset", presetKey);
+      if (presetKey !== "custom" && promptPresets[presetKey]) {
+        // Load the preset into the text area
+        document.getElementById("gameSystemMessage").value = promptPresets[presetKey];
+        // Save that text to localStorage
+        localStorage.setItem("gameSystemMessage", promptPresets[presetKey]);
+      }
+    });
+
     // Toggle the settings panel
     document.getElementById("settingsBtn").addEventListener("click", () => {
       document.getElementById("settingsPanel").classList.toggle("open");
     });
 
     /********************************************************
-     * GAME CONVERSATION LOGIC
+     * 3) GAME CONVERSATION LOGIC
      ********************************************************/
-    // Conversation memory (without the system message)
+    // We'll store conversation messages here (excluding the system message).
     let messages = [];
 
     const sendMessageButton = document.getElementById("send-btn");
@@ -147,7 +203,7 @@ Offer hints on how the user can answer.
         return;
       }
 
-      // Build the full conversation by prefixing the game prompt
+      // Build the conversation array with the system message from settings
       const gamePrompt = document.getElementById("gameSystemMessage").value;
       const fullConversation = [
         { role: 'system', content: gamePrompt },
@@ -157,12 +213,13 @@ Offer hints on how the user can answer.
 
       try {
         const aiMessage = await callOpenAI(fullConversation, pat);
-        // Update conversation memory (store only user and assistant messages)
+        // Update conversation memory
         messages.push({ role: 'user', content: userSentence });
         messages.push({ role: 'assistant', content: aiMessage });
-        // Display the AI's response in the story area
+
+        // Display the AI's response
         document.getElementById("story").textContent = aiMessage;
-        // Make words in the story clickable for dictionary lookups
+        // Make words clickable
         makeWordsClickable('story', handleWordClick);
       } catch (err) {
         alert("Error: " + err);
@@ -171,7 +228,37 @@ Offer hints on how the user can answer.
     });
 
     /********************************************************
-     * DICTIONARY HANDLER & MODAL
+     * 4) LOAD STORY FILE
+     ********************************************************/
+    const loadStoryBtn = document.getElementById("load-story-btn");
+    const fileInput = document.getElementById("file-input");
+
+    loadStoryBtn.addEventListener("click", () => {
+      fileInput.click();
+    });
+
+    fileInput.addEventListener("change", (event) => {
+      const file = event.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          const storyText = e.target.result;
+          // Insert the story as if the "assistant" started with it
+          messages.push({ role: 'assistant', content: storyText });
+
+          // Show it in the #story area
+          document.getElementById("story").textContent = storyText;
+          makeWordsClickable('story', handleWordClick);
+        };
+        reader.onerror = function() {
+          alert("Error reading file");
+        };
+        reader.readAsText(file);
+      }
+    });
+
+    /********************************************************
+     * 5) DICTIONARY HANDLER & MODAL
      ********************************************************/
     async function handleWordClick(clickedWord, context) {
       const pat = document.getElementById("pat").value.trim();
@@ -215,18 +302,18 @@ Offer hints on how the user can answer.
       }
     }
 
-    // Create a themable modal for the dictionary explanation
+    // The dictionary modal
     function showAlertWithMeaning(word, meaning) {
-      // Speak the clicked word
+      // TTS
       sayThis(word, document.getElementById("voiceSelect").value);
 
-      // Remove existing modal if present
+      // Remove existing modal if any
       const existingModal = document.getElementById("custom-alert");
       if (existingModal) {
         document.body.removeChild(existingModal);
       }
 
-      // Create the modal container
+      // Create the modal
       const modal = document.createElement("div");
       modal.id = "custom-alert";
       modal.classList.add("custom-alert");
@@ -241,7 +328,7 @@ Offer hints on how the user can answer.
       meaningText.textContent = meaning;
       modal.appendChild(meaningText);
 
-      // Buttons container
+      // Buttons
       const buttonsContainer = document.createElement("div");
       buttonsContainer.classList.add("modal-buttons");
 
@@ -295,10 +382,7 @@ Offer hints on how the user can answer.
       };
       buttonsContainer.appendChild(closeButton);
 
-      // Add buttons to modal
       modal.appendChild(buttonsContainer);
-
-      // Add modal to DOM
       document.body.appendChild(modal);
     }
   </script>

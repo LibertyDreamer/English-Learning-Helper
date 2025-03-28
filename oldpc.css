@@ -84,9 +84,8 @@ button:hover {
   white-space: pre-wrap;
 }
 
-/* Clickable words: underlined and change color on hover */
+/* Clickable words without underlining */
 .clickable-word {
-  text-decoration: underline;
   cursor: pointer;
   transition: color 0.2s ease;
 }

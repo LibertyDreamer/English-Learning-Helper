@@ -3,7 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <title>Space Adventure Game</title>
-  <link rel="stylesheet" href="oldpc.css">
+  <!-- Default theme is Old PC -->
+  <link id="themeStylesheet" rel="stylesheet" href="oldpc.css">
 </head>
 <body>
   <button id="settingsBtn">⚙ Settings</button>
@@ -44,6 +45,14 @@ Offer hints on how the user can answer.
       <option value="Brian">Brian</option>
       <option value="Russell">Russell</option>
     </select>
+    <hr>
+    <label for="themeSelect">Theme:</label>
+    <select id="themeSelect">
+      <option value="reading-dark.css">Reader</option>
+      <option value="oldpc.css" selected>Old PC</option>
+      <option value="fantasy.css">Fantasy</option>
+      <option value="horror.css">Horror</option>
+    </select>
   </div>
 
   <div id="container">
@@ -67,13 +76,14 @@ Offer hints on how the user can answer.
     import { sayThis } from './ttsModule.js';
 
     /********************************************************
-     * SETTINGS PANEL: LOAD/SAVE TO LOCALSTORAGE
+     * SETTINGS PANEL: LOAD/SAVE TO LOCALSTORAGE & THEME SWITCHING
      ********************************************************/
     function loadSettings() {
       const savedPat = localStorage.getItem("azurePat");
       const aiRole = localStorage.getItem("AISystemRole");
       const gamePrompt = localStorage.getItem("gameSystemMessage");
       const voiceSelect = localStorage.getItem("voiceSelect");
+      const theme = localStorage.getItem("theme");
 
       if (savedPat !== null) {
         document.getElementById("pat").value = savedPat;
@@ -86,6 +96,10 @@ Offer hints on how the user can answer.
       }
       if (voiceSelect !== null) {
         document.getElementById("voiceSelect").value = voiceSelect;
+      }
+      if (theme !== null) {
+        document.getElementById("themeSelect").value = theme;
+        document.getElementById("themeStylesheet").href = theme;
       }
     }
     loadSettings();
@@ -101,6 +115,11 @@ Offer hints on how the user can answer.
     });
     document.getElementById("voiceSelect").addEventListener("input", () => {
       localStorage.setItem("voiceSelect", document.getElementById("voiceSelect").value);
+    });
+    document.getElementById("themeSelect").addEventListener("change", () => {
+      const theme = document.getElementById("themeSelect").value;
+      localStorage.setItem("theme", theme);
+      document.getElementById("themeStylesheet").href = theme;
     });
 
     // Toggle the settings panel
@@ -245,7 +264,7 @@ Offer hints on how the user can answer.
       };
       buttonsContainer.appendChild(playButton);
 
-      // Deep learning button to open Youglish
+      // Deep learning button (opens Youglish)
       const deepLearningButton = document.createElement("button");
       deepLearningButton.textContent = "Deep learning";
       deepLearningButton.onclick = () => {

@@ -1,6 +1,3 @@
-/* Old PC / Emacs Hacker Style */
-/* A dark, terminal-inspired theme with neon-green accents */
-
 @import url('https://fonts.googleapis.com/css2?family=Source+Code+Pro:wght@400;700&display=swap');
 
 html, body {
@@ -19,7 +16,6 @@ a {
   text-decoration: none;
 }
 
-/* Main container with a retro terminal look */
 #container {
   width: 90%;
   max-width: 800px;
@@ -30,14 +26,12 @@ a {
   box-shadow: 0 0 10px #0f0;
 }
 
-/* Headings styled like old system messages */
 h1, h2 {
   color: #0f0;
   text-align: center;
   margin: 0 0 15px 0;
 }
 
-/* Input and button styling for a command-line feel */
 input[type="text"],
 input[type="password"],
 textarea,
@@ -56,7 +50,6 @@ textarea {
   resize: vertical;
 }
 
-/* Buttons styled as terminal commands */
 button {
   background-color: #222;
   color: #0f0;
@@ -72,7 +65,6 @@ button:hover {
   background-color: #333;
 }
 
-/* Story area styled as an output terminal */
 #story {
   margin-top: 20px;
   padding: 15px;
@@ -84,7 +76,6 @@ button:hover {
   white-space: pre-wrap;
 }
 
-/* Clickable words without underlining */
 .clickable-word {
   cursor: pointer;
   transition: color 0.2s ease;
@@ -94,7 +85,6 @@ button:hover {
   color: #fff;
 }
 
-/* Settings Panel & Button (slide-in) */
 #settingsBtn {
   position: fixed;
   top: 10px;

@@ -18,11 +18,15 @@ export function makeWordsClickable(containerId, callback) {
     return;
   }
 
-  // Ensure that whitespace (spaces, newlines) is preserved in the container.
-  container.style.whiteSpace = "pre-wrap";
+  // Clone the container to remove previously attached event listeners.
+  const newContainer = container.cloneNode(true);
+  container.parentNode.replaceChild(newContainer, container);
 
-  // Preserve original formatting by splitting text on spaces, keeping whitespace tokens.
-  const originalText = container.textContent;
+  // Ensure that whitespace is preserved.
+  newContainer.style.whiteSpace = "pre-wrap";
+
+  // Split text preserving whitespace tokens.
+  const originalText = newContainer.textContent;
   const tokens = originalText.split(/(\s+)/);
 
   // Collect non-space tokens for context calculations.
@@ -32,7 +36,7 @@ export function makeWordsClickable(containerId, callback) {
   // Wrap non-space tokens in a clickable span while preserving whitespace.
   const processedTokens = tokens.map(token => {
     if (token.trim() === "") {
-      return token; // Return whitespace unchanged.
+      return token; // Leave whitespace unchanged.
     } else {
       wordsArray.push(token);
       const span = `<span class="clickable-word" data-index="${wordIndex}">${token}</span>`;
@@ -41,11 +45,11 @@ export function makeWordsClickable(containerId, callback) {
     }
   });
 
-  // Update container's content without altering formatting.
-  container.innerHTML = processedTokens.join('');
+  // Update the container's content.
+  newContainer.innerHTML = processedTokens.join('');
 
-  // Attach click event listener to the container.
-  container.addEventListener('click', event => {
+  // Attach the click event listener.
+  newContainer.addEventListener('click', event => {
     if (event.target.classList.contains('clickable-word')) {
       const index = parseInt(event.target.getAttribute('data-index'), 10);
       const clickedWord = wordsArray[index];

@@ -205,7 +205,7 @@
     </div>
   </div>
   
-  <!-- Dictionary Modal (now using API results) -->
+  <!-- Dictionary Modal (using API results) -->
   <div id="dictModal" class="modal">
     <div class="modal-content large">
       <span class="close" id="closeDictModalBtn">&times;</span>
@@ -267,9 +267,8 @@
     /**************************************************
      * 2) Spaced Repetition Drill System Code
      **************************************************/
-    let wordData = {};        // { word: { examples: [...], repetition, interval, ease, nextReview } }
+    let wordData = {};        // { word: { examples: [...], repetition, interval, ease, nextReview, ignored } }
     let words = [];           // Array of word keys
-    let ignoredWords = [];    // Words to ignore
     let jsonLoaded = false;
     let currentWord = "";
     let currentExamples = [];
@@ -281,6 +280,7 @@
       if (card.interval === undefined) card.interval = 0;
       if (card.ease === undefined) card.ease = 2.5;
       if (card.nextReview === undefined) card.nextReview = Date.now();
+      if (card.ignored === undefined) card.ignored = false;
     }
     
     // SM-2 scheduling update.
@@ -307,14 +307,14 @@
       card.nextReview = now + card.interval * 86400000; // days to ms.
     }
     
-    // Get the next due card.
+    // Get the next due card, skipping words marked as ignored.
     function getNextCard() {
       const now = Date.now();
-      const dueCards = words.filter(w => !ignoredWords.includes(w) && (wordData[w].nextReview || 0) <= now);
+      const dueCards = words.filter(w => !wordData[w].ignored && (wordData[w].nextReview || 0) <= now);
       if (dueCards.length > 0) {
         return dueCards[Math.floor(Math.random() * dueCards.length)];
       } else {
-        const notIgnored = words.filter(w => !ignoredWords.includes(w));
+        const notIgnored = words.filter(w => !wordData[w].ignored);
         if (notIgnored.length === 0) return null;
         notIgnored.sort((a, b) => (wordData[a].nextReview || Infinity) - (wordData[b].nextReview || Infinity));
         return notIgnored[0];
@@ -419,7 +419,8 @@
                 repetition: 0, 
                 interval: 0, 
                 ease: 2.5, 
-                nextReview: Date.now() 
+                nextReview: Date.now(),
+                ignored: false
               };
             } else {
               if (!wordData[word].examples.includes(line)) {
@@ -575,10 +576,10 @@
       downloadAnchor.remove();
     });
     
-    // Ignore Word button.
+    // Ignore Word button. This now updates the JSON by setting an "ignored" property.
     document.getElementById("ignoreWordBtn").addEventListener("click", () => {
       if (currentWord) {
-        if (!ignoredWords.includes(currentWord)) ignoredWords.push(currentWord);
+        wordData[currentWord].ignored = true;
         currentWord = getNextCard();
         if (currentWord) showCurrentCard();
         else {

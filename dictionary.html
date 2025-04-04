@@ -203,7 +203,7 @@
     </div>
   </div>
   
-  <!-- Dictionary Modal -->
+  <!-- Dictionary Modal (static markup) -->
   <div id="dictModal" class="modal">
     <div class="modal-content large">
       <span class="close" id="closeDictModalBtn">&times;</span>
@@ -444,19 +444,8 @@
     /**************************************************
      * 4) Dictionary Modal (Oxford Learner's Dictionaries)
      **************************************************/
-    // Create a dictionary modal that shows an iframe with Oxford Learner's Dictionaries.
-    // When the user clicks the current word, this modal will appear.
-    const dictModal = document.createElement("div");
-    dictModal.id = "dictModal";
-    dictModal.classList.add("modal");
-    dictModal.innerHTML = `
-      <div class="modal-content large">
-        <span class="close" id="closeDictModalBtn">&times;</span>
-        <h2 id="dictTitle"></h2>
-        <iframe id="dictIframe" src=""></iframe>
-      </div>
-    `;
-    document.body.appendChild(dictModal);
+    // Use the static dictionary modal defined in the HTML.
+    const dictModal = document.getElementById("dictModal");
     
     // Open dictionary modal when current word is clicked.
     document.getElementById("currentWord").addEventListener("click", () => {

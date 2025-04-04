@@ -2,7 +2,7 @@
 <html>
 <head>
   <meta charset="UTF-8">
-  <title>Word Drill System</title>
+  <title>Spaced Repetition Word Drill</title>
   <style>
     body {
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -33,7 +33,7 @@
       margin: 8% auto; 
       padding: 20px;
       border-radius: 8px;
-      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+      box-shadow: 0 2px 10px rgba(0,0,0,0.2);
       width: 90%; 
       max-width: 600px;
       position: relative;
@@ -153,7 +153,7 @@
   </style>
 </head>
 <body>
-  <h1>Word Drill System</h1>
+  <h1>Spaced Repetition Word Drill</h1>
   
   <!-- Button to open the JSON management modal -->
   <button id="openModalBtn">Manage JSON</button>
@@ -166,16 +166,13 @@
     <div class="modal-content">
       <span class="close" id="closeModalBtn">&times;</span>
       <h2>Load / Update JSON</h2>
-      
       <!-- Single button to choose + load JSON -->
       <button id="chooseAndLoadBtn">Choose &amp; Load JSON</button>
       <br><br>
-      
       <p>Paste ASS, SRT, or plain text to add words (works only if JSON is loaded):</p>
       <textarea id="inputText" placeholder="Paste text here..."></textarea>
       <br>
       <button id="processTextBtn">Add Words from Text</button>
-      
       <hr style="margin:20px 0;">
       <h3>Download Updated JSON</h3>
       <button id="downloadJsonBtn">Download JSON</button>
@@ -185,7 +182,6 @@
   <!-- Main Drill Section -->
   <div class="section" id="drill-section" style="display:none;">
     <h2>Drill System</h2>
-    
     <!-- Top row: Voice Selection -->
     <div id="topRow">
       <div>
@@ -193,12 +189,10 @@
         <select id="voiceSelect"></select>
       </div>
     </div>
-    
     <!-- Current Word and Examples -->
     <h3 id="currentWord"></h3>
     <div id="examplesContainer"></div>
-    
-    <!-- Rating Buttons (now below examples) -->
+    <!-- Rating Buttons (below examples) -->
     <div id="ratingSection">
       <p>How well do you know this word?</p>
       <button class="ratingBtn" data-rating="0">0%</button>
@@ -208,7 +202,6 @@
       <button class="ratingBtn" data-rating="80">80%</button>
       <button class="ratingBtn" data-rating="100">100%</button>
     </div>
-    
     <!-- Ignore Word Button at the very bottom -->
     <button id="ignoreWordBtn">Ignore Word</button>
   </div>
@@ -241,137 +234,133 @@
     }
     
     /**************************************************
-     * 2) Drill System Code
+     * 2) Spaced Repetition Drill System Code
      **************************************************/
-    let wordData = {};        // { word: { examples: [...], percentage: number } }
-    let words = [];           // Array of word keys from wordData
-    let ignoredWords = [];    // Words to ignore in the drill
+    let wordData = {};        // { word: { examples: [...], percentage: number, repetition, interval, ease, nextReview } }
+    let words = [];           // Array of word keys
+    let ignoredWords = [];    // Words to ignore
     let jsonLoaded = false;
     let currentWord = "";
     let currentExamples = [];
     
-    // Initialize voice dropdown and load saved preference from localStorage
-    function initVoiceSelect() {
-      const voiceSelect = document.getElementById("voiceSelect");
-      voiceSelect.innerHTML = "";
-      availableVoices.forEach(voice => {
-        const option = document.createElement("option");
-        option.value = voice;
-        option.textContent = voice;
-        voiceSelect.appendChild(option);
-      });
-      const savedVoice = localStorage.getItem("selectedVoice");
-      if(savedVoice && availableVoices.includes(savedVoice)) {
-        voiceSelect.value = savedVoice;
-      }
-      voiceSelect.addEventListener("change", () => {
-        localStorage.setItem("selectedVoice", voiceSelect.value);
-      });
+    // Initialize each card with scheduling properties if missing.
+    function ensureCardProperties(word) {
+      const card = wordData[word];
+      if (card.repetition === undefined) card.repetition = 0;
+      if (card.interval === undefined) card.interval = 0;
+      if (card.ease === undefined) card.ease = 2.5;
+      if (card.nextReview === undefined) card.nextReview = Date.now();
     }
     
-    // Weighted random selection: words with lower percentage appear more frequently.
-    function weightedRandomWord() {
-      const validWords = words.filter(w => !ignoredWords.includes(w));
-      let candidates = validWords.filter(w => wordData[w].percentage < 100);
-      if(candidates.length === 0) candidates = validWords;
-      if(candidates.length === 0) return null;
-      
-      let totalWeight = 0;
-      const weights = [];
-      candidates.forEach(w => {
-        const weight = 101 - wordData[w].percentage;
-        weights.push(weight);
-        totalWeight += weight;
-      });
-      
-      let rand = Math.random() * totalWeight;
-      for(let i = 0; i < candidates.length; i++) {
-        rand -= weights[i];
-        if(rand <= 0) return candidates[i];
+    // SM-2 scheduling update.
+    // Map rating (0,20,40,60,80,100) to quality (0–5)
+    function updateCard(word, quality) {
+      ensureCardProperties(word);
+      let card = wordData[word];
+      const now = Date.now();
+      if (quality < 3) {  // If quality is less than 3, treat as failure.
+        card.repetition = 0;
+        card.interval = 1;  // next review in 1 day.
+      } else {
+        card.repetition++;
+        if (card.repetition === 1) {
+          card.interval = 1;
+        } else if (card.repetition === 2) {
+          card.interval = 6;
+        } else {
+          card.interval = card.interval * card.ease;
+        }
+        card.ease = card.ease - 0.8 + 0.28 * quality - 0.02 * quality * quality;
+        if (card.ease < 1.3) card.ease = 1.3;
       }
-      return candidates[candidates.length - 1];
+      card.nextReview = now + card.interval * 86400000; // days to ms
     }
     
-    // Display the current word and up to 5 random examples.
-    function showCurrentWord() {
-      if(!currentWord) return;
+    // Get the next card that is due.
+    function getNextCard() {
+      const now = Date.now();
+      const dueCards = words.filter(w => !ignoredWords.includes(w) && (wordData[w].nextReview || 0) <= now);
+      if (dueCards.length > 0) {
+        return dueCards[Math.floor(Math.random() * dueCards.length)];
+      } else {
+        const notIgnored = words.filter(w => !ignoredWords.includes(w));
+        if (notIgnored.length === 0) return null;
+        notIgnored.sort((a, b) => (wordData[a].nextReview || Infinity) - (wordData[b].nextReview || Infinity));
+        return notIgnored[0];
+      }
+    }
+    
+    // Display the current card.
+    function showCurrentCard() {
+      if (!currentWord) return;
+      ensureCardProperties(currentWord);
       document.getElementById("currentWord").textContent = currentWord;
       const exs = wordData[currentWord].examples;
       const shuffled = exs.slice().sort(() => 0.5 - Math.random());
       currentExamples = shuffled.slice(0, 5);
-      
       const container = document.getElementById("examplesContainer");
       container.innerHTML = "";
-      
       currentExamples.forEach(exampleText => {
         const div = document.createElement("div");
         div.classList.add("exampleLine");
-        
         const span = document.createElement("span");
         span.textContent = exampleText;
-        
         const playBtn = document.createElement("button");
         playBtn.textContent = "Play";
         playBtn.addEventListener("click", () => {
           const selectedVoice = document.getElementById("voiceSelect").value;
           sayThis(exampleText, selectedVoice);
         });
-        
         div.appendChild(span);
         div.appendChild(playBtn);
         container.appendChild(div);
       });
-      
-      // Auto-play the first example, if available.
-      if(currentExamples.length > 0) {
+      // Auto-play the first example.
+      if (currentExamples.length > 0) {
         const selectedVoice = document.getElementById("voiceSelect").value;
         sayThis(currentExamples[0], selectedVoice);
       }
     }
     
-    function pickNextWord() {
-      return weightedRandomWord();
-    }
-    
-    // Check if a text is a vector drawing command.
-    function isVectorCommand(text) {
-      const tokens = text.trim().split(/\s+/);
-      for(let token of tokens) {
-        if(/^(m|l|c|s|n)$/i.test(token)) continue;
-        if(/^\d+(\.\d+)?$/.test(token)) continue;
-        return false;
+    // When a rating button is clicked, update the card and load the next one.
+    function reviewCurrentCard(quality) {
+      updateCard(currentWord, quality);
+      // Save updated scheduling info in wordData.
+      currentWord = getNextCard();
+      if (currentWord) {
+        showCurrentCard();
+      } else {
+        document.getElementById("currentWord").textContent = "No cards available.";
+        document.getElementById("examplesContainer").textContent = "";
       }
-      return true;
     }
     
-    // Remove formatting tags enclosed in curly braces.
-    function cleanLine(line) {
-      return line.replace(/\{[^}]*\}/g, "").trim();
-    }
-    
-    // Convert pasted text (ASS, SRT, or plain) into dialogue lines.
+    /**************************************************
+     * 3) Input & Modal Management
+     **************************************************/
+    // Process text input (ASS, SRT, or plain) into dialogue lines.
     function processInputText(text) {
       let processedLines = [];
       text = text.trim();
-      if(text.includes("Dialogue:")) {
+      if (text.includes("Dialogue:")) {
         const lines = text.split("\n");
-        for(const line of lines) {
-          if(line.startsWith("Dialogue:")) {
+        for (const line of lines) {
+          if (line.startsWith("Dialogue:")) {
             const parts = line.split(",", 10);
-            if(parts.length >= 10) {
+            if (parts.length >= 10) {
               let dialogue = parts[9].trim();
               dialogue = dialogue.replace(/\{[^}]*\}/g, "").trim();
-              if(dialogue) processedLines.push(dialogue);
+              if (dialogue) processedLines.push(dialogue);
             }
           }
         }
-      } else if(text.match(/^\d+\s*\n\d\d:\d\d:\d\d/)) {
+      } else if (text.match(/^\d+\s*\n\d\d:\d\d:\d\d/)) {
         const blocks = text.split(/\n\s*\n/);
-        for(const block of blocks) {
+        for (const block of blocks) {
           const lines = block.split("\n");
-          if(lines.length >= 3) {
+          if (lines.length >= 3) {
             const dialogue = lines.slice(2).join(" ").trim();
-            if(dialogue) processedLines.push(dialogue);
+            if (dialogue) processedLines.push(dialogue);
           }
         }
       } else {
@@ -380,18 +369,23 @@
       return processedLines;
     }
     
-    // Update wordData with lines from pasted text.
+    // Remove formatting tags.
+    function cleanLine(line) {
+      return line.replace(/\{[^}]*\}/g, "").trim();
+    }
+    
+    // Add words from pasted text.
     function updateWordDataFromLines(lines) {
       lines.forEach(line => {
         line = cleanLine(line);
-        if(isVectorCommand(line)) return;
+        if (isVectorCommand(line)) return;
         const wordsInLine = line.toLowerCase().match(/\w+/g);
-        if(wordsInLine) {
+        if (wordsInLine) {
           wordsInLine.forEach(word => {
-            if(!wordData[word]) {
+            if (!wordData[word]) {
               wordData[word] = { examples: [line], percentage: 0 };
             } else {
-              if(!wordData[word].examples.includes(line)) {
+              if (!wordData[word].examples.includes(line)) {
                 wordData[word].examples.push(line);
               }
             }
@@ -401,43 +395,51 @@
       words = Object.keys(wordData);
     }
     
-    /**************************************************
-     * 3) Event Listeners & Initialization
-     **************************************************/
+    // Check for vector drawing command.
+    function isVectorCommand(text) {
+      const tokens = text.trim().split(/\s+/);
+      for (let token of tokens) {
+        if (/^(m|l|c|s|n)$/i.test(token)) continue;
+        if (/^\d+(\.\d+)?$/.test(token)) continue;
+        return false;
+      }
+      return true;
+    }
     
+    /**************************************************
+     * 4) Event Listeners & Initialization
+     **************************************************/
     // Modal management
     const modal = document.getElementById("jsonModal");
     const openModalBtn = document.getElementById("openModalBtn");
     const closeModalBtn = document.getElementById("closeModalBtn");
-    
     openModalBtn.addEventListener("click", () => { modal.style.display = "block"; });
     closeModalBtn.addEventListener("click", () => { modal.style.display = "none"; });
-    window.addEventListener("click", event => {
-      if(event.target == modal) modal.style.display = "none";
-    });
+    window.addEventListener("click", event => { if (event.target == modal) modal.style.display = "none"; });
     
     // Single "Choose & Load JSON" button
     document.getElementById("chooseAndLoadBtn").addEventListener("click", () => {
       document.getElementById("jsonFileInput").click();
     });
     
-    // When a file is chosen, load it immediately.
+    // Load JSON when file is chosen.
     document.getElementById("jsonFileInput").addEventListener("change", () => {
       const fileInput = document.getElementById("jsonFileInput");
-      if(fileInput.files.length === 0) return;
-      
+      if (fileInput.files.length === 0) return;
       const file = fileInput.files[0];
       const reader = new FileReader();
       reader.onload = e => {
         try {
           wordData = JSON.parse(e.target.result);
+          // Ensure each card has scheduling properties.
           words = Object.keys(wordData);
+          words.forEach(word => { ensureCardProperties(word); });
           jsonLoaded = true;
           alert("JSON file loaded successfully.");
           document.getElementById("drill-section").style.display = "block";
-          currentWord = pickNextWord();
-          if(currentWord) showCurrentWord();
-        } catch(err) {
+          currentWord = getNextCard();
+          if (currentWord) showCurrentCard();
+        } catch (err) {
           alert("Error parsing JSON file.");
         }
       };
@@ -446,12 +448,12 @@
     
     // Process text to add words.
     document.getElementById("processTextBtn").addEventListener("click", () => {
-      if(!jsonLoaded) {
+      if (!jsonLoaded) {
         alert("Please load a JSON file first.");
         return;
       }
       const inputText = document.getElementById("inputText").value;
-      if(!inputText) {
+      if (!inputText) {
         alert("Please paste some text first.");
         return;
       }
@@ -460,9 +462,9 @@
       alert("Text processed. JSON data updated.");
     });
     
-    // Download JSON
+    // Download updated JSON.
     document.getElementById("downloadJsonBtn").addEventListener("click", () => {
-      if(!jsonLoaded) {
+      if (!jsonLoaded) {
         alert("No JSON loaded.");
         return;
       }
@@ -475,36 +477,31 @@
       downloadAnchor.remove();
     });
     
-    // Ignore Word: move to next word after ignoring.
+    // Ignore Word button.
     document.getElementById("ignoreWordBtn").addEventListener("click", () => {
-      if(currentWord) {
-        if(!ignoredWords.includes(currentWord)) ignoredWords.push(currentWord);
-        currentWord = pickNextWord();
-        if(currentWord) showCurrentWord();
+      if (currentWord) {
+        if (!ignoredWords.includes(currentWord)) ignoredWords.push(currentWord);
+        currentWord = getNextCard();
+        if (currentWord) showCurrentCard();
         else {
-          document.getElementById("currentWord").textContent = "No more words available.";
+          document.getElementById("currentWord").textContent = "No more cards available.";
           document.getElementById("examplesContainer").textContent = "";
         }
       }
     });
     
-    // Rating buttons: update percentage and then automatically move to the next word.
+    // Rating buttons: update scheduling and load next card.
     document.querySelectorAll(".ratingBtn").forEach(btn => {
       btn.addEventListener("click", () => {
-        const rating = parseInt(btn.getAttribute("data-rating"));
-        if(currentWord && wordData[currentWord]) {
-          wordData[currentWord].percentage = rating;
-          currentWord = pickNextWord();
-          if(currentWord) showCurrentWord();
-          else {
-            document.getElementById("currentWord").textContent = "No words available for drill.";
-            document.getElementById("examplesContainer").textContent = "";
-          }
+        const rating = parseInt(btn.getAttribute("data-rating")); // 0,20,...,100
+        const quality = rating / 20;  // Maps to 0,1,2,3,4,5
+        if (currentWord && wordData[currentWord]) {
+          reviewCurrentCard(quality);
         }
       });
     });
     
-    // Initialize voice select on load.
+    // Initialize voice select.
     initVoiceSelect();
   </script>
 </body>

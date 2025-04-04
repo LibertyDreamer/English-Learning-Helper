@@ -81,25 +81,19 @@
       margin: 0 auto 20px;
     }
     /* Drill Section Layout */
-    #drillTopRow {
+    #topRow {
       display: flex;
-      flex-wrap: wrap;
-      align-items: center;
-      justify-content: space-between;
+      justify-content: center;
       margin-bottom: 15px;
     }
-    #drillTopRow > * {
-      margin: 5px 0;
+    #topRow > * {
+      margin: 0 10px;
     }
-    #ratingSection {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      flex-wrap: wrap;
-    }
-    #ratingSection p {
-      margin: 0;
-      font-weight: 600;
+    #currentWord {
+      font-size: 2em;
+      color: #2c3e50;
+      text-align: center;
+      margin-bottom: 10px;
     }
     #examplesContainer {
       padding: 10px;
@@ -129,24 +123,32 @@
       padding: 6px 10px;
       border-radius: 4px;
       border: 1px solid #ccc;
-      margin-right: 10px;
+    }
+    #ratingSection {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 15px;
+    }
+    #ratingSection p {
+      margin: 0;
+      font-weight: 600;
     }
     .ratingBtn {
       background: #e67e22;
-      margin: 0 3px;
     }
     .ratingBtn:hover {
       background: #d35400;
     }
-    #nextWordBtn {
-      background: #27ae60;
-      margin-right: 10px;
-    }
-    #nextWordBtn:hover {
-      background: #1e8449;
-    }
     #ignoreWordBtn {
-      margin-top: 15px;
+      display: block;
+      margin: 20px auto 0;
+      background: #c0392b;
+    }
+    #ignoreWordBtn:hover {
+      background: #a93226;
     }
   </style>
 </head>
@@ -166,7 +168,7 @@
       <h2>Load / Update JSON</h2>
       
       <!-- Single button to choose + load JSON -->
-      <button id="chooseAndLoadBtn">Choose & Load JSON</button>
+      <button id="chooseAndLoadBtn">Choose &amp; Load JSON</button>
       <br><br>
       
       <p>Paste ASS, SRT, or plain text to add words (works only if JSON is loaded):</p>
@@ -184,29 +186,30 @@
   <div class="section" id="drill-section" style="display:none;">
     <h2>Drill System</h2>
     
-    <!-- Top row: Next Word, Voice Select, Rating Buttons -->
-    <div id="drillTopRow">
-      <button id="nextWordBtn">Next Word</button>
-      
+    <!-- Top row: Voice Selection -->
+    <div id="topRow">
       <div>
         <label for="voiceSelect"><strong>Voice:</strong></label>
         <select id="voiceSelect"></select>
       </div>
-      
-      <div id="ratingSection">
-        <p>How well do you know this word?</p>
-        <button class="ratingBtn" data-rating="0">0%</button>
-        <button class="ratingBtn" data-rating="20">20%</button>
-        <button class="ratingBtn" data-rating="40">40%</button>
-        <button class="ratingBtn" data-rating="60">60%</button>
-        <button class="ratingBtn" data-rating="80">80%</button>
-        <button class="ratingBtn" data-rating="100">100%</button>
-      </div>
     </div>
     
-    <h3 id="currentWord" style="text-align:center;"></h3>
+    <!-- Current Word and Examples -->
+    <h3 id="currentWord"></h3>
     <div id="examplesContainer"></div>
     
+    <!-- Rating Buttons (now below examples) -->
+    <div id="ratingSection">
+      <p>How well do you know this word?</p>
+      <button class="ratingBtn" data-rating="0">0%</button>
+      <button class="ratingBtn" data-rating="20">20%</button>
+      <button class="ratingBtn" data-rating="40">40%</button>
+      <button class="ratingBtn" data-rating="60">60%</button>
+      <button class="ratingBtn" data-rating="80">80%</button>
+      <button class="ratingBtn" data-rating="100">100%</button>
+    </div>
+    
+    <!-- Ignore Word Button at the very bottom -->
     <button id="ignoreWordBtn">Ignore Word</button>
   </div>
   
@@ -247,7 +250,7 @@
     let currentWord = "";
     let currentExamples = [];
     
-    // Initialize voice dropdown (and load from localStorage)
+    // Initialize voice dropdown and load saved preference from localStorage
     function initVoiceSelect() {
       const voiceSelect = document.getElementById("voiceSelect");
       voiceSelect.innerHTML = "";
@@ -266,7 +269,7 @@
       });
     }
     
-    // Weighted random selection: words with lower % appear more often
+    // Weighted random selection: words with lower percentage appear more frequently.
     function weightedRandomWord() {
       const validWords = words.filter(w => !ignoredWords.includes(w));
       let candidates = validWords.filter(w => wordData[w].percentage < 100);
@@ -289,13 +292,11 @@
       return candidates[candidates.length - 1];
     }
     
-    // Display the current word + up to 5 examples
+    // Display the current word and up to 5 random examples.
     function showCurrentWord() {
       if(!currentWord) return;
-      
       document.getElementById("currentWord").textContent = currentWord;
       const exs = wordData[currentWord].examples;
-      // Shuffle & take up to 5
       const shuffled = exs.slice().sort(() => 0.5 - Math.random());
       currentExamples = shuffled.slice(0, 5);
       
@@ -321,10 +322,9 @@
         container.appendChild(div);
       });
       
-      // Auto-play the first example if available
+      // Auto-play the first example, if available.
       if(currentExamples.length > 0) {
         const selectedVoice = document.getElementById("voiceSelect").value;
-        // Some browsers block autoplay if user hasn't interacted yet
         sayThis(currentExamples[0], selectedVoice);
       }
     }
@@ -333,7 +333,7 @@
       return weightedRandomWord();
     }
     
-    // Check if text is a vector drawing command
+    // Check if a text is a vector drawing command.
     function isVectorCommand(text) {
       const tokens = text.trim().split(/\s+/);
       for(let token of tokens) {
@@ -344,16 +344,15 @@
       return true;
     }
     
-    // Remove curly brace formatting
+    // Remove formatting tags enclosed in curly braces.
     function cleanLine(line) {
       return line.replace(/\{[^}]*\}/g, "").trim();
     }
     
-    // Convert pasted text (ASS, SRT, or plain) into lines
+    // Convert pasted text (ASS, SRT, or plain) into dialogue lines.
     function processInputText(text) {
       let processedLines = [];
       text = text.trim();
-      // Detect ASS
       if(text.includes("Dialogue:")) {
         const lines = text.split("\n");
         for(const line of lines) {
@@ -366,9 +365,7 @@
             }
           }
         }
-      }
-      // Detect SRT
-      else if(text.match(/^\d+\s*\n\d\d:\d\d:\d\d/)) {
+      } else if(text.match(/^\d+\s*\n\d\d:\d\d:\d\d/)) {
         const blocks = text.split(/\n\s*\n/);
         for(const block of blocks) {
           const lines = block.split("\n");
@@ -377,15 +374,13 @@
             if(dialogue) processedLines.push(dialogue);
           }
         }
-      }
-      // Plain text
-      else {
+      } else {
         processedLines = text.split("\n").map(line => line.trim()).filter(line => line);
       }
       return processedLines;
     }
     
-    // Add lines to the wordData
+    // Update wordData with lines from pasted text.
     function updateWordDataFromLines(lines) {
       lines.forEach(line => {
         line = cleanLine(line);
@@ -410,30 +405,23 @@
      * 3) Event Listeners & Initialization
      **************************************************/
     
-    // Modal references
+    // Modal management
     const modal = document.getElementById("jsonModal");
     const openModalBtn = document.getElementById("openModalBtn");
     const closeModalBtn = document.getElementById("closeModalBtn");
     
-    // Show/hide modal
-    openModalBtn.addEventListener("click", () => {
-      modal.style.display = "block";
-    });
-    closeModalBtn.addEventListener("click", () => {
-      modal.style.display = "none";
-    });
+    openModalBtn.addEventListener("click", () => { modal.style.display = "block"; });
+    closeModalBtn.addEventListener("click", () => { modal.style.display = "none"; });
     window.addEventListener("click", event => {
-      if(event.target == modal) {
-        modal.style.display = "none";
-      }
+      if(event.target == modal) modal.style.display = "none";
     });
     
-    // Single “Choose & Load JSON” button
+    // Single "Choose & Load JSON" button
     document.getElementById("chooseAndLoadBtn").addEventListener("click", () => {
       document.getElementById("jsonFileInput").click();
     });
     
-    // When file is chosen, load it immediately
+    // When a file is chosen, load it immediately.
     document.getElementById("jsonFileInput").addEventListener("change", () => {
       const fileInput = document.getElementById("jsonFileInput");
       if(fileInput.files.length === 0) return;
@@ -456,7 +444,7 @@
       reader.readAsText(file);
     });
     
-    // Process text => add words
+    // Process text to add words.
     document.getElementById("processTextBtn").addEventListener("click", () => {
       if(!jsonLoaded) {
         alert("Please load a JSON file first.");
@@ -487,34 +475,20 @@
       downloadAnchor.remove();
     });
     
-    // Next Word
-    document.getElementById("nextWordBtn").addEventListener("click", () => {
-      currentWord = pickNextWord();
-      if(currentWord) {
-        showCurrentWord();
-      } else {
-        document.getElementById("currentWord").textContent = "No words available for drill.";
-        document.getElementById("examplesContainer").textContent = "";
-      }
-    });
-    
-    // Ignore Word
+    // Ignore Word: move to next word after ignoring.
     document.getElementById("ignoreWordBtn").addEventListener("click", () => {
       if(currentWord) {
-        if(!ignoredWords.includes(currentWord)) {
-          ignoredWords.push(currentWord);
-        }
+        if(!ignoredWords.includes(currentWord)) ignoredWords.push(currentWord);
         currentWord = pickNextWord();
-        if(currentWord) {
-          showCurrentWord();
-        } else {
+        if(currentWord) showCurrentWord();
+        else {
           document.getElementById("currentWord").textContent = "No more words available.";
           document.getElementById("examplesContainer").textContent = "";
         }
       }
     });
     
-    // Rating Buttons => update percentage & move on
+    // Rating buttons: update percentage and then automatically move to the next word.
     document.querySelectorAll(".ratingBtn").forEach(btn => {
       btn.addEventListener("click", () => {
         const rating = parseInt(btn.getAttribute("data-rating"));
@@ -530,7 +504,7 @@
       });
     });
     
-    // Initialize voice dropdown on load
+    // Initialize voice select on load.
     initVoiceSelect();
   </script>
 </body>

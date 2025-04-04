@@ -128,8 +128,7 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      flex-wrap: wrap;
-      gap: 8px;
+      gap: 10px;
       margin-bottom: 15px;
     }
     #ratingSection p {
@@ -138,6 +137,8 @@
     }
     .ratingBtn {
       background: #e67e22;
+      padding: 10px 20px;
+      font-size: 1em;
     }
     .ratingBtn:hover {
       background: #d35400;
@@ -146,6 +147,8 @@
       display: block;
       margin: 20px auto 0;
       background: #c0392b;
+      padding: 10px 20px;
+      font-size: 1em;
     }
     #ignoreWordBtn:hover {
       background: #a93226;
@@ -192,15 +195,11 @@
     <!-- Current Word and Examples -->
     <h3 id="currentWord"></h3>
     <div id="examplesContainer"></div>
-    <!-- Rating Buttons (below examples) -->
+    <!-- Rating Buttons (3 buttons) below examples -->
     <div id="ratingSection">
-      <p>How well do you know this word?</p>
-      <button class="ratingBtn" data-rating="0">0%</button>
-      <button class="ratingBtn" data-rating="20">20%</button>
-      <button class="ratingBtn" data-rating="40">40%</button>
-      <button class="ratingBtn" data-rating="60">60%</button>
-      <button class="ratingBtn" data-rating="80">80%</button>
-      <button class="ratingBtn" data-rating="100">100%</button>
+      <button class="ratingBtn" data-quality="0">Again</button>
+      <button class="ratingBtn" data-quality="3">Hard</button>
+      <button class="ratingBtn" data-quality="5">Easy</button>
     </div>
     <!-- Ignore Word Button at the very bottom -->
     <button id="ignoreWordBtn">Ignore Word</button>
@@ -236,14 +235,14 @@
     /**************************************************
      * 2) Spaced Repetition Drill System Code
      **************************************************/
-    let wordData = {};        // { word: { examples: [...], percentage: number, repetition, interval, ease, nextReview } }
+    let wordData = {};        // { word: { examples: [...], repetition, interval, ease, nextReview } }
     let words = [];           // Array of word keys
     let ignoredWords = [];    // Words to ignore
     let jsonLoaded = false;
     let currentWord = "";
     let currentExamples = [];
     
-    // Initialize each card with scheduling properties if missing.
+    // Ensure each card has scheduling properties.
     function ensureCardProperties(word) {
       const card = wordData[word];
       if (card.repetition === undefined) card.repetition = 0;
@@ -253,12 +252,12 @@
     }
     
     // SM-2 scheduling update.
-    // Map rating (0,20,40,60,80,100) to quality (0–5)
+    // Mapping: "Again" => quality 0, "Hard" => quality 3, "Easy" => quality 5.
     function updateCard(word, quality) {
       ensureCardProperties(word);
       let card = wordData[word];
       const now = Date.now();
-      if (quality < 3) {  // If quality is less than 3, treat as failure.
+      if (quality < 3) {  // Failed; reset repetition.
         card.repetition = 0;
         card.interval = 1;  // next review in 1 day.
       } else {
@@ -273,10 +272,10 @@
         card.ease = card.ease - 0.8 + 0.28 * quality - 0.02 * quality * quality;
         if (card.ease < 1.3) card.ease = 1.3;
       }
-      card.nextReview = now + card.interval * 86400000; // days to ms
+      card.nextReview = now + card.interval * 86400000; // Convert days to ms.
     }
     
-    // Get the next card that is due.
+    // Get the next due card.
     function getNextCard() {
       const now = Date.now();
       const dueCards = words.filter(w => !ignoredWords.includes(w) && (wordData[w].nextReview || 0) <= now);
@@ -322,10 +321,9 @@
       }
     }
     
-    // When a rating button is clicked, update the card and load the next one.
+    // When a review button is clicked.
     function reviewCurrentCard(quality) {
       updateCard(currentWord, quality);
-      // Save updated scheduling info in wordData.
       currentWord = getNextCard();
       if (currentWord) {
         showCurrentCard();
@@ -338,7 +336,8 @@
     /**************************************************
      * 3) Input & Modal Management
      **************************************************/
-    // Process text input (ASS, SRT, or plain) into dialogue lines.
+    
+    // Process input text (ASS, SRT, or plain) into dialogue lines.
     function processInputText(text) {
       let processedLines = [];
       text = text.trim();
@@ -383,7 +382,7 @@
         if (wordsInLine) {
           wordsInLine.forEach(word => {
             if (!wordData[word]) {
-              wordData[word] = { examples: [line], percentage: 0 };
+              wordData[word] = { examples: [line], repetition: 0, interval: 0, ease: 2.5, nextReview: Date.now() };
             } else {
               if (!wordData[word].examples.includes(line)) {
                 wordData[word].examples.push(line);
@@ -395,7 +394,7 @@
       words = Object.keys(wordData);
     }
     
-    // Check for vector drawing command.
+    // Check if text is a vector drawing command.
     function isVectorCommand(text) {
       const tokens = text.trim().split(/\s+/);
       for (let token of tokens) {
@@ -409,6 +408,7 @@
     /**************************************************
      * 4) Event Listeners & Initialization
      **************************************************/
+    
     // Modal management
     const modal = document.getElementById("jsonModal");
     const openModalBtn = document.getElementById("openModalBtn");
@@ -422,15 +422,20 @@
       document.getElementById("jsonFileInput").click();
     });
     
-    // Load JSON when file is chosen.
+    // When file is chosen, load it immediately. If empty, initialize to {}.
     document.getElementById("jsonFileInput").addEventListener("change", () => {
       const fileInput = document.getElementById("jsonFileInput");
       if (fileInput.files.length === 0) return;
       const file = fileInput.files[0];
       const reader = new FileReader();
       reader.onload = e => {
+        const content = e.target.result.trim();
         try {
-          wordData = JSON.parse(e.target.result);
+          if (!content) {
+            wordData = {};
+          } else {
+            wordData = JSON.parse(content);
+          }
           // Ensure each card has scheduling properties.
           words = Object.keys(wordData);
           words.forEach(word => { ensureCardProperties(word); });
@@ -490,18 +495,36 @@
       }
     });
     
-    // Rating buttons: update scheduling and load next card.
+    // Rating buttons: three buttons mapping to quality 0, 3, and 5.
     document.querySelectorAll(".ratingBtn").forEach(btn => {
       btn.addEventListener("click", () => {
-        const rating = parseInt(btn.getAttribute("data-rating")); // 0,20,...,100
-        const quality = rating / 20;  // Maps to 0,1,2,3,4,5
+        const quality = parseInt(btn.getAttribute("data-quality"));
         if (currentWord && wordData[currentWord]) {
           reviewCurrentCard(quality);
         }
       });
     });
     
-    // Initialize voice select.
+    // Initialize voice selection on load.
+    function initVoiceSelect() {
+      const voiceSelect = document.getElementById("voiceSelect");
+      voiceSelect.innerHTML = "";
+      availableVoices.forEach(voice => {
+        const option = document.createElement("option");
+        option.value = voice;
+        option.textContent = voice;
+        voiceSelect.appendChild(option);
+      });
+      const savedVoice = localStorage.getItem("selectedVoice");
+      if (savedVoice && availableVoices.includes(savedVoice)) {
+        voiceSelect.value = savedVoice;
+      } else {
+        voiceSelect.value = "Salli";
+      }
+      voiceSelect.addEventListener("change", () => {
+        localStorage.setItem("selectedVoice", voiceSelect.value);
+      });
+    }
     initVoiceSelect();
   </script>
 </body>

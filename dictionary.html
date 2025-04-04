@@ -43,6 +43,7 @@
       width: 90%;
       height: 80vh;
       padding: 10px;
+      overflow-y: auto;
     }
     .close {
       color: #aaa;
@@ -164,15 +165,16 @@
     #dictModal .modal-content {
       padding: 10px;
     }
-    #dictModal iframe {
-      width: 100%;
-      height: calc(100% - 50px);
-      border: none;
-    }
     #dictTitle {
       margin: 0 0 10px 0;
       text-align: center;
       font-size: 1.2em;
+    }
+    #dictContent {
+      padding: 10px;
+      font-family: Arial, sans-serif;
+      font-size: 1em;
+      line-height: 1.5;
     }
   </style>
 </head>
@@ -203,12 +205,12 @@
     </div>
   </div>
   
-  <!-- Dictionary Modal (static markup) -->
+  <!-- Dictionary Modal (now using API results) -->
   <div id="dictModal" class="modal">
     <div class="modal-content large">
       <span class="close" id="closeDictModalBtn">&times;</span>
       <h2 id="dictTitle"></h2>
-      <iframe id="dictIframe" src=""></iframe>
+      <div id="dictContent">Loading definition...</div>
     </div>
   </div>
   
@@ -442,20 +444,47 @@
     }
     
     /**************************************************
-     * 4) Dictionary Modal (Oxford Learner's Dictionaries)
+     * 4) Dictionary Modal (Using Dictionary API)
      **************************************************/
-    // Use the static dictionary modal defined in the HTML.
     const dictModal = document.getElementById("dictModal");
     
-    // Open dictionary modal when current word is clicked.
+    // Open dictionary modal and fetch definition using the API.
     document.getElementById("currentWord").addEventListener("click", () => {
       if (!currentWord) return;
       const dictTitle = document.getElementById("dictTitle");
-      const dictIframe = document.getElementById("dictIframe");
+      const dictContent = document.getElementById("dictContent");
       dictTitle.textContent = currentWord;
-      // Using Oxford Learner's Dictionaries search URL.
-      const url = "https://www.oxfordlearnersdictionaries.com/search/english/?q=" + encodeURIComponent(currentWord);
-      dictIframe.src = url;
+      dictContent.innerHTML = "Loading definition...";
+      // Fetch definition from the free Dictionary API.
+      fetch("https://api.dictionaryapi.dev/api/v2/entries/en/" + encodeURIComponent(currentWord))
+        .then(response => {
+          if (!response.ok) {
+            throw new Error("Definition not found.");
+          }
+          return response.json();
+        })
+        .then(data => {
+          let html = "";
+          data.forEach(entry => {
+            if (entry.meanings) {
+              entry.meanings.forEach(meaning => {
+                html += "<h3>" + meaning.partOfSpeech + "</h3>";
+                if (meaning.definitions) {
+                  meaning.definitions.forEach((def, index) => {
+                    html += "<p><strong>Definition " + (index + 1) + ":</strong> " + def.definition + "</p>";
+                    if (def.example) {
+                      html += "<p><em>Example:</em> " + def.example + "</p>";
+                    }
+                  });
+                }
+              });
+            }
+          });
+          dictContent.innerHTML = html || "No definition found.";
+        })
+        .catch(error => {
+          dictContent.innerHTML = "<p>Error fetching definition: " + error.message + "</p>";
+        });
       dictModal.style.display = "block";
     });
     

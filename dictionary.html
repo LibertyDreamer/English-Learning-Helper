@@ -8,6 +8,33 @@
       font-family: Arial, sans-serif;
       margin: 20px;
     }
+    /* Modal styles */
+    .modal {
+      display: none; 
+      position: fixed; 
+      z-index: 100; 
+      left: 0;
+      top: 0;
+      width: 100%; 
+      height: 100%; 
+      overflow: auto; 
+      background-color: rgba(0,0,0,0.4); 
+    }
+    .modal-content {
+      background-color: #fefefe;
+      margin: 10% auto; 
+      padding: 20px;
+      border: 1px solid #888;
+      width: 80%; 
+      max-width: 600px;
+    }
+    .close {
+      color: #aaa;
+      float: right;
+      font-size: 28px;
+      font-weight: bold;
+      cursor: pointer;
+    }
     .section {
       border: 1px solid #ccc;
       padding: 15px;
@@ -43,20 +70,27 @@
 </head>
 <body>
   <h1>Word Drill System</h1>
+  <!-- Button to open the JSON management modal -->
+  <button id="openModalBtn">Manage JSON</button>
   
-  <div class="section" id="input-section">
-    <h2>Load JSON and Add Words</h2>
-    <p><strong>Note:</strong> The drill system relies solely on your JSON file. Please load your JSON file first.</p>
-    <label for="jsonFileInput">Load existing JSON file:</label>
-    <input type="file" id="jsonFileInput" accept=".json">
-    <button id="loadJsonBtn">Load JSON</button>
-    <br><br>
-    <p>If you want to add new words, paste your ASS, SRT or plain text below (only works if a JSON is already loaded):</p>
-    <textarea id="inputText" placeholder="Paste text here..."></textarea>
-    <br>
-    <button id="processTextBtn">Process Text</button>
+  <!-- JSON Management Modal -->
+  <div id="jsonModal" class="modal">
+    <div class="modal-content">
+      <span class="close" id="closeModalBtn">&times;</span>
+      <h2>Load JSON and Add Words</h2>
+      <p><strong>Note:</strong> The drill system relies solely on your JSON file. Please load your JSON file here.</p>
+      <label for="jsonFileInput">Load existing JSON file:</label>
+      <input type="file" id="jsonFileInput" accept=".json">
+      <button id="loadJsonBtn">Load JSON</button>
+      <br><br>
+      <p>If you want to add new words, paste your ASS, SRT, or plain text below (works only if a JSON is already loaded):</p>
+      <textarea id="inputText" placeholder="Paste text here..."></textarea>
+      <br>
+      <button id="processTextBtn">Process Text</button>
+    </div>
   </div>
   
+  <!-- Main Drill Section -->
   <div class="section" id="drill-section" style="display:none;">
     <h2>Drill System</h2>
     <div id="wordDisplay">
@@ -77,12 +111,13 @@
     <button id="nextWordBtn">Next Word</button>
   </div>
   
+  <!-- Download Section -->
   <div class="section" id="download-section" style="display:none;">
     <h2>Download Updated JSON</h2>
     <button id="downloadJsonBtn">Download JSON</button>
   </div>
   
-  <!-- JavaScript code (module) -->
+  <!-- JavaScript (module) -->
   <script type="module">
     /*******************
      * Speech Module (using StreamElements API)
@@ -122,7 +157,7 @@
      * Drill System Code
      *******************/
     
-    // Global variables
+    // Global variables for JSON data and drill state.
     let wordData = {}; // { word: { examples: [...], percentage: <number> } }
     let words = [];    // Array of word keys from wordData
     let ignoredWords = []; // Words to ignore in the drill system
@@ -201,19 +236,16 @@
       return true;
     }
     
-    // Weighted random selection: words with lower percentage (i.e. 100 - percentage is higher) are more likely.
+    // Weighted random selection: words with lower percentage appear more frequently.
     function weightedRandomWord() {
-      // Filter words that are not ignored.
-      let validWords = words.filter(word => !ignoredWords.includes(word));
-      // Prefer words with percentage less than 100.
+      const validWords = words.filter(word => !ignoredWords.includes(word));
       let candidates = validWords.filter(word => wordData[word].percentage < 100);
       if(candidates.length === 0) {
-        candidates = validWords; // fallback if all words are 100%
+        candidates = validWords;
       }
       let totalWeight = 0;
       const weights = [];
       candidates.forEach(word => {
-        // Weight is 101 - percentage (so lower known words get higher weight)
         const weight = 101 - wordData[word].percentage;
         weights.push(weight);
         totalWeight += weight;
@@ -228,12 +260,11 @@
       return candidates[candidates.length - 1];
     }
     
-    // Show the current word and 5 random examples (or all if fewer than 5).
+    // Show the current word and 5 random examples.
     function showCurrentWord() {
       if(!currentWord) return;
       document.getElementById("currentWord").innerText = currentWord;
       const exs = wordData[currentWord].examples;
-      // Shuffle and take up to 5 examples.
       const shuffled = exs.slice().sort(() => 0.5 - Math.random());
       currentExamples = shuffled.slice(0, 5);
       document.getElementById("exampleDisplay").innerText = currentExamples.join("\n");
@@ -241,20 +272,41 @@
     
     // Pick the next word using weighted random selection.
     function pickNextWord() {
-      const newWord = weightedRandomWord();
-      return newWord;
+      return weightedRandomWord();
     }
     
-    // Async function to play examples sequentially with delay.
+    // Async function to play examples sequentially.
     async function playExamplesSequentially() {
       for (let ex of currentExamples) {
         await sayThis(ex);
-        // Wait 2 seconds before next example.
         await new Promise(resolve => setTimeout(resolve, 2000));
       }
     }
     
-    // Event: Process Text button.
+    /*******************
+     * Event Listeners
+     *******************/
+    
+    // Modal management.
+    const modal = document.getElementById("jsonModal");
+    const openModalBtn = document.getElementById("openModalBtn");
+    const closeModalBtn = document.getElementById("closeModalBtn");
+    
+    openModalBtn.addEventListener("click", function() {
+      modal.style.display = "block";
+    });
+    
+    closeModalBtn.addEventListener("click", function() {
+      modal.style.display = "none";
+    });
+    
+    window.addEventListener("click", function(event) {
+      if (event.target == modal) {
+        modal.style.display = "none";
+      }
+    });
+    
+    // Process Text button.
     document.getElementById("processTextBtn").addEventListener("click", function() {
       if(!jsonLoaded) {
         alert("Please load a JSON file first.");
@@ -270,7 +322,7 @@
       alert("Text processed. JSON data updated.");
     });
     
-    // Event: Load JSON button.
+    // Load JSON button.
     document.getElementById("loadJsonBtn").addEventListener("click", function() {
       const fileInput = document.getElementById("jsonFileInput");
       if(fileInput.files.length === 0) {
@@ -296,13 +348,13 @@
       reader.readAsText(file);
     });
     
-    // Event: Play Examples button.
+    // Play Examples button.
     document.getElementById("playExamplesBtn").addEventListener("click", async function() {
       if(currentExamples.length === 0) return;
       await playExamplesSequentially();
     });
     
-    // Event: Ignore Word button.
+    // Ignore Word button.
     document.getElementById("ignoreWordBtn").addEventListener("click", function() {
       if(currentWord) {
         if(!ignoredWords.includes(currentWord)) {
@@ -318,13 +370,12 @@
       }
     });
     
-    // Rating buttons: Update the percentage silently.
+    // Rating buttons: update percentage silently and move to next word.
     document.querySelectorAll(".ratingBtn").forEach(btn => {
       btn.addEventListener("click", function() {
         const rating = parseInt(btn.getAttribute("data-rating"));
         if(currentWord && wordData[currentWord]) {
           wordData[currentWord].percentage = rating;
-          // Immediately pick next word after rating update.
           currentWord = pickNextWord();
           if(currentWord) {
             showCurrentWord();
@@ -336,7 +387,7 @@
       });
     });
     
-    // Event: Next Word button.
+    // Next Word button.
     document.getElementById("nextWordBtn").addEventListener("click", function() {
       currentWord = pickNextWord();
       if(currentWord) {
@@ -347,7 +398,7 @@
       }
     });
     
-    // Event: Download JSON button.
+    // Download JSON button.
     document.getElementById("downloadJsonBtn").addEventListener("click", function() {
       const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(wordData, null, 2));
       const downloadAnchor = document.createElement("a");

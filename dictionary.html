@@ -80,9 +80,56 @@
     <button id="downloadJsonBtn">Download JSON</button>
   </div>
   
-  <script>
+  <!-- All JavaScript below is in module mode -->
+  <script type="module">
+    /*******************
+     * Speech Module
+     *******************/
+    const availableVoices = [
+      "Matthew", "Joanna", "Kimberly", "Salli", 
+      "Amy", "Emma", "Brian", "Russell"
+    ];
+    
+    /**
+     * Converts text to speech using StreamElements API.
+     *
+     * @param {string} text - The text to be spoken.
+     * @param {string} [voice="Salli"] - The voice to use (must be one of the available voices).
+     */
+    async function sayThis(text, voice = "Salli") {
+      if (!text) {
+          console.error("No text provided.");
+          return;
+      }
+  
+      if (!availableVoices.includes(voice)) {
+          console.warn(`Invalid voice "${voice}". Defaulting to "Salli".`);
+          voice = "Salli";
+      }
+  
+      const ttsUrl = `https://api.streamelements.com/kappa/v2/speech?voice=${voice}&text=` + encodeURIComponent(text);
+  
+      try {
+          const audio = new Audio(ttsUrl);
+          await audio.play();
+      } catch (error) {
+          console.error("TTS Error:", error);
+      }
+    }
+    
+    /**
+     * Returns a list of available voices.
+     */
+    function getAvailableVoices() {
+      return availableVoices;
+    }
+    
+    /*******************
+     * Drill System Code
+     *******************/
+    
     // Global variables to store the word data and current drill info.
-    let wordData = {}; // structure: { word: { examples: [...], percentage: <number> } }
+    let wordData = {}; // { word: { examples: [...], percentage: <number> } }
     let words = [];    // array of words (keys from wordData)
     let currentWord = "";
     let currentExamples = [];
@@ -172,16 +219,6 @@
       document.getElementById("exampleDisplay").innerText = currentExamples[exampleIndex];
     }
     
-    // Use Web Speech API to speak a given text.
-    function speakText(text) {
-      if ('speechSynthesis' in window) {
-        const utterance = new SpeechSynthesisUtterance(text);
-        window.speechSynthesis.speak(utterance);
-      } else {
-        alert("Your browser does not support text-to-speech.");
-      }
-    }
-    
     // Event listener: Process text button.
     document.getElementById("processTextBtn").addEventListener("click", function() {
       const inputText = document.getElementById("inputText").value;
@@ -234,10 +271,10 @@
       document.getElementById("exampleDisplay").innerText = currentExamples[exampleIndex];
     });
     
-    // Listen Example button: Speak the current example.
+    // Listen Example button: Use the provided speech module.
     document.getElementById("listenExampleBtn").addEventListener("click", function() {
       const text = document.getElementById("exampleDisplay").innerText;
-      speakText(text);
+      sayThis(text).catch(err => console.error(err));
     });
     
     // Rating buttons: Update the "percentage" for the current word.

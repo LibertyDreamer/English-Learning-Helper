@@ -62,6 +62,7 @@
       <div id="exampleDisplay"></div>
       <button id="nextExampleBtn">Next Example</button>
       <button id="listenExampleBtn">Listen Example</button>
+      <button id="ignoreWordBtn">Ignore Word</button>
     </div>
     <div id="ratingSection">
       <p>How well do you know this word?</p>
@@ -80,7 +81,7 @@
     <button id="downloadJsonBtn">Download JSON</button>
   </div>
   
-  <!-- All JavaScript below is in module mode -->
+  <!-- JavaScript in module mode -->
   <script type="module">
     /*******************
      * Speech Module
@@ -94,7 +95,7 @@
      * Converts text to speech using StreamElements API.
      *
      * @param {string} text - The text to be spoken.
-     * @param {string} [voice="Salli"] - The voice to use (must be one of the available voices).
+     * @param {string} [voice="Salli"] - The voice to use.
      */
     async function sayThis(text, voice = "Salli") {
       if (!text) {
@@ -128,18 +129,19 @@
      * Drill System Code
      *******************/
     
-    // Global variables to store the word data and current drill info.
+    // Global variables for JSON data and drill state.
     let wordData = {}; // { word: { examples: [...], percentage: <number> } }
-    let words = [];    // array of words (keys from wordData)
+    let words = [];    // Array of words (keys from wordData)
+    let ignoredWords = []; // Words to be ignored in the drill system.
     let currentWord = "";
     let currentExamples = [];
     let exampleIndex = 0;
     
-    // Process input text: detect if it's ASS, SRT or plain text.
+    // Process input text: detect if it's ASS, SRT, or plain text.
     function processInputText(text) {
       let processedLines = [];
       text = text.trim();
-      // Detect ASS: if any line starts with "Dialogue:"
+      // ASS detection: if any line starts with "Dialogue:"
       if(text.includes("Dialogue:")) {
         const lines = text.split("\n");
         for(const line of lines) {
@@ -154,7 +156,7 @@
           }
         }
       } else if(text.match(/^\d+\s*\n\d\d:\d\d:\d\d/)) {
-        // SRT detection: a block starts with a number then a timestamp line.
+        // SRT detection: block starts with a number then a timestamp.
         const blocks = text.split(/\n\s*\n/);
         for(const block of blocks) {
           const lines = block.split("\n");
@@ -165,17 +167,24 @@
           }
         }
       } else {
-        // Otherwise assume plain text: each line is taken.
+        // Otherwise, assume plain text: each line is taken.
         processedLines = text.split("\n").map(line => line.trim()).filter(line => line);
       }
       return processedLines;
     }
     
-    // Update the wordData JSON with examples extracted from the provided lines.
+    // Clean a line by removing any formatting tags.
+    function cleanLine(line) {
+      return line.replace(/\{[^}]*\}/g, "").trim();
+    }
+    
+    // Update wordData with examples extracted from lines.
     function updateWordDataFromLines(lines) {
       lines.forEach(line => {
-        if(isVectorCommand(line)) return; // Skip drawing commands.
-        // Extract words (letters and numbers) in lowercase.
+        // Clean line to remove formatting tags.
+        line = cleanLine(line);
+        if(isVectorCommand(line)) return; // Skip vector drawing commands.
+        // Extract words (letters/numbers) in lowercase.
         const wordsInLine = line.toLowerCase().match(/\w+/g);
         if(wordsInLine) {
           wordsInLine.forEach(word => {
@@ -192,7 +201,7 @@
       words = Object.keys(wordData);
     }
     
-    // Checks if a given text is likely a vector drawing command (only drawing tokens and numbers).
+    // Check if text is likely a vector drawing command (only drawing tokens and numbers).
     function isVectorCommand(text) {
       const tokens = text.trim().split(/\s+/);
       for(let token of tokens) {
@@ -203,14 +212,15 @@
       return true;
     }
     
-    // Select a random word from the words array.
+    // Select a random word that is not ignored.
     function selectRandomWord() {
-      if(words.length === 0) return null;
-      const randIndex = Math.floor(Math.random() * words.length);
-      return words[randIndex];
+      const validWords = words.filter(word => !ignoredWords.includes(word));
+      if(validWords.length === 0) return null;
+      let randIndex = Math.floor(Math.random() * validWords.length);
+      return validWords[randIndex];
     }
     
-    // Show the current word and pick a random example from its examples.
+    // Show the current word and a random example.
     function showCurrentWord() {
       if(!currentWord) return;
       document.getElementById("currentWord").innerText = currentWord;
@@ -219,7 +229,19 @@
       document.getElementById("exampleDisplay").innerText = currentExamples[exampleIndex];
     }
     
-    // Event listener: Process text button.
+    // Attempt to pick a new word different from the current one.
+    function pickNextWord() {
+      let newWord = selectRandomWord();
+      // If possible, try to avoid repeating the same word.
+      let attempts = 0;
+      while(newWord === currentWord && attempts < 10) {
+        newWord = selectRandomWord();
+        attempts++;
+      }
+      return newWord;
+    }
+    
+    // Event: Process Text button.
     document.getElementById("processTextBtn").addEventListener("click", function() {
       const inputText = document.getElementById("inputText").value;
       if(!inputText) {
@@ -232,12 +254,12 @@
       if(Object.keys(wordData).length > 0) {
         document.getElementById("drill-section").style.display = "block";
         document.getElementById("download-section").style.display = "block";
-        currentWord = selectRandomWord();
+        currentWord = pickNextWord();
         showCurrentWord();
       }
     });
     
-    // Event listener: Load JSON file.
+    // Event: Load JSON button.
     document.getElementById("loadJsonBtn").addEventListener("click", function() {
       const fileInput = document.getElementById("jsonFileInput");
       if(fileInput.files.length === 0) {
@@ -251,12 +273,10 @@
           wordData = JSON.parse(e.target.result);
           words = Object.keys(wordData);
           alert("JSON file loaded successfully.");
-          if(words.length > 0) {
-            document.getElementById("drill-section").style.display = "block";
-            document.getElementById("download-section").style.display = "block";
-            currentWord = selectRandomWord();
-            showCurrentWord();
-          }
+          document.getElementById("drill-section").style.display = "block";
+          document.getElementById("download-section").style.display = "block";
+          currentWord = pickNextWord();
+          showCurrentWord();
         } catch(err) {
           alert("Error parsing JSON file.");
         }
@@ -264,20 +284,38 @@
       reader.readAsText(file);
     });
     
-    // Next Example button: Cycle to next example.
+    // Event: Next Example button.
     document.getElementById("nextExampleBtn").addEventListener("click", function() {
       if(currentExamples.length === 0) return;
       exampleIndex = (exampleIndex + 1) % currentExamples.length;
       document.getElementById("exampleDisplay").innerText = currentExamples[exampleIndex];
     });
     
-    // Listen Example button: Use the provided speech module.
+    // Event: Listen Example button using provided TTS module.
     document.getElementById("listenExampleBtn").addEventListener("click", function() {
       const text = document.getElementById("exampleDisplay").innerText;
       sayThis(text).catch(err => console.error(err));
     });
     
-    // Rating buttons: Update the "percentage" for the current word.
+    // Event: Ignore Word button – add current word to ignore list.
+    document.getElementById("ignoreWordBtn").addEventListener("click", function() {
+      if(currentWord) {
+        if(!ignoredWords.includes(currentWord)) {
+          ignoredWords.push(currentWord);
+          alert(`Ignored word: ${currentWord}`);
+        }
+        // Pick a new word after ignoring.
+        currentWord = pickNextWord();
+        if(currentWord) {
+          showCurrentWord();
+        } else {
+          document.getElementById("currentWord").innerText = "No more words available.";
+          document.getElementById("exampleDisplay").innerText = "";
+        }
+      }
+    });
+    
+    // Event: Rating buttons – update current word's percentage.
     document.querySelectorAll(".ratingBtn").forEach(btn => {
       btn.addEventListener("click", function() {
         const rating = parseInt(btn.getAttribute("data-rating"));
@@ -288,13 +326,18 @@
       });
     });
     
-    // Next Word button: Pick a new random word.
+    // Event: Next Word button.
     document.getElementById("nextWordBtn").addEventListener("click", function() {
-      currentWord = selectRandomWord();
-      showCurrentWord();
+      currentWord = pickNextWord();
+      if(currentWord) {
+        showCurrentWord();
+      } else {
+        document.getElementById("currentWord").innerText = "No words available for drill.";
+        document.getElementById("exampleDisplay").innerText = "";
+      }
     });
     
-    // Download JSON button: Create a downloadable JSON file.
+    // Event: Download JSON button.
     document.getElementById("downloadJsonBtn").addEventListener("click", function() {
       const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(wordData, null, 2));
       const downloadAnchor = document.createElement("a");

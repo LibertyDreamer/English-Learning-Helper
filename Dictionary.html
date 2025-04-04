@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Word Drill System</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+    }
+    .section {
+      border: 1px solid #ccc;
+      padding: 15px;
+      margin-bottom: 20px;
+    }
+    textarea {
+      width: 100%;
+      height: 150px;
+      font-family: monospace;
+    }
+    button {
+      margin: 5px;
+      padding: 5px 10px;
+    }
+    #wordDisplay {
+      margin-bottom: 10px;
+    }
+    #currentWord {
+      font-size: 1.5em;
+      margin-bottom: 10px;
+    }
+    #exampleDisplay {
+      padding: 10px;
+      border: 1px solid #999;
+      min-height: 40px;
+      margin-bottom: 10px;
+    }
+    .ratingBtn {
+      margin: 3px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Word Drill System</h1>
+  
+  <div class="section" id="input-section">
+    <h2>Input Text and Load JSON</h2>
+    <p>Paste your ASS, SRT or plain text below:</p>
+    <textarea id="inputText" placeholder="Paste text here..."></textarea>
+    <br>
+    <button id="processTextBtn">Process Text</button>
+    <br><br>
+    <label for="jsonFileInput">Load existing JSON file:</label>
+    <input type="file" id="jsonFileInput" accept=".json">
+    <button id="loadJsonBtn">Load JSON</button>
+  </div>
+  
+  <div class="section" id="drill-section" style="display:none;">
+    <h2>Drill System</h2>
+    <div id="wordDisplay">
+      <h3 id="currentWord"></h3>
+      <div id="exampleDisplay"></div>
+      <button id="nextExampleBtn">Next Example</button>
+      <button id="listenExampleBtn">Listen Example</button>
+    </div>
+    <div id="ratingSection">
+      <p>How well do you know this word?</p>
+      <button class="ratingBtn" data-rating="0">0%</button>
+      <button class="ratingBtn" data-rating="20">20%</button>
+      <button class="ratingBtn" data-rating="40">40%</button>
+      <button class="ratingBtn" data-rating="60">60%</button>
+      <button class="ratingBtn" data-rating="80">80%</button>
+      <button class="ratingBtn" data-rating="100">100%</button>
+    </div>
+    <button id="nextWordBtn">Next Word</button>
+  </div>
+  
+  <div class="section" id="download-section" style="display:none;">
+    <h2>Download Updated JSON</h2>
+    <button id="downloadJsonBtn">Download JSON</button>
+  </div>
+  
+  <script>
+    // Global variables to store the word data and current drill info.
+    let wordData = {}; // structure: { word: { examples: [...], percentage: <number> } }
+    let words = [];    // array of words (keys from wordData)
+    let currentWord = "";
+    let currentExamples = [];
+    let exampleIndex = 0;
+    
+    // Process input text: detect if it's ASS, SRT or plain text.
+    function processInputText(text) {
+      let processedLines = [];
+      text = text.trim();
+      // Detect ASS: if any line starts with "Dialogue:"
+      if(text.includes("Dialogue:")) {
+        const lines = text.split("\n");
+        for(const line of lines) {
+          if(line.startsWith("Dialogue:")) {
+            const parts = line.split(",", 10); // ASS dialogue: text is after 9 commas
+            if(parts.length >= 10) {
+              let dialogue = parts[9].trim();
+              // Remove formatting tags (e.g., {\\move(...)} )
+              dialogue = dialogue.replace(/\{[^}]*\}/g, "").trim();
+              if(dialogue) processedLines.push(dialogue);
+            }
+          }
+        }
+      } else if(text.match(/^\d+\s*\n\d\d:\d\d:\d\d/)) {
+        // SRT detection: a block starts with a number then a timestamp line.
+        const blocks = text.split(/\n\s*\n/);
+        for(const block of blocks) {
+          const lines = block.split("\n");
+          if(lines.length >= 3) {
+            // Join lines after the first two (number and timestamp)
+            const dialogue = lines.slice(2).join(" ").trim();
+            if(dialogue) processedLines.push(dialogue);
+          }
+        }
+      } else {
+        // Otherwise assume plain text: each line is taken.
+        processedLines = text.split("\n").map(line => line.trim()).filter(line => line);
+      }
+      return processedLines;
+    }
+    
+    // Update the wordData JSON with examples extracted from the provided lines.
+    function updateWordDataFromLines(lines) {
+      lines.forEach(line => {
+        if(isVectorCommand(line)) return; // Skip drawing commands.
+        // Extract words (letters and numbers) in lowercase.
+        const wordsInLine = line.toLowerCase().match(/\w+/g);
+        if(wordsInLine) {
+          wordsInLine.forEach(word => {
+            if(!wordData[word]) {
+              wordData[word] = { examples: [line], percentage: 0 };
+            } else {
+              if(!wordData[word].examples.includes(line)) {
+                wordData[word].examples.push(line);
+              }
+            }
+          });
+        }
+      });
+      words = Object.keys(wordData);
+    }
+    
+    // Checks if a given text is likely a vector drawing command (only drawing tokens and numbers).
+    function isVectorCommand(text) {
+      const tokens = text.trim().split(/\s+/);
+      for(let token of tokens) {
+        if(/^(m|l|c|s|n)$/i.test(token)) continue;
+        if(/^\d+(\.\d+)?$/.test(token)) continue;
+        return false;
+      }
+      return true;
+    }
+    
+    // Select a random word from the words array.
+    function selectRandomWord() {
+      if(words.length === 0) return null;
+      const randIndex = Math.floor(Math.random() * words.length);
+      return words[randIndex];
+    }
+    
+    // Show the current word and pick a random example from its examples.
+    function showCurrentWord() {
+      if(!currentWord) return;
+      document.getElementById("currentWord").innerText = currentWord;
+      currentExamples = wordData[currentWord].examples;
+      exampleIndex = Math.floor(Math.random() * currentExamples.length);
+      document.getElementById("exampleDisplay").innerText = currentExamples[exampleIndex];
+    }
+    
+    // Use Web Speech API to speak a given text.
+    function speakText(text) {
+      if ('speechSynthesis' in window) {
+        const utterance = new SpeechSynthesisUtterance(text);
+        window.speechSynthesis.speak(utterance);
+      } else {
+        alert("Your browser does not support text-to-speech.");
+      }
+    }
+    
+    // Event listener: Process text button.
+    document.getElementById("processTextBtn").addEventListener("click", function() {
+      const inputText = document.getElementById("inputText").value;
+      if(!inputText) {
+        alert("Please paste some text first.");
+        return;
+      }
+      const lines = processInputText(inputText);
+      updateWordDataFromLines(lines);
+      alert("Text processed. Words updated in JSON data.");
+      if(Object.keys(wordData).length > 0) {
+        document.getElementById("drill-section").style.display = "block";
+        document.getElementById("download-section").style.display = "block";
+        currentWord = selectRandomWord();
+        showCurrentWord();
+      }
+    });
+    
+    // Event listener: Load JSON file.
+    document.getElementById("loadJsonBtn").addEventListener("click", function() {
+      const fileInput = document.getElementById("jsonFileInput");
+      if(fileInput.files.length === 0) {
+        alert("Please select a JSON file to load.");
+        return;
+      }
+      const file = fileInput.files[0];
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        try {
+          wordData = JSON.parse(e.target.result);
+          words = Object.keys(wordData);
+          alert("JSON file loaded successfully.");
+          if(words.length > 0) {
+            document.getElementById("drill-section").style.display = "block";
+            document.getElementById("download-section").style.display = "block";
+            currentWord = selectRandomWord();
+            showCurrentWord();
+          }
+        } catch(err) {
+          alert("Error parsing JSON file.");
+        }
+      };
+      reader.readAsText(file);
+    });
+    
+    // Next Example button: Cycle to next example.
+    document.getElementById("nextExampleBtn").addEventListener("click", function() {
+      if(currentExamples.length === 0) return;
+      exampleIndex = (exampleIndex + 1) % currentExamples.length;
+      document.getElementById("exampleDisplay").innerText = currentExamples[exampleIndex];
+    });
+    
+    // Listen Example button: Speak the current example.
+    document.getElementById("listenExampleBtn").addEventListener("click", function() {
+      const text = document.getElementById("exampleDisplay").innerText;
+      speakText(text);
+    });
+    
+    // Rating buttons: Update the "percentage" for the current word.
+    document.querySelectorAll(".ratingBtn").forEach(btn => {
+      btn.addEventListener("click", function() {
+        const rating = parseInt(btn.getAttribute("data-rating"));
+        if(currentWord && wordData[currentWord]) {
+          wordData[currentWord].percentage = rating;
+          alert(`Updated ${currentWord} rating to ${rating}%`);
+        }
+      });
+    });
+    
+    // Next Word button: Pick a new random word.
+    document.getElementById("nextWordBtn").addEventListener("click", function() {
+      currentWord = selectRandomWord();
+      showCurrentWord();
+    });
+    
+    // Download JSON button: Create a downloadable JSON file.
+    document.getElementById("downloadJsonBtn").addEventListener("click", function() {
+      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(wordData, null, 2));
+      const downloadAnchor = document.createElement("a");
+      downloadAnchor.setAttribute("href", dataStr);
+      downloadAnchor.setAttribute("download", "updated_words.json");
+      document.body.appendChild(downloadAnchor);
+      downloadAnchor.click();
+      downloadAnchor.remove();
+    });
+  </script>
+</body>
+</html>

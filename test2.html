@@ -54,9 +54,9 @@
       margin-left: auto;
       margin-right: auto;
       position: relative;
-      background: #000; /* optional: a background so blank areas don't flash white */
+      background: #000; /* so blank areas don't flash white */
     }
-    /* Both video elements inside share these styles */
+    /* Both video elements share these styles */
     #videoContainer video {
       position: absolute;
       top: 0;
@@ -240,6 +240,18 @@
     const definitionPanel = document.getElementById('definitionPanel');
     const definitionContent = document.getElementById('definitionContent');
 
+    // Helper: Attach timeupdate listener to a video element.
+    function attachTimeUpdateListener(video) {
+      video.addEventListener('timeupdate', () => {
+        if (currentExample && video.currentTime >= currentExample.end) {
+          video.pause();
+        }
+      });
+    }
+
+    // Initially attach the listener to the original video element.
+    attachTimeUpdateListener(videoPlayer);
+
     // Load Archive handler.
     loadButton.addEventListener('click', async () => {
       const file = fileInput.files[0];
@@ -417,8 +429,7 @@
       updateUI();
     }
 
-    // Update UI to display the current word and video.
-    // Uses a two–video swap to avoid showing a blank state.
+    // Update UI to display the current word and video using a two–video swap.
     function updateUI() {
       currentWordSpan.textContent = currentWordKey;
       textVisible = false;
@@ -466,46 +477,24 @@
         newVideo.style.left = "0";
         newVideo.style.opacity = 0;
         
+        // Attach timeupdate listener to new video.
+        attachTimeUpdateListener(newVideo);
+        
         newVideo.src = videoBlobs[videoFileName] || "";
         container.appendChild(newVideo);
         
         newVideo.addEventListener('loadeddata', function onLoaded() {
-          // Set the start time and play.
           newVideo.currentTime = currentExample.start;
           newVideo.play();
-          // Fade in the new video.
           newVideo.style.opacity = 1;
-          // Remove the old video element.
           container.removeChild(videoPlayer);
           videoPlayer = newVideo;
           newVideo.removeEventListener('loadeddata', onLoaded);
         }, { once: true });
       } else {
-        // If the video file is the same, just update time and play.
+        // Same video file: update time and play.
         videoPlayer.currentTime = currentExample.start;
         videoPlayer.play();
-      }
-    }
-
-    // Pause the video when the current segment ends.
-    videoPlayer.addEventListener('timeupdate', () => {
-      if (currentExample && videoPlayer.currentTime >= currentExample.end) {
-        videoPlayer.pause();
-      }
-    });
-
-    // Update the summary rating for the word.
-    function updateWordSummary(wordKey) {
-      const details = wordsData[wordKey];
-      const validExamples = details.examples.filter(ex => !ex.ignored);
-      if (validExamples.length > 0) {
-        let sum = 0;
-        validExamples.forEach(ex => { sum += ex.rating; });
-        details.rating = sum / validExamples.length;
-        details.ignored = false;
-      } else {
-        details.rating = 0;
-        details.ignored = true;
       }
     }
 
@@ -554,7 +543,7 @@
       }
     }
 
-    // Save the updated archive.
+    // Save Archive: update the JSON file inside a new ZIP archive and include all original files.
     saveButton.addEventListener('click', async () => {
       const newZip = new JSZip();
       newZip.file(jsonFileName, JSON.stringify(wordsData, null, 2));

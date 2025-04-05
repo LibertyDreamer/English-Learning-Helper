@@ -1,52 +1,124 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Archive Editor</title>
-  <link rel="stylesheet" href="archive_editor.css">
-  <!-- Include JSZip for archive handling -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-  <!-- Include CodeMirror for JSON editing -->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.css">
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/javascript/javascript.min.js"></script>
+  <title>Video & SRT Archive Creator</title>
 </head>
 <body>
-  <h1>Archive Editor</h1>
-  
-  <!-- Load Archive Section -->
-  <section id="loadSection">
-    <h2>Load Archive</h2>
-    <input type="file" id="archiveFile" accept=".zip">
-  </section>
-  
-  <!-- JSON Editor Section -->
-  <section id="jsonSection">
-    <h2>JSON Content (words.json)</h2>
-    <textarea id="jsonEditor" rows="15"></textarea>
-  </section>
-  
-  <!-- Video Files Section -->
-  <section id="filesSection">
-    <h2>Video Files</h2>
-    <ul id="fileList"></ul>
-    <input type="file" id="addFileInput" accept="video/*">
-    <button id="addFileBtn">Add Video File</button>
-  </section>
-  
-  <!-- Subtitle Files Section -->
-  <section id="subsSection">
-    <h2>Subtitle Files</h2>
-    <ul id="subsList"></ul>
-    <input type="file" id="addSubInput" accept=".srt">
-    <button id="addSubBtn">Add Subtitle File</button>
-  </section>
-  
-  <!-- Download Archive Section -->
-  <section id="downloadSection">
-    <button id="downloadArchiveBtn">Download Updated Archive</button>
-  </section>
-  
-  <script src="archive_editor.js"></script>
+  <h1>Upload Video and SRT File</h1>
+  <input type="file" id="videoInput" accept="video/*">
+  <input type="file" id="srtInput" accept=".srt">
+  <button id="processButton">Process Files</button>
+  <br><br>
+  <a id="downloadLink" style="display:none;">Download Archive</a>
+
+  <!-- Include JSZip library -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+  <script>
+    // Global JSON archive object
+    let archive = {};
+
+    // Parse the SRT file content into an array of subtitle objects
+    function parseSRT(srtText) {
+      const blocks = srtText.trim().split(/\n\n+/);
+      const subtitles = blocks.map(block => {
+        const lines = block.split('\n');
+        if (lines.length < 3) return null;
+        // First line is the index, second is the time range
+        const timeMatch = lines[1].match(/(\d{2}:\d{2}:\d{2},\d{3})\s*-->\s*(\d{2}:\d{2}:\d{2},\d{3})/);
+        if (!timeMatch) return null;
+        const start = toSeconds(timeMatch[1]);
+        const end = toSeconds(timeMatch[2]);
+        // Remaining lines are the subtitle text
+        const text = lines.slice(2).join(' ');
+        return { start, end, text };
+      }).filter(item => item !== null);
+      return subtitles;
+    }
+
+    // Convert SRT time (hh:mm:ss,ms) to seconds (as a float)
+    function toSeconds(timeStr) {
+      const parts = timeStr.split(/[:,]/);
+      return parseInt(parts[0], 10) * 3600 +
+             parseInt(parts[1], 10) * 60 +
+             parseInt(parts[2], 10) +
+             parseInt(parts[3], 10) / 1000;
+    }
+
+    // Update the archive JSON with subtitle examples from the parsed SRT
+    function updateArchive(subtitles, videoFileName) {
+      subtitles.forEach(sub => {
+        // Normalize text: remove punctuation and convert to lower case,
+        // then split the text into individual words.
+        const words = sub.text.replace(/[^\w\s]/g, '').toLowerCase().split(/\s+/);
+        words.forEach(word => {
+          if (word) {
+            if (!archive[word]) {
+              // If the word doesn't exist, create a new entry.
+              archive[word] = {
+                examples: [],
+                rating: 0,
+                ignored: false
+              };
+            }
+            // Add the subtitle block as a new example for this word.
+            archive[word].examples.push({
+              text: sub.text,
+              video: videoFileName,
+              start: sub.start,
+              end: sub.end
+            });
+          }
+        });
+      });
+    }
+
+    // Process the files when the button is clicked
+    document.getElementById('processButton').addEventListener('click', () => {
+      const videoInput = document.getElementById('videoInput');
+      const srtInput = document.getElementById('srtInput');
+
+      if (videoInput.files.length === 0 || srtInput.files.length === 0) {
+        alert("Please select both a video and an SRT file.");
+        return;
+      }
+
+      const videoFile = videoInput.files[0];
+      const srtFile = srtInput.files[0];
+
+      // Read the SRT file content
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        const srtText = e.target.result;
+        const subtitles = parseSRT(srtText);
+        updateArchive(subtitles, videoFile.name);
+        alert("Archive updated! Check the console for details.");
+        console.log(archive);
+        // After updating the archive, create a downloadable ZIP file
+        createZipArchive(videoFile, srtFile, archive);
+      };
+      reader.readAsText(srtFile);
+    });
+
+    // Create a ZIP archive containing the video, SRT, and JSON archive
+    function createZipArchive(videoFile, srtFile, archiveJSON) {
+      const zip = new JSZip();
+      // Add the video and SRT files
+      zip.file(videoFile.name, videoFile);
+      zip.file(srtFile.name, srtFile);
+      // Add the JSON archive file
+      zip.file("archive.json", JSON.stringify(archiveJSON, null, 2));
+
+      // Generate the ZIP and create a download link
+      zip.generateAsync({ type: "blob" })
+      .then(function(content) {
+        const downloadLink = document.getElementById('downloadLink');
+        downloadLink.href = URL.createObjectURL(content);
+        downloadLink.download = "archive.zip";
+        downloadLink.style.display = "block";
+        downloadLink.innerText = "Download Archive";
+      });
+    }
+  </script>
 </body>
 </html>

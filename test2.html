@@ -2,8 +2,8 @@
 <html>
 <head>
   <meta charset="UTF-8">
-  <title>Simple Archive & Drill System</title>
-  <!-- JSZip for archive handling -->
+  <title>Archive Drill System</title>
+  <!-- Include JSZip from CDN for archive handling -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
   <style>
     body { font-family: sans-serif; padding: 10px; }
@@ -14,7 +14,31 @@
   </style>
 </head>
 <body>
-  <h1>Simple Archive & Drill System</h1>
+  <h1>Archive Drill System</h1>
+  
+  <!-- Drill Section (always visible at the top) -->
+  <section id="drillSection">
+    <h2>Drill</h2>
+    <div id="drill-card-section">
+      <!-- Word will be shown here -->
+      <h3 id="currentWord"></h3>
+      <!-- Initially hidden: Example text -->
+      <button id="showTextBtn">Show Example</button>
+      <p id="currentExample" style="display:none;"></p>
+      <!-- Play the audio fragment from the video -->
+      <button id="playFragmentBtn">Play Audio Fragment</button>
+      <!-- Rating buttons for scheduling -->
+      <div id="ratingSection">
+        <button class="ratingBtn" data-quality="0">Bad</button>
+        <button class="ratingBtn" data-quality="3">OK</button>
+        <button class="ratingBtn" data-quality="5">Good</button>
+      </div>
+      <!-- Skip current word -->
+      <button id="ignoreWordBtn">Ignore Word</button>
+      <!-- Video element for playing the fragment -->
+      <video id="drillVideo" controls width="600"></video>
+    </div>
+  </section>
   
   <!-- Archive Management Section -->
   <section id="archiveManagement">
@@ -23,35 +47,20 @@
       <label for="archiveFile">Load Archive (.zip):</label>
       <input type="file" id="archiveFile" accept=".zip">
     </div>
-    <hr>
-    <div>
-      <h3>Add New Video + SRT</h3>
-      <label for="newVideo">Video File:</label>
-      <input type="file" id="newVideo" accept="video/*">
-      <label for="newSRT">SRT File:</label>
-      <input type="file" id="newSRT" accept=".srt">
-      <button id="addNewContentBtn">Add New Content</button>
-    </div>
-    <hr>
     <div>
       <button id="exportArchiveBtn">Export Archive</button>
     </div>
   </section>
   
-  <!-- Drill Section -->
-  <section id="drillSection">
-    <h2>Drill</h2>
-    <div id="drill-card-section">
-      <h3 id="currentWord"></h3>
-      <p id="currentExample"></p>
-      <button id="playFragmentBtn">Play Video Fragment</button>
-      <div id="ratingSection">
-        <button class="ratingBtn" data-quality="0">Again</button>
-        <button class="ratingBtn" data-quality="3">Hard</button>
-        <button class="ratingBtn" data-quality="5">Easy</button>
-      </div>
-      <button id="ignoreWordBtn">Ignore Word</button>
-      <video id="drillVideo" controls width="600"></video>
+  <!-- New Content Section: Add New Video + SRT -->
+  <section id="newContentSection">
+    <h2>Add New Content (Video + SRT)</h2>
+    <div>
+      <label for="newVideo">Video File:</label>
+      <input type="file" id="newVideo" accept="video/*">
+      <label for="newSRT">SRT File:</label>
+      <input type="file" id="newSRT" accept=".srt">
+      <button id="addNewContentBtn">Add New Content</button>
     </div>
   </section>
   
@@ -65,7 +74,8 @@
     let videoFiles = []; // Array of new video File objects
     let videoArchiveMapping = {}; // Mapping: video file name -> object URL
     let currentExampleObj = null; // Chosen example for the current card
-
+    let currentWord = "";
+    
     /**************************************************
      * Utility: SRT Parsing
      **************************************************/
@@ -93,7 +103,7 @@
       }
       return results;
     }
-
+    
     function srtTimeToSeconds(timeStr) {
       const parts = timeStr.split(':');
       if (parts.length < 3) return 0;
@@ -115,7 +125,7 @@
       const videoFile = videoInput.files[0];
       const srtFile = srtInput.files[0];
       
-      // Add video file if not already loaded.
+      // Add video file if not already loaded
       if (!videoArchiveMapping[videoFile.name]) {
         videoFiles.push(videoFile);
         videoArchiveMapping[videoFile.name] = URL.createObjectURL(videoFile);
@@ -125,13 +135,13 @@
       reader.onload = (e) => {
         const srtContent = e.target.result;
         const srtBlocks = parseSRT(srtContent);
-        // For each subtitle block, process the text and add each word.
+        // For each subtitle block, add new words or append new examples.
         srtBlocks.forEach(block => {
           const wordsInBlock = block.text.toLowerCase().match(/[a-zA-Z]+/g);
           if (wordsInBlock) {
             wordsInBlock.forEach(word => {
               if (!wordData[word]) {
-                // Create a new card with an examples array.
+                // Create new card with an examples array.
                 wordData[word] = {
                   examples: [{
                     text: block.text,
@@ -147,9 +157,7 @@
                 };
               } else {
                 // Add new example if not already present.
-                const exists = wordData[word].examples.some(ex =>
-                  ex.text === block.text && ex.video === videoFile.name
-                );
+                const exists = wordData[word].examples.some(ex => ex.text === block.text && ex.video === videoFile.name);
                 if (!exists) {
                   wordData[word].examples.push({
                     text: block.text,
@@ -164,6 +172,11 @@
         });
         words = Object.keys(wordData);
         alert("New content added from SRT.");
+        // If drill hasn't started, start it now:
+        if (!currentWord) {
+          currentWord = getNextCard();
+          if (currentWord) showCurrentCard();
+        }
       };
       reader.readAsText(srtFile);
     });
@@ -191,6 +204,11 @@
               });
             }
             alert("Archive loaded.");
+            // Start drill if not already started.
+            if (!currentWord) {
+              currentWord = getNextCard();
+              if (currentWord) showCurrentCard();
+            }
           } catch (err) {
             alert("Error parsing archive: " + err);
           }
@@ -237,7 +255,7 @@
       if (card.ignored === undefined) card.ignored = false;
     }
     
-    // SM-2 scheduling update (quality: 0 = Again, 3 = Hard, 5 = Easy)
+    // SM-2 scheduling update: quality: 0 (Bad), 3 (OK), 5 (Good)
     function updateCard(word, quality) {
       ensureCardProperties(word);
       let card = wordData[word];
@@ -270,14 +288,16 @@
       if (!currentWord) return;
       ensureCardProperties(currentWord);
       document.getElementById("currentWord").textContent = currentWord;
-      // Choose one random example to display.
+      // Choose one random example from the card.
       const examples = wordData[currentWord].examples;
       const randomIndex = Math.floor(Math.random() * examples.length);
       currentExampleObj = examples[randomIndex];
+      // Initially hide the example text.
       document.getElementById("currentExample").textContent = currentExampleObj.text;
+      document.getElementById("currentExample").style.display = "none";
     }
     
-    let currentWord = "";
+    let currentWordGlobal = ""; // alias for current word if needed
     function reviewCurrentCard(quality) {
       updateCard(currentWord, quality);
       currentWord = getNextCard();
@@ -307,6 +327,12 @@
       }, 100);
     });
     
+    // Toggle example text visibility.
+    document.getElementById("showTextBtn").addEventListener("click", () => {
+      const exampleElem = document.getElementById("currentExample");
+      exampleElem.style.display = (exampleElem.style.display === "none") ? "block" : "none";
+    });
+    
     document.getElementById("ignoreWordBtn").addEventListener("click", () => {
       if (currentWord) {
         wordData[currentWord].ignored = true;
@@ -328,6 +354,7 @@
       });
     });
     
+    // If the page loads without an archive, try to start the drill (if any cards exist).
     window.addEventListener("load", () => {
       currentWord = getNextCard();
       if (currentWord) showCurrentCard();

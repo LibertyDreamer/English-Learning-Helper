@@ -1,77 +1,267 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Zip Archive Drill System</title>
-  <!-- Include JSZip for archive handling -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-  <link rel="stylesheet" href="style.css">
+  <title>Word Drill Learning System</title>
+  <style>
+    body { font-family: sans-serif; padding: 20px; }
+    #controls { margin-top: 20px; }
+    #wordDisplay { margin-top: 20px; font-size: 1.2em; }
+    #exampleDisplay { margin-top: 10px; font-style: italic; }
+    #videoContainer { margin-top: 20px; }
+  </style>
 </head>
 <body>
-  <h1>Zip Archive Drill System</h1>
-  
-  <!-- Drill Section -->
-  <section id="drillSection">
-    <h2>Drill</h2>
-    <div id="drill-card-section">
-      <h3 id="currentWord"></h3>
-      <video id="drillVideo" controls></video>
+  <h1>Word Drill Learning System</h1>
+
+  <!-- Archive load and save buttons -->
+  <div>
+    <input type="file" id="fileInput" accept=".zip">
+    <button id="loadButton">Load Archive</button>
+    <button id="saveButton" disabled>Save JSON</button>
+  </div>
+
+  <!-- Drill display -->
+  <div id="wordDisplay">
+    <div><strong>Word:</strong> <span id="currentWord"></span></div>
+    <div id="exampleDisplay"></div>
+  </div>
+
+  <!-- Video player -->
+  <div id="videoContainer">
+    <video id="videoPlayer" width="480" controls></video>
+    <br>
+    <button id="playSegmentButton" disabled>Play Segment</button>
+  </div>
+
+  <!-- Rating controls -->
+  <div id="controls">
+    <label for="ratingSlider">Rate this example (0-100):</label>
+    <input type="range" id="ratingSlider" min="0" max="100" value="50">
+    <span id="ratingValue">50</span>
+    <button id="applyRatingButton" disabled>Apply Rating</button>
+    <button id="ignoreButton" disabled>Ignore</button>
+  </div>
+
+  <!-- Include JSZip from CDN -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+  <script>
+    // Global variables to hold data and state.
+    let wordsData = {};      // The parsed JSON word data.
+    let videoBlobs = {};     // Mapping: video file name => Blob URL.
+    let currentWordKey = null;
+    let currentExample = null;
+    let zipContent = null;   // Keep the loaded zip content if needed.
+
+    // UI Elements
+    const fileInput = document.getElementById('fileInput');
+    const loadButton = document.getElementById('loadButton');
+    const saveButton = document.getElementById('saveButton');
+    const currentWordSpan = document.getElementById('currentWord');
+    const exampleDisplay = document.getElementById('exampleDisplay');
+    const videoPlayer = document.getElementById('videoPlayer');
+    const playSegmentButton = document.getElementById('playSegmentButton');
+    const ratingSlider = document.getElementById('ratingSlider');
+    const ratingValue = document.getElementById('ratingValue');
+    const applyRatingButton = document.getElementById('applyRatingButton');
+    const ignoreButton = document.getElementById('ignoreButton');
+
+    // Update the displayed rating value when slider moves.
+    ratingSlider.addEventListener('input', () => {
+      ratingValue.textContent = ratingSlider.value;
+    });
+
+    // Load Archive handler.
+    loadButton.addEventListener('click', async () => {
+      const file = fileInput.files[0];
+      if (!file) {
+        alert("Please select a zip file first.");
+        return;
+      }
+      const arrayBuffer = await file.arrayBuffer();
+      const zip = await JSZip.loadAsync(arrayBuffer);
+      zipContent = zip; // Save if needed later.
       
-      <!-- Controls Row -->
-      <div id="controlsRow">
-        <button id="repeatFragmentBtn">Repeat Fragment</button>
-        <button id="showTextBtn">Show Example</button>
-      </div>
+      // Find a JSON file. (Assumes one file ending with .json.)
+      let jsonFileName = null;
+      zip.forEach((relativePath, zipEntry) => {
+        if (relativePath.endsWith('.json')) {
+          jsonFileName = relativePath;
+        }
+      });
+      if (!jsonFileName) {
+        alert("No JSON file found in the zip.");
+        return;
+      }
       
-      <!-- Rating Buttons (all in one row) -->
-      <div id="ratingSection">
-        <button class="ratingBtn" data-rating="0">0%</button>
-        <button class="ratingBtn" data-rating="10">10%</button>
-        <button class="ratingBtn" data-rating="20">20%</button>
-        <button class="ratingBtn" data-rating="30">30%</button>
-        <button class="ratingBtn" data-rating="40">40%</button>
-        <button class="ratingBtn" data-rating="50">50%</button>
-        <button class="ratingBtn" data-rating="60">60%</button>
-        <button class="ratingBtn" data-rating="70">70%</button>
-        <button class="ratingBtn" data-rating="80">80%</button>
-        <button class="ratingBtn" data-rating="90">90%</button>
-        <button class="ratingBtn" data-rating="100">100%</button>
-      </div>
+      // Load the JSON file.
+      const jsonText = await zip.file(jsonFileName).async("string");
+      try {
+        wordsData = JSON.parse(jsonText);
+      } catch (err) {
+        alert("Error parsing JSON: " + err);
+        return;
+      }
       
-      <!-- Ignore Word Button Row -->
-      <div id="ignoreWordRow">
-        <button id="ignoreWordBtn">Ignore Word</button>
-      </div>
+      // Load video file(s). Assumes each example references a video file.
+      // Here we preload any .mp4 file in the zip.
+      const videoPromises = [];
+      zip.forEach((relativePath, zipEntry) => {
+        if (relativePath.endsWith('.mp4')) {
+          videoPromises.push(
+            zipEntry.async("blob").then(blob => {
+              const url = URL.createObjectURL(blob);
+              videoBlobs[relativePath] = url;
+            })
+          );
+        }
+      });
+      await Promise.all(videoPromises);
       
-      <!-- Example Text -->
-      <p id="currentExample" style="display: none;"></p>
-    </div>
-  </section>
-  
-  <!-- Archive Management Section -->
-  <section id="archiveManagement">
-    <h2>Archive Management</h2>
-    <div>
-      <label for="archiveFile">Load Archive (.zip):</label>
-      <input type="file" id="archiveFile" accept=".zip">
-    </div>
-    <div>
-      <button id="exportArchiveBtn">Export Archive</button>
-    </div>
-  </section>
-  
-  <!-- New Content Section -->
-  <section id="newContentSection">
-    <h2>Add New Content (Video + SRT)</h2>
-    <div>
-      <label for="newVideo">Video File:</label>
-      <input type="file" id="newVideo" accept="video/*">
-      <label for="newSRT">SRT File:</label>
-      <input type="file" id="newSRT" accept=".srt">
-      <button id="addNewContentBtn">Add New Content</button>
-    </div>
-  </section>
-  
-  <script src="script.js"></script>
+      // Enable controls now that archive is loaded.
+      saveButton.disabled = false;
+      applyRatingButton.disabled = false;
+      ignoreButton.disabled = false;
+      playSegmentButton.disabled = false;
+      
+      // Start the drill.
+      chooseNextExample();
+    });
+
+    // Choose next word and example based on weighted random selection.
+    function chooseNextExample() {
+      // Get list of word keys that have at least one non-ignored example.
+      const availableWords = [];
+      for (const [word, details] of Object.entries(wordsData)) {
+        const validExamples = details.examples.filter(ex => !ex.ignored);
+        if (validExamples.length > 0) {
+          // Compute average rating (of non-ignored examples) if available.
+          let sum = 0;
+          validExamples.forEach(ex => { sum += ex.rating; });
+          const avg = validExamples.length ? sum / validExamples.length : 0;
+          availableWords.push({word, avg, examples: validExamples});
+        }
+      }
+      if (availableWords.length === 0) {
+        alert("No available examples to drill. All examples might be ignored.");
+        return;
+      }
+      
+      // Weighted random selection: weight = 1 + (100 - average rating)
+      let totalWeight = 0;
+      availableWords.forEach(item => {
+        item.weight = 1 + (100 - item.avg);
+        totalWeight += item.weight;
+      });
+      let r = Math.random() * totalWeight;
+      let selectedWordObj;
+      for (const item of availableWords) {
+        r -= item.weight;
+        if (r <= 0) {
+          selectedWordObj = item;
+          break;
+        }
+      }
+      if (!selectedWordObj) selectedWordObj = availableWords[0];
+      
+      currentWordKey = selectedWordObj.word;
+      // Now select an example from the chosen word.
+      // Use a weighted random selection among its examples:
+      let totalExWeight = 0;
+      selectedWordObj.examples.forEach(ex => {
+        ex.weight = 1 + (100 - ex.rating);
+        totalExWeight += ex.weight;
+      });
+      let rEx = Math.random() * totalExWeight;
+      for (const ex of selectedWordObj.examples) {
+        rEx -= ex.weight;
+        if (rEx <= 0) {
+          currentExample = ex;
+          break;
+        }
+      }
+      if (!currentExample) currentExample = selectedWordObj.examples[0];
+
+      updateUI();
+    }
+
+    // Update the UI to show current word and example.
+    function updateUI() {
+      currentWordSpan.textContent = currentWordKey;
+      exampleDisplay.textContent = currentExample.text;
+      
+      // Set up the video source based on the example's video file.
+      const videoFileName = currentExample.video;
+      if (videoBlobs[videoFileName]) {
+        videoPlayer.src = videoBlobs[videoFileName];
+      } else {
+        videoPlayer.removeAttribute('src');
+      }
+      // Reset video player current time.
+      videoPlayer.currentTime = 0;
+    }
+
+    // Play video segment for the current example.
+    playSegmentButton.addEventListener('click', () => {
+      if (!currentExample || !videoPlayer.src) return;
+      videoPlayer.currentTime = currentExample.start;
+      videoPlayer.play();
+    });
+
+    // Pause video when passing the end time.
+    videoPlayer.addEventListener('timeupdate', () => {
+      if (currentExample && videoPlayer.currentTime >= currentExample.end) {
+        videoPlayer.pause();
+      }
+    });
+
+    // Apply rating button handler.
+    applyRatingButton.addEventListener('click', () => {
+      const newRating = parseInt(ratingSlider.value);
+      // Update the current example's rating.
+      currentExample.rating = newRating;
+      // Optionally, recalc the summary rating for the word:
+      updateWordSummary(currentWordKey);
+      chooseNextExample();
+    });
+
+    // Ignore button handler.
+    ignoreButton.addEventListener('click', () => {
+      currentExample.ignored = true;
+      // If all examples for the word are ignored, update summary.
+      updateWordSummary(currentWordKey);
+      chooseNextExample();
+    });
+
+    // Update the summary rating and ignored flag for a word.
+    function updateWordSummary(wordKey) {
+      const details = wordsData[wordKey];
+      // Recompute average rating only for non-ignored examples.
+      const validExamples = details.examples.filter(ex => !ex.ignored);
+      if (validExamples.length > 0) {
+        let sum = 0;
+        validExamples.forEach(ex => { sum += ex.rating; });
+        details.rating = sum / validExamples.length;
+        details.ignored = false;
+      } else {
+        details.rating = 0;
+        details.ignored = true;
+      }
+    }
+
+    // Save JSON: allow user to download updated JSON file.
+    saveButton.addEventListener('click', () => {
+      const dataStr = JSON.stringify(wordsData, null, 2);
+      const blob = new Blob([dataStr], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "updated_words.json";
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    });
+  </script>
 </body>
 </html>

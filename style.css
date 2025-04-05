@@ -1,0 +1,69 @@
+/* Global Styles */
+body {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background: #f0f4f8;
+  margin: 0;
+  padding: 20px;
+}
+h1, h2 {
+  text-align: center;
+  color: #333;
+  margin-bottom: 10px;
+}
+section {
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  padding: 20px;
+  margin: 20px auto;
+  max-width: 800px;
+}
+
+/* Drill Card Layout */
+#drill-card-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+#currentWord {
+  font-size: 2em;
+  margin-bottom: 10px;
+  color: #007BFF;
+}
+video {
+  width: 100%;
+  border-radius: 8px;
+  margin-bottom: 10px;
+}
+p {
+  font-size: 1.1em;
+  color: #555;
+  text-align: center;
+}
+
+/* Button Styles */
+button {
+  background: #007BFF;
+  color: #fff;
+  border: none;
+  padding: 10px 20px;
+  margin: 5px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background 0.3s ease;
+}
+button:hover {
+  background: #0056b3;
+}
+#ratingSection {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  margin-top: 10px;
+}
+#ratingSection button {
+  background: #28a745;
+}
+#ratingSection button:hover {
+  background: #218838;
+}

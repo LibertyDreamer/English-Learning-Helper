@@ -4,51 +4,147 @@
   <meta charset="UTF-8">
   <title>Word Drill Learning System</title>
   <style>
-    body { font-family: sans-serif; padding: 20px; }
-    #controls { margin-top: 20px; }
-    #wordDisplay { margin-top: 20px; font-size: 1.2em; }
-    #exampleDisplay { margin-top: 10px; font-style: italic; }
-    #videoContainer { margin-top: 20px; }
-    #ratingButtons button { margin-right: 5px; margin-top: 5px; }
+    body {
+      font-family: sans-serif;
+      margin: 0;
+      padding: 0;
+      background: #f0f2f5;
+    }
+    .container {
+      max-width: 720px;
+      margin: 40px auto;
+      background: #fff;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+    h1 {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+    #topControls {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    #topControls input[type="file"] {
+      margin-right: 10px;
+    }
+    #wordSection {
+      margin-top: 20px;
+    }
+    #currentWord {
+      font-size: 1.3em;
+      font-weight: bold;
+      display: inline-block;
+      margin-bottom: 10px;
+      color: #333;
+    }
+    #exampleDisplay {
+      font-style: italic;
+      margin: 10px 0;
+      min-height: 1.5em; /* keep space even if empty */
+    }
+    #videoContainer {
+      margin-top: 20px;
+      text-align: center;
+    }
+    video {
+      width: 100%;
+      max-width: 480px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      outline: none;
+    }
+    #controls {
+      margin-top: 20px;
+      text-align: center;
+    }
+    #ratingButtons {
+      margin-bottom: 10px;
+    }
+    .rating-btn {
+      margin: 5px 3px;
+      padding: 8px 12px;
+      background: #eee;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 0.9em;
+      transition: background 0.2s;
+    }
+    .rating-btn:hover {
+      background: #ddd;
+    }
+    #ignoreButton, #repeatButton, #showTextButton {
+      margin: 5px;
+      padding: 8px 12px;
+      background: #f5f5f5;
+      border: 1px solid #bbb;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: background 0.2s;
+      font-size: 0.9em;
+    }
+    #ignoreButton:hover, #repeatButton:hover, #showTextButton:hover {
+      background: #e5e5e5;
+    }
+    #saveButton, #loadButton {
+      margin-left: 5px;
+      padding: 6px 12px;
+      background: #2b7ceb;
+      color: #fff;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: background 0.2s;
+      font-size: 0.9em;
+    }
+    #saveButton:hover, #loadButton:hover {
+      background: #1a66cf;
+    }
   </style>
 </head>
 <body>
-  <h1>Word Drill Learning System</h1>
+  <div class="container">
+    <h1>Word Drill Learning System</h1>
 
-  <!-- Archive load and save -->
-  <div>
-    <input type="file" id="fileInput" accept=".zip">
-    <button id="loadButton">Load Archive</button>
-    <button id="saveButton" disabled>Save Archive</button>
-  </div>
-
-  <!-- Drill display -->
-  <div id="wordDisplay">
-    <div><strong>Word:</strong> <span id="currentWord"></span></div>
-    <div id="exampleDisplay"></div>
-  </div>
-
-  <!-- Video player -->
-  <div id="videoContainer">
-    <video id="videoPlayer" width="480" controls></video>
-  </div>
-
-  <!-- Rating and ignore controls -->
-  <div id="controls">
-    <div id="ratingButtons">
-      <!-- 10 rating buttons (10%–100%) -->
-      <button class="rating-btn" data-value="10">10%</button>
-      <button class="rating-btn" data-value="20">20%</button>
-      <button class="rating-btn" data-value="30">30%</button>
-      <button class="rating-btn" data-value="40">40%</button>
-      <button class="rating-btn" data-value="50">50%</button>
-      <button class="rating-btn" data-value="60">60%</button>
-      <button class="rating-btn" data-value="70">70%</button>
-      <button class="rating-btn" data-value="80">80%</button>
-      <button class="rating-btn" data-value="90">90%</button>
-      <button class="rating-btn" data-value="100">100%</button>
+    <!-- Archive load and save -->
+    <div id="topControls">
+      <input type="file" id="fileInput" accept=".zip">
+      <button id="loadButton">Load Archive</button>
+      <button id="saveButton" disabled>Save Archive</button>
     </div>
-    <button id="ignoreButton" disabled>Ignore</button>
+
+    <!-- Drill display -->
+    <div id="wordSection">
+      <div><span id="currentWord"></span></div>
+      <div id="exampleDisplay"></div>
+    </div>
+
+    <!-- Video player -->
+    <div id="videoContainer">
+      <video id="videoPlayer" controls></video>
+    </div>
+
+    <!-- Rating and ignore controls -->
+    <div id="controls">
+      <div id="ratingButtons">
+        <!-- 10 rating buttons (10%–100%) -->
+        <button class="rating-btn" data-value="10">10%</button>
+        <button class="rating-btn" data-value="20">20%</button>
+        <button class="rating-btn" data-value="30">30%</button>
+        <button class="rating-btn" data-value="40">40%</button>
+        <button class="rating-btn" data-value="50">50%</button>
+        <button class="rating-btn" data-value="60">60%</button>
+        <button class="rating-btn" data-value="70">70%</button>
+        <button class="rating-btn" data-value="80">80%</button>
+        <button class="rating-btn" data-value="90">90%</button>
+        <button class="rating-btn" data-value="100">100%</button>
+      </div>
+      <button id="ignoreButton" disabled>Ignore</button>
+      <button id="repeatButton" disabled>Repeat</button>
+      <button id="showTextButton" disabled>Show Subtitle</button>
+    </div>
   </div>
 
   <!-- JSZip library -->
@@ -61,6 +157,7 @@
     let currentExample = null;
     let zipContent = null; // Loaded ZIP content.
     let jsonFileName = null;
+    let textVisible = false; // Whether example text is currently shown.
 
     // UI elements.
     const fileInput = document.getElementById('fileInput');
@@ -70,6 +167,8 @@
     const exampleDisplay = document.getElementById('exampleDisplay');
     const videoPlayer = document.getElementById('videoPlayer');
     const ignoreButton = document.getElementById('ignoreButton');
+    const repeatButton = document.getElementById('repeatButton');
+    const showTextButton = document.getElementById('showTextButton');
     const ratingButtons = document.querySelectorAll('.rating-btn');
 
     // Load Archive handler.
@@ -120,6 +219,8 @@
       // Enable controls.
       saveButton.disabled = false;
       ignoreButton.disabled = false;
+      repeatButton.disabled = false;
+      showTextButton.disabled = false;
       
       // Set up rating buttons.
       ratingButtons.forEach(button => {
@@ -130,6 +231,33 @@
           updateWordSummary(currentWordKey);
           chooseNextExample();
         });
+      });
+
+      // "Ignore" button
+      ignoreButton.addEventListener('click', () => {
+        currentExample.ignored = true;
+        updateWordSummary(currentWordKey);
+        chooseNextExample();
+      });
+
+      // "Repeat" button
+      repeatButton.addEventListener('click', () => {
+        if (!currentExample) return;
+        videoPlayer.currentTime = currentExample.start;
+        videoPlayer.play();
+      });
+
+      // "Show Subtitle" button
+      showTextButton.addEventListener('click', () => {
+        if (!textVisible) {
+          exampleDisplay.textContent = currentExample.text;
+          textVisible = true;
+          showTextButton.textContent = "Hide Subtitle";
+        } else {
+          exampleDisplay.textContent = "";
+          textVisible = false;
+          showTextButton.textContent = "Show Subtitle";
+        }
       });
 
       chooseNextExample();
@@ -145,16 +273,16 @@
           let sum = 0;
           validExamples.forEach(ex => { sum += ex.rating; });
           const avg = validExamples.length ? sum / validExamples.length : 0;
-          // Compute weight: lower average rating means higher chance.
+          // Compute weight: lower average rating => higher chance.
           const weight = 1 + (100 - avg);
-          availableWords.push({ word: word, avg: avg, weight: weight, examples: validExamples });
+          availableWords.push({ word, avg, weight, examples: validExamples });
         }
       }
       if (availableWords.length === 0) {
         alert("No available examples to drill. All examples might be ignored.");
         return;
       }
-      // Select a word weighted by (1 + (100 - average rating)).
+      // Weighted random pick among words.
       let totalWeight = availableWords.reduce((sum, item) => sum + item.weight, 0);
       let r = Math.random() * totalWeight;
       let selectedWordObj = availableWords[0];
@@ -167,7 +295,7 @@
       }
       currentWordKey = selectedWordObj.word;
       
-      // Select one example from the chosen word using weighted random.
+      // Weighted random pick among examples for that word.
       const examples = selectedWordObj.examples;
       let totalExWeight = 0;
       const exWeights = examples.map(ex => {
@@ -189,10 +317,12 @@
       updateUI();
     }
 
-    // Update UI to display the current word, example, and play the video segment automatically.
+    // Update UI to display the current word, reset text hidden, and auto-play the video segment.
     function updateUI() {
       currentWordSpan.textContent = currentWordKey;
-      exampleDisplay.textContent = currentExample.text;
+      textVisible = false;
+      exampleDisplay.textContent = "";
+      showTextButton.textContent = "Show Subtitle";
       
       // Set up video based on the example's video file.
       const videoFileName = currentExample.video;
@@ -213,13 +343,6 @@
       }
     });
 
-    // Ignore button: mark current example as ignored.
-    ignoreButton.addEventListener('click', () => {
-      currentExample.ignored = true;
-      updateWordSummary(currentWordKey);
-      chooseNextExample();
-    });
-
     // Update word summary fields based on non-ignored examples.
     function updateWordSummary(wordKey) {
       const details = wordsData[wordKey];
@@ -238,7 +361,7 @@
     // Save Archive: update the JSON file inside a new ZIP archive and include all original files.
     saveButton.addEventListener('click', async () => {
       const newZip = new JSZip();
-      // Add updated JSON file (using the same filename as loaded).
+      // Add updated JSON file (using the same filename).
       newZip.file(jsonFileName, JSON.stringify(wordsData, null, 2));
       
       // Copy over all other files from the original archive.

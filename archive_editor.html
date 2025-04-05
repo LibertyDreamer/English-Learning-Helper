@@ -14,23 +14,35 @@
 <body>
   <h1>Archive Editor</h1>
   
+  <!-- Load Archive Section -->
   <section id="loadSection">
     <h2>Load Archive</h2>
     <input type="file" id="archiveFile" accept=".zip">
   </section>
   
+  <!-- JSON Editor Section -->
   <section id="jsonSection">
     <h2>JSON Content (words.json)</h2>
     <textarea id="jsonEditor" rows="15"></textarea>
   </section>
   
+  <!-- Video Files Section -->
   <section id="filesSection">
     <h2>Video Files</h2>
     <ul id="fileList"></ul>
     <input type="file" id="addFileInput" accept="video/*">
-    <button id="addFileBtn">Add File</button>
+    <button id="addFileBtn">Add Video File</button>
   </section>
   
+  <!-- Subtitle Files Section -->
+  <section id="subsSection">
+    <h2>Subtitle Files</h2>
+    <ul id="subsList"></ul>
+    <input type="file" id="addSubInput" accept=".srt">
+    <button id="addSubBtn">Add Subtitle File</button>
+  </section>
+  
+  <!-- Download Archive Section -->
   <section id="downloadSection">
     <button id="downloadArchiveBtn">Download Updated Archive</button>
   </section>

@@ -6,12 +6,73 @@
   <!-- Include JSZip for archive handling -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
   <style>
-    body { font-family: sans-serif; padding: 10px; }
-    h1, h2 { text-align: center; }
-    section { border: 1px solid #ccc; padding: 10px; margin: 10px; }
-    button, input { margin: 5px; }
-    video { display: block; margin: 10px auto; }
-    #ratingSection button { margin: 2px; }
+    /* Global Styles */
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: #f0f4f8;
+      margin: 0;
+      padding: 20px;
+    }
+    h1, h2 {
+      text-align: center;
+      color: #333;
+      margin-bottom: 10px;
+    }
+    section {
+      background: #fff;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      padding: 20px;
+      margin: 20px auto;
+      max-width: 800px;
+    }
+    /* Drill Card Layout */
+    #drill-card-section {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    #currentWord {
+      font-size: 2em;
+      margin-bottom: 10px;
+      color: #007BFF;
+    }
+    video {
+      width: 100%;
+      border-radius: 8px;
+      margin-bottom: 10px;
+    }
+    p {
+      font-size: 1.1em;
+      color: #555;
+      text-align: center;
+    }
+    /* Button Styles */
+    button {
+      background: #007BFF;
+      color: #fff;
+      border: none;
+      padding: 10px 20px;
+      margin: 5px;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: background 0.3s ease;
+    }
+    button:hover {
+      background: #0056b3;
+    }
+    #ratingSection {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      margin-top: 10px;
+    }
+    #ratingSection button {
+      background: #28a745;
+    }
+    #ratingSection button:hover {
+      background: #218838;
+    }
   </style>
 </head>
 <body>
@@ -22,7 +83,9 @@
     <h2>Drill</h2>
     <div id="drill-card-section">
       <h3 id="currentWord"></h3>
-      <video id="drillVideo" controls width="600"></video>
+      <video id="drillVideo" controls></video>
+      <!-- New button to repeat the video fragment -->
+      <button id="repeatFragmentBtn">Repeat Fragment</button>
       <button id="showTextBtn">Show Example</button>
       <p id="currentExample" style="display: none;"></p>
       <div id="ratingSection">
@@ -242,13 +305,12 @@
     /**************************************************
      * Drill Section: UI and Weighted Selection
      **************************************************/
-    // Remove scheduling – simply update the word's rating.
+    // Update the word's rating (no scheduling).
     function updateCard(word, rating) {
       wordData[word].rating = rating;
     }
     
-    // Select the next card using weighted random selection.
-    // Words with lower ratings (e.g., 0, 10, 20) receive a higher weight.
+    // Weighted random selection: lower-rated words appear more often.
     function getNextCard() {
       const availableWords = words.filter(w => !wordData[w].ignored);
       if (availableWords.length === 0) return null;
@@ -257,8 +319,8 @@
       availableWords.forEach(word => {
         let r = wordData[word].rating;
         if (r === undefined) { r = 0; }
-        // Lower ratings result in higher weight.
-        const weight = 101 - r; // For example, rating 0 gives 101; rating 100 gives 1.
+        // Lower ratings yield higher weight.
+        const weight = 101 - r; // e.g., rating 0 gives 101; rating 100 gives 1.
         totalWeight += weight;
         weightedWords.push({ word, weight });
       });
@@ -279,7 +341,7 @@
       document.getElementById("currentExample").textContent = currentExampleObj.text;
       document.getElementById("currentExample").style.display = "none";
       
-      // Auto-play video fragment when new word is shown.
+      // Auto-play video fragment when a new word is shown.
       autoPlayVideoFragment();
     }
     
@@ -318,6 +380,7 @@
       exampleElem.style.display = (exampleElem.style.display === "none") ? "block" : "none";
     });
     
+    // Ignore the current word.
     document.getElementById("ignoreWordBtn").addEventListener("click", () => {
       if (currentWord) {
         wordData[currentWord].ignored = true;
@@ -338,6 +401,11 @@
           reviewCurrentCard(rating);
         }
       });
+    });
+    
+    // Attach event listener for the repeat fragment button.
+    document.getElementById("repeatFragmentBtn").addEventListener("click", () => {
+      autoPlayVideoFragment();
     });
     
     window.addEventListener("load", () => {

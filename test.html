@@ -81,8 +81,8 @@
       }
 
       // Found the correct block
-      fragmentStart = foundBlock.start - 1;
-      fragmentEnd = foundBlock.end + 1; // +1 second for smooth ending
+      fragmentStart = foundBlock.start - 0.5;
+      fragmentEnd = foundBlock.end + 0.5;
 
       // Jump and play
       video.currentTime = fragmentStart;

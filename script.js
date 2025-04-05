@@ -128,7 +128,10 @@ document.getElementById("archiveFile").addEventListener("change", (e) => {
           videoFolder.forEach((relPath, fileEntry) => {
             let promise = fileEntry.async("blob").then(blob => {
               const url = URL.createObjectURL(blob);
-              videoMapping[fileEntry.name] = url;
+              // Extract the base file name in case the path is included.
+              const parts = fileEntry.name.split("/");
+              const baseName = parts[parts.length - 1];
+              videoMapping[baseName] = url;
             });
             videoPromises.push(promise);
           });

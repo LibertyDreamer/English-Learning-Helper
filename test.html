@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Video Fragment Viewer</title>
+  <title>Video Fragment Viewer (Fixed)</title>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -17,7 +17,7 @@
 </head>
 <body>
 
-<h1>Video Fragment Viewer</h1>
+<h1>Video Fragment Viewer (Fixed)</h1>
 
 <input type="file" id="videoFile" accept="video/*,.mkv">
 <input type="file" id="srtFile" accept=".srt">
@@ -61,7 +61,7 @@
   }
 
   function findAndShow() {
-    let phrase = document.getElementById('phraseInput').value.trim();
+    let phrase = document.getElementById('phraseInput').value.trim().toLowerCase();
     if (!phrase || !srtContent) {
       alert('Please load SRT and enter a phrase.');
       return;
@@ -74,11 +74,16 @@
       let lines = block.split('\n');
       if (lines.length >= 3) {
         let timeLine = lines[1];
-        let textLines = lines.slice(2).join(' ');
+        let textLines = lines.slice(2).join(' ')
+          .replace(/\r?\n|\r/g, ' ')    // 🔥 Remove linebreaks
+          .replace(/\s+/g, ' ')          // 🔥 Collapse extra spaces
+          .trim()
+          .toLowerCase();                // 🔥 Lowercase everything
+
         if (textLines.includes(phrase)) {
           let [startTime, endTime] = timeLine.split(' --> ');
           fragmentStart = srtTimeToSeconds(startTime.trim());
-          fragmentEnd = srtTimeToSeconds(endTime.trim()) + 1;  // 👈 Add +1 second for smooth ending
+          fragmentEnd = srtTimeToSeconds(endTime.trim()) + 1;  // +1s for smooth ending
 
           video.currentTime = fragmentStart;
           video.play();
@@ -98,7 +103,6 @@
   }
 
   video.addEventListener('timeupdate', function() {
-    // Only auto-pause when playing fragment
     if (fragmentEnd > 0 && !video.paused && video.currentTime >= fragmentEnd) {
       video.pause();
     }

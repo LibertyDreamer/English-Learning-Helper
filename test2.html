@@ -2,7 +2,7 @@
 <html>
 <head>
   <meta charset="UTF-8">
-  <title>Simple Archive & Drill</title>
+  <title>Simple Archive & Drill System</title>
   <!-- JSZip for archive handling -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
   <style>
@@ -14,7 +14,7 @@
   </style>
 </head>
 <body>
-  <h1>Simple Archive & Drill</h1>
+  <h1>Simple Archive & Drill System</h1>
   
   <!-- Archive Management Section -->
   <section id="archiveManagement">
@@ -56,13 +56,19 @@
   </section>
   
   <script>
-    // Global variables
-    let wordData = {};   // { word: { example, video, start, end, repetition, interval, ease, nextReview, ignored } }
+    /**************************************************
+     * Global Variables
+     **************************************************/
+    // wordData: key = word; value: { examples: [{ text, video, start, end }], repetition, interval, ease, nextReview, ignored }
+    let wordData = {};   
     let words = [];      // Array of word keys
     let videoFiles = []; // Array of new video File objects
     let videoArchiveMapping = {}; // Mapping: video file name -> object URL
+    let currentExampleObj = null; // Chosen example for the current card
 
-    // --- Utility Functions ---
+    /**************************************************
+     * Utility: SRT Parsing
+     **************************************************/
     function parseSRT(srtString) {
       const blocks = srtString.split(/\r?\n\r?\n/);
       let results = [];
@@ -96,7 +102,9 @@
       return (parseInt(hh) * 3600) + (parseInt(mm) * 60) + parseInt(ss) + (parseInt(ms) / 1000);
     }
     
-    // --- Add New Content (Video + SRT) ---
+    /**************************************************
+     * 1) Add New Content (Video + SRT)
+     **************************************************/
     document.getElementById("addNewContentBtn").addEventListener("click", () => {
       const videoInput = document.getElementById("newVideo");
       const srtInput = document.getElementById("newSRT");
@@ -107,7 +115,7 @@
       const videoFile = videoInput.files[0];
       const srtFile = srtInput.files[0];
       
-      // Add video file if not already loaded
+      // Add video file if not already loaded.
       if (!videoArchiveMapping[videoFile.name]) {
         videoFiles.push(videoFile);
         videoArchiveMapping[videoFile.name] = URL.createObjectURL(videoFile);
@@ -117,34 +125,52 @@
       reader.onload = (e) => {
         const srtContent = e.target.result;
         const srtBlocks = parseSRT(srtContent);
-        // For each subtitle block, add each new word as a card if not already present.
+        // For each subtitle block, process the text and add each word.
         srtBlocks.forEach(block => {
           const wordsInBlock = block.text.toLowerCase().match(/[a-zA-Z]+/g);
           if (wordsInBlock) {
             wordsInBlock.forEach(word => {
               if (!wordData[word]) {
+                // Create a new card with an examples array.
                 wordData[word] = {
-                  example: block.text,
-                  video: videoFile.name,
-                  start: block.start,
-                  end: block.end,
+                  examples: [{
+                    text: block.text,
+                    video: videoFile.name,
+                    start: block.start,
+                    end: block.end
+                  }],
                   repetition: 0,
                   interval: 0,
                   ease: 2.5,
                   nextReview: Date.now(),
                   ignored: false
                 };
+              } else {
+                // Add new example if not already present.
+                const exists = wordData[word].examples.some(ex =>
+                  ex.text === block.text && ex.video === videoFile.name
+                );
+                if (!exists) {
+                  wordData[word].examples.push({
+                    text: block.text,
+                    video: videoFile.name,
+                    start: block.start,
+                    end: block.end
+                  });
+                }
               }
             });
           }
         });
         words = Object.keys(wordData);
-        alert("New content added.");
+        alert("New content added from SRT.");
       };
       reader.readAsText(srtFile);
     });
     
-    // --- Load Archive (ZIP file) ---
+    /**************************************************
+     * 2) Load Archive from ZIP (JSON + Videos)
+     **************************************************/
     document.getElementById("archiveFile").addEventListener("change", (e) => {
       const file = e.target.files[0];
       if (!file) return;
@@ -174,7 +200,9 @@
       });
     });
     
-    // --- Export Archive (ZIP file) ---
+    /**************************************************
+     * 3) Export Archive (ZIP: JSON + Videos)
+     **************************************************/
     document.getElementById("exportArchiveBtn").addEventListener("click", async () => {
       const zip = new JSZip();
       zip.file("words.json", JSON.stringify(wordData, null, 2));
@@ -197,7 +225,9 @@
       }
     });
     
-    // --- Drill Section Scheduling & UI ---
+    /**************************************************
+     * 4) Drill Section: Scheduling & UI
+     **************************************************/
     function ensureCardProperties(word) {
       const card = wordData[word];
       if (card.repetition === undefined) card.repetition = 0;
@@ -207,7 +237,7 @@
       if (card.ignored === undefined) card.ignored = false;
     }
     
-    // SM-2 scheduling update: quality 0 = Again, 3 = Hard, 5 = Easy.
+    // SM-2 scheduling update (quality: 0 = Again, 3 = Hard, 5 = Easy)
     function updateCard(word, quality) {
       ensureCardProperties(word);
       let card = wordData[word];
@@ -229,10 +259,10 @@
     function getNextCard() {
       const now = Date.now();
       const dueCards = words.filter(w => !wordData[w].ignored && (wordData[w].nextReview <= now));
-      if (dueCards.length > 0) return dueCards[Math.floor(Math.random()*dueCards.length)];
+      if (dueCards.length > 0) return dueCards[Math.floor(Math.random() * dueCards.length)];
       const notIgnored = words.filter(w => !wordData[w].ignored);
       if (notIgnored.length === 0) return null;
-      notIgnored.sort((a,b) => (wordData[a].nextReview || Infinity) - (wordData[b].nextReview || Infinity));
+      notIgnored.sort((a, b) => (wordData[a].nextReview || Infinity) - (wordData[b].nextReview || Infinity));
       return notIgnored[0];
     }
     
@@ -240,7 +270,11 @@
       if (!currentWord) return;
       ensureCardProperties(currentWord);
       document.getElementById("currentWord").textContent = currentWord;
-      document.getElementById("currentExample").textContent = wordData[currentWord].example;
+      // Choose one random example to display.
+      const examples = wordData[currentWord].examples;
+      const randomIndex = Math.floor(Math.random() * examples.length);
+      currentExampleObj = examples[randomIndex];
+      document.getElementById("currentExample").textContent = currentExampleObj.text;
     }
     
     let currentWord = "";
@@ -254,20 +288,19 @@
       }
     }
     
-    // Play video fragment for the current card.
+    // Play video fragment using the chosen example.
     document.getElementById("playFragmentBtn").addEventListener("click", () => {
-      if (!currentWord) return;
-      const card = wordData[currentWord];
-      if (!card.video || !videoArchiveMapping[card.video]) {
+      if (!currentWord || !currentExampleObj) return;
+      if (!currentExampleObj.video || !videoArchiveMapping[currentExampleObj.video]) {
         alert("Video not available for this card.");
         return;
       }
       const drillVideo = document.getElementById("drillVideo");
-      drillVideo.src = videoArchiveMapping[card.video];
-      drillVideo.currentTime = card.start;
+      drillVideo.src = videoArchiveMapping[currentExampleObj.video];
+      drillVideo.currentTime = currentExampleObj.start;
       drillVideo.play();
       const checkInterval = setInterval(() => {
-        if (drillVideo.currentTime >= card.end) {
+        if (drillVideo.currentTime >= currentExampleObj.end) {
           drillVideo.pause();
           clearInterval(checkInterval);
         }

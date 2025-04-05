@@ -54,7 +54,7 @@
       margin-left: auto;
       margin-right: auto;
       position: relative;
-      background: #000; /* so blank areas don't flash white */
+      background: #000;
     }
     /* Both video elements share these styles */
     #videoContainer video {
@@ -481,6 +481,7 @@
         attachTimeUpdateListener(newVideo);
         
         newVideo.src = videoBlobs[videoFileName] || "";
+        newVideo.load();  // Force load the new video.
         container.appendChild(newVideo);
         
         newVideo.addEventListener('loadeddata', function onLoaded() {
@@ -492,7 +493,7 @@
           newVideo.removeEventListener('loadeddata', onLoaded);
         }, { once: true });
       } else {
-        // Same video file: update time and play.
+        // If the video file is the same, just update time and play.
         videoPlayer.currentTime = currentExample.start;
         videoPlayer.play();
       }

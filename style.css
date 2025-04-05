@@ -50,7 +50,7 @@ video {
   margin: 15px 0;
 }
 
-/* Rating Buttons: all in one row using CSS Grid */
+/* Rating Buttons: Force into one row using CSS Grid */
 #ratingSection {
   display: grid;
   grid-template-columns: repeat(11, 1fr);

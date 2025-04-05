@@ -11,6 +11,7 @@
     section { border: 1px solid #ccc; padding: 10px; margin: 10px; }
     button, input { margin: 5px; }
     video { display: block; margin: 10px auto; }
+    #ratingSection button { margin: 2px; }
   </style>
 </head>
 <body>
@@ -21,16 +22,23 @@
     <h2>Drill</h2>
     <div id="drill-card-section">
       <h3 id="currentWord"></h3>
+      <video id="drillVideo" controls width="600"></video>
       <button id="showTextBtn">Show Example</button>
       <p id="currentExample" style="display: none;"></p>
-      <button id="playFragmentBtn">Play Video Fragment</button>
       <div id="ratingSection">
-        <button class="ratingBtn" data-quality="0">Bad</button>
-        <button class="ratingBtn" data-quality="3">OK</button>
-        <button class="ratingBtn" data-quality="5">Good</button>
+        <button class="ratingBtn" data-rating="0">0%</button>
+        <button class="ratingBtn" data-rating="10">10%</button>
+        <button class="ratingBtn" data-rating="20">20%</button>
+        <button class="ratingBtn" data-rating="30">30%</button>
+        <button class="ratingBtn" data-rating="40">40%</button>
+        <button class="ratingBtn" data-rating="50">50%</button>
+        <button class="ratingBtn" data-rating="60">60%</button>
+        <button class="ratingBtn" data-rating="70">70%</button>
+        <button class="ratingBtn" data-rating="80">80%</button>
+        <button class="ratingBtn" data-rating="90">90%</button>
+        <button class="ratingBtn" data-rating="100">100%</button>
       </div>
       <button id="ignoreWordBtn">Ignore Word</button>
-      <video id="drillVideo" controls width="600"></video>
     </div>
   </section>
   
@@ -62,13 +70,28 @@
     /**************************************************
      * Global Variables
      **************************************************/
-    // wordData: { word: { examples: [{ text, video, start, end }], repetition, interval, ease, nextReview, ignored } }
+    // wordData: { word: { examples: [{ text, video, start, end }], nextReview, ignored } }
     let wordData = {};   
     let words = [];      // Array of word keys
     let videoFiles = []; // Array of new video File objects (for export)
     let videoMapping = {}; // Mapping: video file name -> object URL
     let currentExampleObj = null; // Chosen example for the current card
     let currentWord = "";
+    
+    // Mapping percent rating to interval in days.
+    const ratingToInterval = {
+      0: 1,
+      10: 1,
+      20: 1,
+      30: 2,
+      40: 3,
+      50: 4,
+      60: 6,
+      70: 9,
+      80: 14,
+      90: 21,
+      100: 30
+    };
     
     /**************************************************
      * Utility: SRT Parsing
@@ -141,9 +164,6 @@
                     start: block.start,
                     end: block.end
                   }],
-                  repetition: 0,
-                  interval: 0,
-                  ease: 2.5,
                   nextReview: Date.now(),
                   ignored: false
                 };
@@ -238,30 +258,16 @@
      **************************************************/
     function ensureCardProperties(word) {
       const card = wordData[word];
-      if (card.repetition === undefined) card.repetition = 0;
-      if (card.interval === undefined) card.interval = 0;
-      if (card.ease === undefined) card.ease = 2.5;
       if (card.nextReview === undefined) card.nextReview = Date.now();
       if (card.ignored === undefined) card.ignored = false;
     }
     
-    // SM-2 scheduling update: quality: 0 (Bad), 3 (OK), 5 (Good)
-    function updateCard(word, quality) {
+    // Update card scheduling based on percent rating.
+    function updateCard(word, rating) {
       ensureCardProperties(word);
-      let card = wordData[word];
       const now = Date.now();
-      if (quality < 3) {
-        card.repetition = 0;
-        card.interval = 1;
-      } else {
-        card.repetition++;
-        card.interval = (card.repetition === 1) ? 1 :
-                        (card.repetition === 2) ? 6 :
-                        card.interval * card.ease;
-        card.ease = card.ease - 0.8 + 0.28 * quality - 0.02 * quality * quality;
-        if (card.ease < 1.3) card.ease = 1.3;
-      }
-      card.nextReview = now + card.interval * 86400000;
+      let days = ratingToInterval[rating] || 1;
+      wordData[word].nextReview = now + days * 86400000;
     }
     
     function getNextCard() {
@@ -283,20 +289,12 @@
       currentExampleObj = examples[randomIndex];
       document.getElementById("currentExample").textContent = currentExampleObj.text;
       document.getElementById("currentExample").style.display = "none";
+      
+      // Auto-play video fragment when new word is shown.
+      autoPlayVideoFragment();
     }
     
-    function reviewCurrentCard(quality) {
-      updateCard(currentWord, quality);
-      currentWord = getNextCard();
-      if (currentWord) showCurrentCard();
-      else {
-        document.getElementById("currentWord").textContent = "No cards available.";
-        document.getElementById("currentExample").textContent = "";
-      }
-    }
-    
-    // Play video fragment using the chosen example.
-    document.getElementById("playFragmentBtn").addEventListener("click", () => {
+    function autoPlayVideoFragment() {
       if (!currentWord || !currentExampleObj) return;
       const videoURL = videoMapping[currentExampleObj.video];
       if (!videoURL) {
@@ -313,7 +311,17 @@
           clearInterval(checkInterval);
         }
       }, 100);
-    });
+    }
+    
+    function reviewCurrentCard(rating) {
+      updateCard(currentWord, rating);
+      currentWord = getNextCard();
+      if (currentWord) showCurrentCard();
+      else {
+        document.getElementById("currentWord").textContent = "No cards available.";
+        document.getElementById("currentExample").textContent = "";
+      }
+    }
     
     // Toggle example text visibility.
     document.getElementById("showTextBtn").addEventListener("click", () => {
@@ -333,11 +341,12 @@
       }
     });
     
+    // Attach event listeners to percent rating buttons.
     document.querySelectorAll(".ratingBtn").forEach(btn => {
       btn.addEventListener("click", () => {
-        const quality = parseInt(btn.getAttribute("data-quality"));
+        const rating = parseInt(btn.getAttribute("data-rating"));
         if (currentWord && wordData[currentWord]) {
-          reviewCurrentCard(quality);
+          reviewCurrentCard(rating);
         }
       });
     });

@@ -2,11 +2,11 @@
 <html>
 <head>
   <meta charset="UTF-8">
-  <title>SRT Video Search, Repetition Drill & Archive</title>
-  <!-- Include JSZip library from CDN -->
+  <title>Archive &amp; Drill System</title>
+  <!-- Include JSZip from CDN for archive handling -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
   <style>
-    /* ---------- Common & Drill Styles ---------- */
+    /* ---------- Common Styles ---------- */
     body {
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
       background: #f0f2f5;
@@ -14,64 +14,30 @@
       padding: 20px;
       color: #333;
     }
-    h1, h2 {
+    h1, h2, h3 {
       text-align: center;
       color: #2c3e50;
     }
     section {
-      margin-bottom: 50px;
+      margin-bottom: 40px;
       padding: 20px;
       border: 1px solid #ddd;
       border-radius: 8px;
       background: #fff;
     }
-    input, button, textarea, select, p {
+    input, button, label, p {
       margin: 5px;
     }
     video {
       display: block;
       margin: 10px auto;
     }
-    /* ---------- Modal Styles ---------- */
-    .modal {
-      display: none; 
-      position: fixed; 
-      z-index: 100; 
-      left: 0;
-      top: 0;
-      width: 100%; 
-      height: 100%; 
-      overflow: auto; 
-      background-color: rgba(0, 0, 0, 0.5);
-    }
-    .modal-content {
-      background-color: #fff;
-      margin: 8% auto;
-      padding: 20px;
-      border-radius: 8px;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.2);
-      width: 90%; 
-      max-width: 600px;
-      position: relative;
-    }
-    .close {
-      color: #aaa;
-      float: right;
-      font-size: 28px;
-      font-weight: bold;
-      cursor: pointer;
-    }
-    .close:hover {
-      color: #333;
-    }
     /* ---------- Drill Card Styles ---------- */
     #drill-card-section {
-      display: none;
       text-align: center;
     }
     #currentWord {
       font-size: 2em;
-      color: #2c3e50;
       margin-bottom: 10px;
       cursor: pointer;
     }
@@ -79,175 +45,75 @@
       font-size: 1.2em;
       margin-bottom: 15px;
     }
-    #ratingSection {
-      margin-bottom: 15px;
-    }
-    button {
-      background: #3498db;
-      border: none;
-      border-radius: 4px;
-      padding: 8px 12px;
-      color: #fff;
-      cursor: pointer;
-      transition: background 0.2s;
-    }
-    button:hover {
-      background: #2980b9;
+    #ratingSection button {
+      margin: 0 5px;
     }
   </style>
 </head>
 <body>
-  <h1>SRT Video Search, Repetition Drill & Archive</h1>
+  <h1>Archive &amp; Drill System</h1>
   
   <!-- ===========================
-       Section 1: SRT Video Search Utility
-       (Use this to test searching a loaded SRT file.)
+       Archive Management Section
+       - Load an archive (ZIP file)
+       - Add new content (video + SRT)
+       - Export current archive
   ============================ -->
-  <section id="videoSection">
-    <h2>SRT Video Search</h2>
-    <!-- Choose video file -->
-    <input type="file" id="videoFile" accept="video/*">
-    <!-- Choose SRT file -->
-    <input type="file" id="srtFile" accept=".srt">
-    <br>
-    <!-- Enter a subtitle phrase -->
-    <input type="text" id="phraseInput" placeholder="Enter exact subtitle phrase" style="width: 300px;">
-    <button id="searchBtn">Find and Play</button>
-    <p id="times"></p>
-    <video id="video" controls width="600"></video>
+  <section id="archiveManagement">
+    <h2>Archive Management</h2>
+    <div>
+      <label for="archiveFile">Load Archive (.zip):</label>
+      <input type="file" id="archiveFile" accept=".zip">
+    </div>
+    <hr>
+    <div>
+      <h3>Add New Video + SRT</h3>
+      <label for="newVideo">Video File:</label>
+      <input type="file" id="newVideo" accept="video/*">
+      <label for="newSRT">SRT File:</label>
+      <input type="file" id="newSRT" accept=".srt">
+      <button id="addNewContentBtn">Add New Content</button>
+    </div>
+    <hr>
+    <div>
+      <button id="exportArchiveBtn">Export Archive</button>
+    </div>
   </section>
   
   <!-- ===========================
-       Section 2: Spaced Repetition Drill
+       Drill Section
   ============================ -->
   <section id="drillSection">
-    <h2>Repetition Drill</h2>
-    <!-- JSON Management Modal Trigger -->
-    <button id="openModalBtn">Manage JSON</button>
-    <!-- Hidden JSON File Input -->
-    <input type="file" id="jsonFileInput" accept=".json" style="display:none;">
-    <!-- Video Archive: load one or more video files -->
-    <p>Load Video Archive (select one or more video files):</p>
-    <input type="file" id="videoArchive" accept="video/*" multiple>
-    <!-- Export Archive Button -->
-    <button id="exportArchiveBtn">Export Archive</button>
-    
-    <!-- Drill Card Display -->
+    <h2>Drill</h2>
     <div id="drill-card-section">
       <h3 id="currentWord"></h3>
       <p id="currentExample"></p>
       <button id="playFragmentBtn">Play Video Fragment</button>
-      <!-- Rating Buttons -->
       <div id="ratingSection">
         <button class="ratingBtn" data-quality="0">Again</button>
         <button class="ratingBtn" data-quality="3">Hard</button>
         <button class="ratingBtn" data-quality="5">Easy</button>
       </div>
       <button id="ignoreWordBtn">Ignore Word</button>
-      <!-- Video element for playing the fragment -->
       <video id="drillVideo" controls width="600"></video>
     </div>
   </section>
   
   <!-- ===========================
-       JSON Management Modal
-  ============================ -->
-  <div id="jsonModal" class="modal">
-    <div class="modal-content">
-      <span class="close" id="closeModalBtn">&times;</span>
-      <h2>Load / Update JSON</h2>
-      <button id="chooseAndLoadBtn">Choose &amp; Load JSON</button>
-      <br><br>
-      <p>Paste plain text (format: word: example) to add words.<br>
-      (Note: Video file and timestamps need to be added later.)</p>
-      <textarea id="inputText" placeholder="word: example"></textarea>
-      <br>
-      <button id="processTextBtn">Add Words from Text</button>
-      <hr style="margin:20px 0;">
-      <h3>Download Updated JSON</h3>
-      <button id="downloadJsonBtn">Download JSON</button>
-    </div>
-  </div>
-  
-  <!-- ===========================
        Scripts: Functionality Code
   ============================ -->
-  
-  <!-- SRT Video Search Script (Utility) -->
   <script>
-    const video = document.getElementById('video');
-    const phraseInput = document.getElementById('phraseInput');
-    const timesDisplay = document.getElementById('times');
+    /**************************************************
+     * Global Variables
+     **************************************************/
+    let wordData = {};   // { word: { example, video, start, end, repetition, interval, ease, nextReview, ignored } }
+    let words = [];      // Array of word keys
+    let videoFiles = []; // Array of new video File objects
+    let videoArchiveMapping = {}; // Mapping: video file name -> object URL
 
-    let srtContent = '';
-    let srtBlocks = [];  // Holds parsed subtitle blocks: { start, end, text }
-    let fragmentStart = 0;
-    let fragmentEnd = 0;
-
-    // Load video file for utility section
-    document.getElementById('videoFile').addEventListener('change', (e) => {
-      const file = e.target.files[0];
-      if (file) {
-        video.src = URL.createObjectURL(file);
-      }
-    });
-
-    // Load and parse SRT file
-    document.getElementById('srtFile').addEventListener('change', (e) => {
-      const file = e.target.files[0];
-      if (file) {
-        const reader = new FileReader();
-        reader.onload = (event) => {
-          srtContent = event.target.result;
-          srtBlocks = parseSRT(srtContent);
-        };
-        reader.readAsText(file);
-      }
-    });
-
-    // On “Find and Play,” search for the phrase in srtBlocks
-    document.getElementById('searchBtn').addEventListener('click', () => {
-      const phrase = phraseInput.value.trim().toLowerCase();
-      if (!phrase) {
-        alert('Please type a phrase.');
-        return;
-      }
-      if (!srtBlocks.length) {
-        alert('Please load an SRT file first.');
-        return;
-      }
-
-      let foundBlock = null;
-      for (const block of srtBlocks) {
-        if (block.text.toLowerCase().includes(phrase)) {
-          foundBlock = block;
-          break;
-        }
-      }
-
-      if (!foundBlock) {
-        alert('Phrase not found in SRT.');
-        return;
-      }
-
-      // Set fragment times (with a 0.5s buffer)
-      fragmentStart = foundBlock.start - 0.5;
-      fragmentEnd = foundBlock.end + 0.5;
-
-      video.currentTime = fragmentStart;
-      video.play();
-      timesDisplay.textContent =
-        `Fragment Start: ${fragmentStart.toFixed(2)}s, End: ${fragmentEnd.toFixed(2)}s`;
-    });
-
-    // Pause video when fragmentEnd is reached
-    video.addEventListener('timeupdate', () => {
-      if (fragmentEnd > 0 && !video.paused && video.currentTime >= fragmentEnd) {
-        video.pause();
-      }
-    });
-
-    // Parse SRT text into blocks
+    /**************************************************
+     * Utility: SRT Parsing
+     **************************************************/
     function parseSRT(srtString) {
       const blocks = srtString.split(/\r?\n\r?\n/);
       const results = [];
@@ -273,27 +139,134 @@
       return results;
     }
 
-    // Convert SRT time "HH:MM:SS,mmm" to seconds
     function srtTimeToSeconds(timeStr) {
-      const [hh, mm, ssMs] = timeStr.split(':');
+      const parts = timeStr.split(':');
+      if (parts.length < 3) return 0;
+      const [hh, mm, ssMs] = parts;
       const [ss, ms] = ssMs.split(',');
-      return (parseInt(hh, 10) || 0) * 3600 +
-             (parseInt(mm, 10) || 0) * 60 +
-             (parseInt(ss, 10) || 0) +
-             (parseInt(ms, 10) || 0) / 1000;
+      return (parseInt(hh) * 3600) + (parseInt(mm) * 60) + parseInt(ss) + (parseInt(ms) / 1000);
     }
-  </script>
-  
-  <!-- Drill & Archive Script -->
-  <script>
+    
     /**************************************************
-     * 1) Repetition Drill Data & Scheduling
+     * 1) Add New Content (Video + SRT)
      **************************************************/
-    let wordData = {};   // { word: { example, video, start, end, repetition, interval, ease, nextReview, ignored } }
-    let words = [];      // Array of word keys
-    let jsonLoaded = false;
-    let currentWord = "";
-
+    document.getElementById("addNewContentBtn").addEventListener("click", () => {
+      const videoInput = document.getElementById("newVideo");
+      const srtInput = document.getElementById("newSRT");
+      if (videoInput.files.length === 0 || srtInput.files.length === 0) {
+        alert("Please select both a video and an SRT file.");
+        return;
+      }
+      const videoFile = videoInput.files[0];
+      const srtFile = srtInput.files[0];
+      
+      // Add video file to our archive if not already added.
+      if (!videoArchiveMapping[videoFile.name]) {
+        videoFiles.push(videoFile);
+        videoArchiveMapping[videoFile.name] = URL.createObjectURL(videoFile);
+      }
+      
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const srtContent = e.target.result;
+        const srtBlocks = parseSRT(srtContent);
+        // For each subtitle block, extract words and add new cards.
+        srtBlocks.forEach(block => {
+          // Extract words (letters only, case-insensitive)
+          const wordsInBlock = block.text.toLowerCase().match(/[a-zA-Z]+/g);
+          if (wordsInBlock) {
+            wordsInBlock.forEach(word => {
+              if (!wordData[word]) {
+                // Create new card with this word.
+                wordData[word] = {
+                  example: block.text,
+                  video: videoFile.name,
+                  start: block.start,
+                  end: block.end,
+                  repetition: 0,
+                  interval: 0,
+                  ease: 2.5,
+                  nextReview: Date.now(),
+                  ignored: false
+                };
+              }
+            });
+          }
+        });
+        // Update word list.
+        words = Object.keys(wordData);
+        alert("New content added from SRT.");
+      };
+      reader.readAsText(srtFile);
+    });
+    
+    /**************************************************
+     * 2) Load Archive from ZIP (JSON + Videos)
+     **************************************************/
+    document.getElementById("archiveFile").addEventListener("change", (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      const zip = new JSZip();
+      zip.loadAsync(file).then((zipContent) => {
+        // Load words.json from the root of the archive.
+        return zipContent.file("words.json").async("string").then((jsonStr) => {
+          try {
+            wordData = JSON.parse(jsonStr);
+            words = Object.keys(wordData);
+            // Load video files from the "videos" folder.
+            const videoFolder = zipContent.folder("videos");
+            if (videoFolder) {
+              videoFolder.forEach((relativePath, fileEntry) => {
+                fileEntry.async("blob").then(blob => {
+                  // Create an object URL from the blob.
+                  const url = URL.createObjectURL(blob);
+                  videoArchiveMapping[fileEntry.name] = url;
+                  // (Optional) You might want to store these blobs in an array if needed.
+                });
+              });
+            }
+            alert("Archive loaded successfully.");
+          } catch (err) {
+            alert("Error parsing archive: " + err);
+          }
+        });
+      }).catch(err => {
+        alert("Error loading archive: " + err);
+      });
+    });
+    
+    /**************************************************
+     * 3) Export Archive: Bundle JSON & Videos into ZIP
+     **************************************************/
+    document.getElementById("exportArchiveBtn").addEventListener("click", async () => {
+      const zip = new JSZip();
+      zip.file("words.json", JSON.stringify(wordData, null, 2));
+      const videoFolder = zip.folder("videos");
+      // Include new video files (if any) from our videoFiles array.
+      if (videoFiles.length === 0) {
+        alert("No new video files loaded.");
+        return;
+      }
+      for (const file of videoFiles) {
+        videoFolder.file(file.name, file);
+      }
+      try {
+        const content = await zip.generateAsync({ type: "blob" });
+        const archiveName = "archive.zip";
+        const a = document.createElement("a");
+        a.href = URL.createObjectURL(content);
+        a.download = archiveName;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+      } catch (err) {
+        console.error("Error generating archive:", err);
+      }
+    });
+    
+    /**************************************************
+     * 4) Drill Section: Scheduling & UI
+     **************************************************/
     function ensureCardProperties(word) {
       const card = wordData[word];
       if (card.repetition === undefined) card.repetition = 0;
@@ -302,7 +275,7 @@
       if (card.nextReview === undefined) card.nextReview = Date.now();
       if (card.ignored === undefined) card.ignored = false;
     }
-
+    
     // SM-2 scheduling update (quality: 0 = Again, 3 = Hard, 5 = Easy)
     function updateCard(word, quality) {
       ensureCardProperties(word);
@@ -321,27 +294,25 @@
       }
       card.nextReview = now + card.interval * 86400000;
     }
-
+    
     function getNextCard() {
       const now = Date.now();
       const dueCards = words.filter(w => !wordData[w].ignored && (wordData[w].nextReview || 0) <= now);
-      if (dueCards.length > 0) {
-        return dueCards[Math.floor(Math.random() * dueCards.length)];
-      } else {
-        const notIgnored = words.filter(w => !wordData[w].ignored);
-        if (notIgnored.length === 0) return null;
-        notIgnored.sort((a, b) => (wordData[a].nextReview || Infinity) - (wordData[b].nextReview || Infinity));
-        return notIgnored[0];
-      }
+      if (dueCards.length > 0) return dueCards[Math.floor(Math.random() * dueCards.length)];
+      const notIgnored = words.filter(w => !wordData[w].ignored);
+      if (notIgnored.length === 0) return null;
+      notIgnored.sort((a, b) => (wordData[a].nextReview || Infinity) - (wordData[b].nextReview || Infinity));
+      return notIgnored[0];
     }
-
+    
     function showCurrentCard() {
       if (!currentWord) return;
       ensureCardProperties(currentWord);
       document.getElementById("currentWord").textContent = currentWord;
       document.getElementById("currentExample").textContent = wordData[currentWord].example;
     }
-
+    
+    let currentWord = "";
     function reviewCurrentCard(quality) {
       updateCard(currentWord, quality);
       currentWord = getNextCard();
@@ -351,149 +322,40 @@
         document.getElementById("currentExample").textContent = "";
       }
     }
-
-    /**************************************************
-     * 2) Video Archive for Drill & Archive Export
-     **************************************************/
-    // Store mapping of video file names to object URLs AND store the original File objects.
-    let videoArchiveMapping = {};
-    let videoFiles = []; // Array of File objects.
-    document.getElementById("videoArchive").addEventListener("change", (e) => {
-      const files = e.target.files;
-      videoFiles = Array.from(files);
-      videoFiles.forEach(file => {
-        videoArchiveMapping[file.name] = URL.createObjectURL(file);
-      });
-      console.log("Loaded videos:", videoArchiveMapping);
-    });
-
+    
     // Play video fragment for the current card.
-    const drillVideo = document.getElementById("drillVideo");
-    let drillFragmentEnd = 0;
     document.getElementById("playFragmentBtn").addEventListener("click", () => {
       if (!currentWord) return;
       const card = wordData[currentWord];
       if (!card.video || !videoArchiveMapping[card.video]) {
-        alert("Video file not loaded for this card.");
+        alert("Video file not available for this card.");
         return;
       }
+      const drillVideo = document.getElementById("drillVideo");
       drillVideo.src = videoArchiveMapping[card.video];
       drillVideo.currentTime = card.start;
       drillVideo.play();
-      drillFragmentEnd = card.end;
+      // Stop playback after reaching the card's end time.
+      let checkInterval = setInterval(() => {
+        if (drillVideo.currentTime >= card.end) {
+          drillVideo.pause();
+          clearInterval(checkInterval);
+        }
+      }, 100);
     });
-
-    // Pause drill video when reaching the fragment end.
-    drillVideo.addEventListener("timeupdate", () => {
-      if (drillFragmentEnd > 0 && drillVideo.currentTime >= drillFragmentEnd) {
-        drillVideo.pause();
-      }
-    });
-
-    /**************************************************
-     * 3) Copy Word + Example to Clipboard & Open ChatGPT
-     **************************************************/
+    
+    // Clicking on the current word copies the word and example to clipboard, then opens ChatGPT.
     document.getElementById("currentWord").addEventListener("click", () => {
       if (!currentWord) return;
       const card = wordData[currentWord];
       const textToCopy = currentWord + "\n" + card.example;
-      navigator.clipboard.writeText(textToCopy)
-        .then(() => {
-          window.open("https://chat.openai.com/", "_blank");
-        })
-        .catch(err => {
-          console.error("Failed to copy text:", err);
-        });
-    });
-
-    /**************************************************
-     * 4) JSON Management & Modal Handling
-     **************************************************/
-    const modal = document.getElementById("jsonModal");
-    const openModalBtn = document.getElementById("openModalBtn");
-    const closeModalBtn = document.getElementById("closeModalBtn");
-    openModalBtn.addEventListener("click", () => { modal.style.display = "block"; });
-    closeModalBtn.addEventListener("click", () => { modal.style.display = "none"; });
-    window.addEventListener("click", event => { if (event.target == modal) modal.style.display = "none"; });
-
-    document.getElementById("chooseAndLoadBtn").addEventListener("click", () => {
-      document.getElementById("jsonFileInput").click();
-    });
-
-    document.getElementById("jsonFileInput").addEventListener("change", () => {
-      const fileInput = document.getElementById("jsonFileInput");
-      if (fileInput.files.length === 0) return;
-      const file = fileInput.files[0];
-      const reader = new FileReader();
-      reader.onload = e => {
-        const content = e.target.result.trim();
-        try {
-          wordData = content ? JSON.parse(content) : {};
-          words = Object.keys(wordData);
-          words.forEach(word => { ensureCardProperties(word); });
-          jsonLoaded = true;
-          alert("JSON loaded successfully.");
-          document.getElementById("drill-card-section").style.display = "block";
-          currentWord = getNextCard();
-          if (currentWord) showCurrentCard();
-        } catch (err) {
-          alert("Error parsing JSON.");
-        }
-      };
-      reader.readAsText(file);
-    });
-
-    document.getElementById("processTextBtn").addEventListener("click", () => {
-      if (!jsonLoaded) {
-        alert("Please load a JSON file first.");
-        return;
-      }
-      const inputText = document.getElementById("inputText").value;
-      if (!inputText) {
-        alert("Please paste some text.");
-        return;
-      }
-      // Expecting format: word: example
-      const lines = inputText.split("\n").map(line => line.trim()).filter(line => line);
-      lines.forEach(line => {
-        const parts = line.split(":");
-        if (parts.length >= 2) {
-          const word = parts[0].trim().toLowerCase();
-          const example = parts.slice(1).join(":").trim();
-          // Create a new card with default video reference and timestamps (to be updated later)
-          if (!wordData[word]) {
-            wordData[word] = {
-              example: example,
-              video: "", // to be set later
-              start: 0,
-              end: 0,
-              repetition: 0,
-              interval: 0,
-              ease: 2.5,
-              nextReview: Date.now(),
-              ignored: false
-            };
-          }
-        }
+      navigator.clipboard.writeText(textToCopy).then(() => {
+        window.open("https://chat.openai.com/", "_blank");
+      }).catch(err => {
+        console.error("Failed to copy text:", err);
       });
-      words = Object.keys(wordData);
-      alert("Text processed and JSON updated.");
     });
-
-    document.getElementById("downloadJsonBtn").addEventListener("click", () => {
-      if (!jsonLoaded) {
-        alert("No JSON loaded.");
-        return;
-      }
-      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(wordData, null, 2));
-      const downloadAnchor = document.createElement("a");
-      downloadAnchor.setAttribute("href", dataStr);
-      downloadAnchor.setAttribute("download", "updated_words.json");
-      document.body.appendChild(downloadAnchor);
-      downloadAnchor.click();
-      downloadAnchor.remove();
-    });
-
+    
     document.getElementById("ignoreWordBtn").addEventListener("click", () => {
       if (currentWord) {
         wordData[currentWord].ignored = true;
@@ -505,7 +367,7 @@
         }
       }
     });
-
+    
     document.querySelectorAll(".ratingBtn").forEach(btn => {
       btn.addEventListener("click", () => {
         const quality = parseInt(btn.getAttribute("data-quality"));
@@ -514,42 +376,11 @@
         }
       });
     });
-
-    /**************************************************
-     * 5) Archive Export: Bundle JSON & Videos into a ZIP
-     **************************************************/
-    document.getElementById("exportArchiveBtn").addEventListener("click", async () => {
-      if (!jsonLoaded) {
-        alert("Please load or update your JSON data first.");
-        return;
-      }
-      const zip = new JSZip();
-      // Add the JSON data
-      zip.file("words.json", JSON.stringify(wordData, null, 2));
-      // Create a folder for videos
-      const videoFolder = zip.folder("videos");
-      // Add each loaded video file to the archive.
-      if (videoFiles.length === 0) {
-        alert("No video files loaded in the archive.");
-        return;
-      }
-      // Use FileReader to read each video file as a blob.
-      for (const file of videoFiles) {
-        videoFolder.file(file.name, file);
-      }
-      // Generate the ZIP and trigger download.
-      try {
-        const content = await zip.generateAsync({ type: "blob" });
-        const archiveName = "archive.zip";
-        const a = document.createElement("a");
-        a.href = URL.createObjectURL(content);
-        a.download = archiveName;
-        document.body.appendChild(a);
-        a.click();
-        a.remove();
-      } catch (err) {
-        console.error("Error generating archive:", err);
-      }
+    
+    // Initialize drill on window load.
+    window.addEventListener("load", () => {
+      currentWord = getNextCard();
+      if (currentWord) showCurrentCard();
     });
   </script>
 </body>

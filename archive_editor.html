@@ -48,8 +48,8 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.4.14/ace.js"></script>
   <script>
     // Global variables
-    let archive = {};          // JSON archive object
-    let storedFiles = {};      // { filename: Blob }
+    let archive = {};          // JSON archive object: { word: { examples: [...], rating: 0, ignored: false } }
+    let storedFiles = {};      // { filename: Blob } for video/SRT files
 
     // Initialize Ace Editor for JSON editing
     let editor = ace.edit("jsonEditor");
@@ -57,23 +57,27 @@
     editor.setTheme("ace/theme/github");
     editor.setValue(JSON.stringify(archive, null, 2), -1);
 
-    // Helper function: update the Ace editor with current archive JSON
+    // Update the Ace Editor with current archive JSON.
     function updateEditor() {
       editor.setValue(JSON.stringify(archive, null, 2), -1);
     }
 
-    // SRT Parsing: splits SRT into blocks using newlines only.
+    // Revised SRT parsing: splits the text by blank lines (handling CRLF) and extracts only the subtitle text.
     function parseSRT(srtText) {
-      const blocks = srtText.trim().split(/\n\n+/);
+      // Split by blank lines (supports Windows CRLF or Unix LF)
+      const blocks = srtText.trim().split(/\r?\n\r?\n/);
       let subtitles = [];
       blocks.forEach(block => {
-        const lines = block.split('\n');
-        if (lines.length < 3) return;  // Not a valid subtitle block
+        // Split each block by newlines (handles \r\n or \n)
+        const lines = block.split(/\r?\n/);
+        if (lines.length < 3) return; // Must have at least index, time, and text
+        // The second line should contain the time range.
         const timeMatch = lines[1].match(/(\d{2}:\d{2}:\d{2},\d{3})\s*-->\s*(\d{2}:\d{2}:\d{2},\d{3})/);
         if (!timeMatch) return;
         const start = toSeconds(timeMatch[1]);
         const end = toSeconds(timeMatch[2]);
-        const text = lines.slice(2).join(' ');
+        // The text is the rest of the block (ignoring index and time)
+        const text = lines.slice(2).join(' ').trim();
         subtitles.push({ start, end, text });
       });
       return subtitles;
@@ -89,15 +93,15 @@
     function updateArchiveWithSubtitles(subtitles, videoFileName) {
       subtitles.forEach(sub => {
         const exampleObj = {
-          text: sub.text,
+          text: sub.text,       // Only the actual subtitle sentence
           video: videoFileName,
           start: sub.start,
           end: sub.end
         };
-        // Use regex to extract words (letters, digits, underscore), all in lowercase.
+        // Extract words: letters, digits, and underscore (converted to lowercase).
         const words = sub.text.toLowerCase().match(/\b\w+\b/g);
         if (words) {
-          // Use a Set to ensure we add each subtitle example only once per word.
+          // Use a Set so each example is added only once per word.
           const uniqueWords = Array.from(new Set(words));
           uniqueWords.forEach(word => {
             if (!archive[word]) {
@@ -109,7 +113,7 @@
       });
     }
 
-    // New Archive: clear current archive and stored files.
+    // Create a new archive: clear the current archive and stored files.
     document.getElementById('newArchiveButton').addEventListener('click', () => {
       archive = {};
       storedFiles = {};
@@ -117,7 +121,7 @@
       alert("New archive created.");
     });
 
-    // Load Existing Archive from a ZIP file.
+    // Load an existing archive from a ZIP file.
     document.getElementById('loadArchiveButton').addEventListener('click', () => {
       const fileInput = document.getElementById('loadArchiveInput');
       if (fileInput.files.length === 0) {
@@ -160,7 +164,7 @@
       });
     });
 
-    // Add New Pair: Process new video and SRT files.
+    // Add a new video and SRT pair to the archive.
     document.getElementById('addPairButton').addEventListener('click', () => {
       const videoInput = document.getElementById('videoInput');
       const srtInput = document.getElementById('srtInput');

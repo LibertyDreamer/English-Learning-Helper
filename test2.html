@@ -25,8 +25,8 @@
       <!-- Initially hidden: Example text -->
       <button id="showTextBtn">Show Example</button>
       <p id="currentExample" style="display:none;"></p>
-      <!-- Play the audio fragment from the video -->
-      <button id="playFragmentBtn">Play Audio Fragment</button>
+      <!-- Button to play video fragment -->
+      <button id="playFragmentBtn">Play Video Fragment</button>
       <!-- Rating buttons for scheduling -->
       <div id="ratingSection">
         <button class="ratingBtn" data-quality="0">Bad</button>
@@ -297,7 +297,6 @@
       document.getElementById("currentExample").style.display = "none";
     }
     
-    let currentWordGlobal = ""; // alias for current word if needed
     function reviewCurrentCard(quality) {
       updateCard(currentWord, quality);
       currentWord = getNextCard();
@@ -311,12 +310,14 @@
     // Play video fragment using the chosen example.
     document.getElementById("playFragmentBtn").addEventListener("click", () => {
       if (!currentWord || !currentExampleObj) return;
-      if (!currentExampleObj.video || !videoArchiveMapping[currentExampleObj.video]) {
+      // Try to get the video URL. (Removed the extra check that caused false alerts.)
+      const videoURL = videoArchiveMapping[currentExampleObj.video];
+      if (!videoURL) {
         alert("Video not available for this card.");
         return;
       }
       const drillVideo = document.getElementById("drillVideo");
-      drillVideo.src = videoArchiveMapping[currentExampleObj.video];
+      drillVideo.src = videoURL;
       drillVideo.currentTime = currentExampleObj.start;
       drillVideo.play();
       const checkInterval = setInterval(() => {
@@ -354,7 +355,7 @@
       });
     });
     
-    // If the page loads without an archive, try to start the drill (if any cards exist).
+    // Start drill on page load if available.
     window.addEventListener("load", () => {
       currentWord = getNextCard();
       if (currentWord) showCurrentCard();

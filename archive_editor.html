@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Archive Editor</title>
+  <link rel="stylesheet" href="archive_editor.css">
+  <!-- Include JSZip for archive handling -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+  <!-- Include CodeMirror for JSON editing -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/javascript/javascript.min.js"></script>
+</head>
+<body>
+  <h1>Archive Editor</h1>
+  
+  <section id="loadSection">
+    <h2>Load Archive</h2>
+    <input type="file" id="archiveFile" accept=".zip">
+  </section>
+  
+  <section id="jsonSection">
+    <h2>JSON Content (words.json)</h2>
+    <textarea id="jsonEditor" rows="15"></textarea>
+  </section>
+  
+  <section id="filesSection">
+    <h2>Video Files</h2>
+    <ul id="fileList"></ul>
+    <input type="file" id="addFileInput" accept="video/*">
+    <button id="addFileBtn">Add File</button>
+  </section>
+  
+  <section id="downloadSection">
+    <button id="downloadArchiveBtn">Download Updated Archive</button>
+  </section>
+  
+  <script src="archive_editor.js"></script>
+</body>
+</html>

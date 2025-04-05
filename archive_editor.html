@@ -13,12 +13,12 @@
 <body>
   <h1>Video & SRT Archive Manager</h1>
 
-  <!-- Archive Management Section -->
+  <!-- Archive Section: One button to either load an existing archive or create a new one -->
   <section id="archive-management">
-    <h2>Archive Management</h2>
-    <input type="file" id="loadArchiveInput" accept=".zip">
-    <button id="loadArchiveButton">Load Existing Archive</button>
-    <button id="newArchiveButton">New Archive</button>
+    <h2>Open Archive</h2>
+    <p>Choose an archive ZIP file (or leave empty to create a new archive):</p>
+    <input type="file" id="archiveInput" accept=".zip">
+    <button id="openArchiveButton">Open Archive</button>
   </section>
 
   <!-- Add New Pair Section -->
@@ -33,14 +33,12 @@
   <section id="json-editor-section">
     <h2>Edit JSON Archive</h2>
     <div id="jsonEditor" style="height: 300px; width: 100%; border: 1px solid #ccc;"></div>
-    <button id="saveJsonButton">Save JSON Changes</button>
   </section>
 
   <!-- Download Archive Section -->
   <section id="download-section">
-    <h2>Download Archive</h2>
+    <h2>Generate & Download Archive</h2>
     <button id="generateArchiveButton">Generate Archive</button>
-    <a id="downloadLink" style="display:none; margin-left:10px;">Download Updated Archive</a>
   </section>
 
   <!-- Include external libraries: JSZip and Ace Editor -->
@@ -48,8 +46,8 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.4.14/ace.js"></script>
   <script>
     // Global variables
-    let archive = {};          // JSON archive object: { word: { examples: [...], rating: 0, ignored: false } }
-    let storedFiles = {};      // { filename: Blob } for video/SRT files
+    let archive = {};          // Archive JSON object: { word: { examples: [...], rating: 0, ignored: false } }
+    let storedFiles = {};      // Stored files: { filename: Blob } for video/SRT files
 
     // Initialize Ace Editor for JSON editing
     let editor = ace.edit("jsonEditor");
@@ -57,12 +55,27 @@
     editor.setTheme("ace/theme/github");
     editor.setValue(JSON.stringify(archive, null, 2), -1);
 
-    // Update the Ace Editor with current archive JSON.
+    // Update the Ace Editor with the current archive JSON.
     function updateEditor() {
       editor.setValue(JSON.stringify(archive, null, 2), -1);
     }
 
-    // Check if an example already exists in an array.
+    // Auto-save JSON changes after 500ms of inactivity.
+    let autoSaveTimeout;
+    editor.session.on('change', function() {
+      clearTimeout(autoSaveTimeout);
+      autoSaveTimeout = setTimeout(() => {
+        try {
+          const newJson = JSON.parse(editor.getValue());
+          archive = newJson;
+          console.log("JSON auto-saved.");
+        } catch(e) {
+          console.error("Invalid JSON:", e.message);
+        }
+      }, 500);
+    });
+
+    // Checks if a given subtitle example already exists in an array.
     function exampleExists(exampleArr, newExample) {
       return exampleArr.some(existing =>
         existing.text === newExample.text &&
@@ -72,52 +85,45 @@
       );
     }
 
-    // Revised SRT parsing: splits the text by blank lines (handling CRLF) and extracts only the subtitle text.
+    // Parse the SRT file into subtitle blocks—ignoring the index and time lines.
     function parseSRT(srtText) {
-      // Split by blank lines (supports Windows CRLF or Unix LF)
       const blocks = srtText.trim().split(/\r?\n\r?\n/);
       let subtitles = [];
       blocks.forEach(block => {
-        // Split each block by newlines (handles \r\n or \n)
         const lines = block.split(/\r?\n/);
         if (lines.length < 3) return; // Must have at least index, time, and text
-        // The second line should contain the time range.
         const timeMatch = lines[1].match(/(\d{2}:\d{2}:\d{2},\d{3})\s*-->\s*(\d{2}:\d{2}:\d{2},\d{3})/);
         if (!timeMatch) return;
         const start = toSeconds(timeMatch[1]);
         const end = toSeconds(timeMatch[2]);
-        // The text is the rest of the block (ignoring index and time)
         const text = lines.slice(2).join(' ').trim();
         subtitles.push({ start, end, text });
       });
       return subtitles;
     }
 
-    // Convert SRT time (hh:mm:ss,ms) to seconds (as a float)
+    // Convert SRT time (hh:mm:ss,ms) to seconds.
     function toSeconds(timeStr) {
       const parts = timeStr.split(/[:,]/);
       return (+parts[0]) * 3600 + (+parts[1]) * 60 + (+parts[2]) + (+parts[3]) / 1000;
     }
 
-    // Update archive JSON with subtitle data from SRT and the given video file name.
+    // Update the archive JSON using the subtitle data and video file name.
     function updateArchiveWithSubtitles(subtitles, videoFileName) {
       subtitles.forEach(sub => {
         const exampleObj = {
-          text: sub.text,       // Only the actual subtitle sentence
+          text: sub.text,
           video: videoFileName,
           start: sub.start,
           end: sub.end
         };
-        // Extract words: letters, digits, and underscore (converted to lowercase).
         const words = sub.text.toLowerCase().match(/\b\w+\b/g);
         if (words) {
-          // Use a Set so each example is added only once per word.
           const uniqueWords = Array.from(new Set(words));
           uniqueWords.forEach(word => {
             if (!archive[word]) {
               archive[word] = { examples: [], rating: 0, ignored: false };
             }
-            // Check if the example already exists
             if (!exampleExists(archive[word].examples, exampleObj)) {
               archive[word].examples.push(exampleObj);
             }
@@ -126,58 +132,52 @@
       });
     }
 
-    // Create a new archive: clear the current archive and stored files.
-    document.getElementById('newArchiveButton').addEventListener('click', () => {
-      archive = {};
-      storedFiles = {};
-      updateEditor();
-      alert("New archive created.");
-    });
-
-    // Load an existing archive from a ZIP file.
-    document.getElementById('loadArchiveButton').addEventListener('click', () => {
-      const fileInput = document.getElementById('loadArchiveInput');
-      if (fileInput.files.length === 0) {
-        alert("Please select an archive ZIP file.");
-        return;
-      }
-      const zipFile = fileInput.files[0];
-      JSZip.loadAsync(zipFile).then(zip => {
-        let promises = [];
-        storedFiles = {};
-        archive = {};
-        Object.keys(zip.files).forEach(filename => {
-          const file = zip.files[filename];
-          if (!file.dir) {
-            if (filename === "archive.json") {
-              // Read and parse the JSON archive.
-              promises.push(
-                file.async("string").then(content => {
-                  try {
-                    archive = JSON.parse(content);
-                  } catch(e) {
-                    console.error("Error parsing archive.json:", e);
-                  }
-                })
-              );
-            } else {
-              // Store other files (video/SRT) as Blob.
-              promises.push(
-                file.async("blob").then(blob => {
-                  storedFiles[filename] = blob;
-                })
-              );
+    // Open Archive button: if a file is chosen, load it; otherwise, create a new archive.
+    document.getElementById('openArchiveButton').addEventListener('click', () => {
+      const fileInput = document.getElementById('archiveInput');
+      if (fileInput.files.length > 0) {
+        const zipFile = fileInput.files[0];
+        JSZip.loadAsync(zipFile).then(zip => {
+          let promises = [];
+          storedFiles = {};
+          archive = {};
+          Object.keys(zip.files).forEach(filename => {
+            const file = zip.files[filename];
+            if (!file.dir) {
+              if (filename === "archive.json") {
+                promises.push(
+                  file.async("string").then(content => {
+                    try {
+                      archive = JSON.parse(content);
+                    } catch(e) {
+                      console.error("Error parsing archive.json:", e);
+                    }
+                  })
+                );
+              } else {
+                promises.push(
+                  file.async("blob").then(blob => {
+                    storedFiles[filename] = blob;
+                  })
+                );
+              }
             }
-          }
+          });
+          Promise.all(promises).then(() => {
+            updateEditor();
+            alert("Archive loaded successfully.");
+          });
         });
-        Promise.all(promises).then(() => {
-          updateEditor();
-          alert("Archive loaded successfully.");
-        });
-      });
+      } else {
+        // No file chosen—create a new archive.
+        archive = {};
+        storedFiles = {};
+        updateEditor();
+        alert("New archive created.");
+      }
     });
 
-    // Add a new video and SRT pair to the archive.
+    // Add New Pair button: processes the selected video and SRT files.
     document.getElementById('addPairButton').addEventListener('click', () => {
       const videoInput = document.getElementById('videoInput');
       const srtInput = document.getElementById('srtInput');
@@ -187,14 +187,11 @@
       }
       const videoFile = videoInput.files[0];
       const srtFile = srtInput.files[0];
-
-      // Read the SRT file content.
       const reader = new FileReader();
       reader.onload = function(e) {
         const srtText = e.target.result;
         const subtitles = parseSRT(srtText);
         updateArchiveWithSubtitles(subtitles, videoFile.name);
-        // Add new files to storedFiles.
         storedFiles[videoFile.name] = videoFile;
         storedFiles[srtFile.name] = srtFile;
         updateEditor();
@@ -203,36 +200,24 @@
       reader.readAsText(srtFile);
     });
 
-    // Save JSON changes from the Ace Editor.
-    document.getElementById('saveJsonButton').addEventListener('click', () => {
-      try {
-        const newJson = JSON.parse(editor.getValue());
-        archive = newJson;
-        alert("JSON archive updated.");
-      } catch(e) {
-        alert("Invalid JSON: " + e.message);
-      }
-    });
-
-    // Generate a new ZIP archive using the updated archive and stored files.
+    // Generate and automatically trigger the download of the ZIP archive.
     function generateZipArchive() {
       const zip = new JSZip();
-      // Add stored files (video and SRT) into the ZIP.
       Object.keys(storedFiles).forEach(filename => {
         zip.file(filename, storedFiles[filename]);
       });
-      // Add the updated archive.json.
       zip.file("archive.json", JSON.stringify(archive, null, 2));
       zip.generateAsync({ type: "blob" }).then(content => {
-        const downloadLink = document.getElementById('downloadLink');
-        downloadLink.href = URL.createObjectURL(content);
-        downloadLink.download = "archive.zip";
-        downloadLink.style.display = "inline-block";
-        downloadLink.innerText = "Download Updated Archive";
+        const a = document.createElement('a');
+        const url = URL.createObjectURL(content);
+        a.href = url;
+        a.download = "archive.zip";
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        setTimeout(() => URL.revokeObjectURL(url), 100);
       });
     }
-
-    // Generate Archive button to refresh the download link.
     document.getElementById('generateArchiveButton').addEventListener('click', generateZipArchive);
   </script>
 </body>

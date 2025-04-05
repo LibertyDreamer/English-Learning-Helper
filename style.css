@@ -37,12 +37,12 @@ section {
 
 video {
   width: 100%;
-  max-width: 600px; /* video won't exceed 600px */
+  max-width: 600px;
   border-radius: 8px;
   margin-bottom: 10px;
 }
 
-/* Controls Row (Repeat, Show Example, Ignore) */
+/* Controls Row */
 #controlsRow {
   display: flex;
   gap: 10px;
@@ -50,13 +50,22 @@ video {
   margin: 15px 0;
 }
 
-/* Rating Buttons */
+/* Rating Buttons (all in one row) */
 #ratingSection {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   gap: 10px;
   justify-content: center;
   margin-bottom: 15px;
+  overflow-x: auto;
+  width: 100%;
+  max-width: 600px;
+}
+
+/* Ignore Word Button Row */
+#ignoreWordRow {
+  margin-bottom: 15px;
+  text-align: center;
 }
 
 /* Example Text */

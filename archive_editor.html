@@ -46,7 +46,7 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.4.14/ace.js"></script>
   <script>
     // Global variables
-    let archive = {};          // Archive JSON object: { word: { examples: [...], rating: 0, ignored: false } }
+    let archive = {};          // Archive JSON: { word: { examples: [{text, video, start, end, rating, ignored}, ...], rating: <summary>, ignored: <summary> } }
     let storedFiles = {};      // Stored files: { filename: Blob } for video/SRT files
 
     // Initialize Ace Editor for JSON editing
@@ -75,7 +75,7 @@
       }, 500);
     });
 
-    // Checks if a given subtitle example already exists in an array.
+    // Check if an example already exists in an array (ignoring rating/ignored fields).
     function exampleExists(exampleArr, newExample) {
       return exampleArr.some(existing =>
         existing.text === newExample.text &&
@@ -83,6 +83,20 @@
         existing.start === newExample.start &&
         existing.end === newExample.end
       );
+    }
+
+    // Recalculate the summary rating and ignored for a given word.
+    function recalcWordSummary(wordKey) {
+      const ex = archive[wordKey].examples;
+      if (ex.length === 0) {
+        archive[wordKey].rating = 0;
+        archive[wordKey].ignored = false;
+      } else {
+        const sum = ex.reduce((acc, cur) => acc + (cur.rating || 0), 0);
+        archive[wordKey].rating = sum / ex.length;
+        // Summary "ignored": true only if every example is ignored.
+        archive[wordKey].ignored = ex.every(cur => cur.ignored);
+      }
     }
 
     // Parse the SRT file into subtitle blocks—ignoring the index and time lines.
@@ -109,23 +123,28 @@
     }
 
     // Update the archive JSON using the subtitle data and video file name.
+    // Each example now gets its own "rating" and "ignored" fields.
     function updateArchiveWithSubtitles(subtitles, videoFileName) {
       subtitles.forEach(sub => {
         const exampleObj = {
           text: sub.text,
           video: videoFileName,
           start: sub.start,
-          end: sub.end
+          end: sub.end,
+          rating: 0,      // new per-example rating field
+          ignored: false  // new per-example ignored field
         };
         const words = sub.text.toLowerCase().match(/\b\w+\b/g);
         if (words) {
           const uniqueWords = Array.from(new Set(words));
           uniqueWords.forEach(word => {
             if (!archive[word]) {
+              // Initialize the word with an empty examples array and summary fields.
               archive[word] = { examples: [], rating: 0, ignored: false };
             }
             if (!exampleExists(archive[word].examples, exampleObj)) {
               archive[word].examples.push(exampleObj);
+              recalcWordSummary(word);
             }
           });
         }

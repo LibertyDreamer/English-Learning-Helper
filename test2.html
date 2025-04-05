@@ -2,7 +2,9 @@
 <html>
 <head>
   <meta charset="UTF-8">
-  <title>Folder Drill System</title>
+  <title>Zip Archive Drill System</title>
+  <!-- Include JSZip for archive handling -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
   <style>
     body { font-family: sans-serif; padding: 10px; }
     h1, h2 { text-align: center; }
@@ -12,15 +14,15 @@
   </style>
 </head>
 <body>
-  <h1>Folder Drill System</h1>
+  <h1>Zip Archive Drill System</h1>
   
-  <!-- Drill Section (always visible at the top) -->
+  <!-- Drill Section -->
   <section id="drillSection">
     <h2>Drill</h2>
     <div id="drill-card-section">
       <h3 id="currentWord"></h3>
       <button id="showTextBtn">Show Example</button>
-      <p id="currentExample" style="display:none;"></p>
+      <p id="currentExample" style="display: none;"></p>
       <button id="playFragmentBtn">Play Video Fragment</button>
       <div id="ratingSection">
         <button class="ratingBtn" data-quality="0">Bad</button>
@@ -32,14 +34,19 @@
     </div>
   </section>
   
-  <!-- Folder Management Section -->
-  <section id="folderManagement">
-    <h2>Load Folder</h2>
-    <!-- This input lets you select a folder (supported in Chrome and some browsers) -->
-    <input type="file" id="folderInput" webkitdirectory directory>
+  <!-- Archive Management Section -->
+  <section id="archiveManagement">
+    <h2>Archive Management</h2>
+    <div>
+      <label for="archiveFile">Load Archive (.zip):</label>
+      <input type="file" id="archiveFile" accept=".zip">
+    </div>
+    <div>
+      <button id="exportArchiveBtn">Export Archive</button>
+    </div>
   </section>
   
-  <!-- New Content Section: Add New Video + SRT -->
+  <!-- New Content Section -->
   <section id="newContentSection">
     <h2>Add New Content (Video + SRT)</h2>
     <div>
@@ -55,11 +62,11 @@
     /**************************************************
      * Global Variables
      **************************************************/
-    // wordData: key = word; value: { examples: [{ text, video, start, end }], repetition, interval, ease, nextReview, ignored }
+    // wordData: { word: { examples: [{ text, video, start, end }], repetition, interval, ease, nextReview, ignored } }
     let wordData = {};   
     let words = [];      // Array of word keys
-    let videoFolderFiles = []; // Array to hold video File objects from folder load.
-    let videoMapping = {};     // Mapping: video file name -> object URL
+    let videoFiles = []; // Array of new video File objects (for export)
+    let videoMapping = {}; // Mapping: video file name -> object URL
     let currentExampleObj = null; // Chosen example for the current card
     let currentWord = "";
     
@@ -69,10 +76,10 @@
     function parseSRT(srtString) {
       const blocks = srtString.split(/\r?\n\r?\n/);
       let results = [];
-      for (let block of blocks) {
+      blocks.forEach(block => {
         const lines = block.split(/\r?\n/).map(l => l.trim()).filter(l => l);
-        if (lines.length < 2) continue;
-        let timeLine = '';
+        if (lines.length < 2) return;
+        let timeLine = "";
         let textLines = [];
         if (/^\d+$/.test(lines[0])) {
           timeLine = lines[1];
@@ -81,64 +88,26 @@
           timeLine = lines[0];
           textLines = lines.slice(1);
         }
-        if (!timeLine.includes('-->')) continue;
-        const [startStr, endStr] = timeLine.split('-->').map(s => s.trim());
+        if (!timeLine.includes("-->")) return;
+        const [startStr, endStr] = timeLine.split("-->").map(s => s.trim());
         const startSec = srtTimeToSeconds(startStr);
         const endSec = srtTimeToSeconds(endStr);
-        const text = textLines.join(' ');
+        const text = textLines.join(" ");
         results.push({ start: startSec, end: endSec, text: text });
-      }
+      });
       return results;
     }
     
     function srtTimeToSeconds(timeStr) {
-      const parts = timeStr.split(':');
+      const parts = timeStr.split(":");
       if (parts.length < 3) return 0;
       const [hh, mm, ssMs] = parts;
-      const [ss, ms] = ssMs.split(',');
+      const [ss, ms] = ssMs.split(",");
       return (parseInt(hh) * 3600) + (parseInt(mm) * 60) + parseInt(ss) + (parseInt(ms) / 1000);
     }
     
     /**************************************************
-     * Folder Management: Load Folder Instead of Archive
-     **************************************************/
-    document.getElementById("folderInput").addEventListener("change", (e) => {
-      const files = e.target.files;
-      if (!files.length) return;
-      // Loop through all selected files.
-      Array.from(files).forEach(file => {
-        // If the file is named "words.json", load it as our JSON data.
-        if (file.name === "words.json") {
-          const reader = new FileReader();
-          reader.onload = (ev) => {
-            try {
-              wordData = JSON.parse(ev.target.result);
-              words = Object.keys(wordData);
-              console.log("Loaded JSON data from folder.");
-              // Start drill if not already started.
-              if (!currentWord) {
-                currentWord = getNextCard();
-                if (currentWord) showCurrentCard();
-              }
-            } catch (err) {
-              alert("Error parsing words.json: " + err);
-            }
-          };
-          reader.readAsText(file);
-        }
-        // Otherwise, if the file is a video file (check common extensions), add it.
-        else if (/\.(mp4|webm|ogg)$/i.test(file.name)) {
-          // Store the object URL for the video.
-          videoMapping[file.name] = URL.createObjectURL(file);
-          videoFolderFiles.push(file);
-          console.log("Loaded video:", file.name);
-        }
-      });
-      alert("Folder loaded.");
-    });
-    
-    /**************************************************
-     * 1) Add New Content (Video + SRT)
+     * Add New Content (Video + SRT)
      **************************************************/
     document.getElementById("addNewContentBtn").addEventListener("click", () => {
       const videoInput = document.getElementById("newVideo");
@@ -150,10 +119,10 @@
       const videoFile = videoInput.files[0];
       const srtFile = srtInput.files[0];
       
-      // Add video file to mapping if not already loaded.
+      // Add video file to mapping if not already present.
       if (!videoMapping[videoFile.name]) {
+        videoFiles.push(videoFile);
         videoMapping[videoFile.name] = URL.createObjectURL(videoFile);
-        videoFolderFiles.push(videoFile);
       }
       
       const reader = new FileReader();
@@ -203,12 +172,69 @@
     });
     
     /**************************************************
-     * 2) (No Export Folder Functionality Provided)
-     * You can implement saving the JSON to a file if needed.
+     * Load Archive from ZIP (JSON + Videos)
      **************************************************/
+    document.getElementById("archiveFile").addEventListener("change", (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      const zip = new JSZip();
+      zip.loadAsync(file).then(zipContent => {
+        // Load JSON data
+        return zipContent.file("words.json").async("string").then(jsonStr => {
+          try {
+            wordData = JSON.parse(jsonStr);
+            words = Object.keys(wordData);
+            // Load video files from "videos" folder.
+            const videoFolder = zipContent.folder("videos");
+            if (videoFolder) {
+              videoFolder.forEach((relPath, fileEntry) => {
+                fileEntry.async("blob").then(blob => {
+                  const url = URL.createObjectURL(blob);
+                  videoMapping[fileEntry.name] = url;
+                });
+              });
+            }
+            alert("Archive loaded.");
+            if (!currentWord) {
+              currentWord = getNextCard();
+              if (currentWord) showCurrentCard();
+            }
+          } catch (err) {
+            alert("Error parsing archive: " + err);
+          }
+        });
+      }).catch(err => {
+        alert("Error loading archive: " + err);
+      });
+    });
     
     /**************************************************
-     * 3) Drill Section: Scheduling & UI
+     * Export Archive to ZIP (JSON + Videos)
+     **************************************************/
+    document.getElementById("exportArchiveBtn").addEventListener("click", async () => {
+      const zip = new JSZip();
+      zip.file("words.json", JSON.stringify(wordData, null, 2));
+      const videoFolder = zip.folder("videos");
+      if (videoFiles.length === 0) {
+        alert("No new video files loaded.");
+        return;
+      }
+      for (const file of videoFiles) {
+        videoFolder.file(file.name, file);
+      }
+      try {
+        const content = await zip.generateAsync({ type: "blob" });
+        const a = document.createElement("a");
+        a.href = URL.createObjectURL(content);
+        a.download = "archive.zip";
+        a.click();
+      } catch(err) {
+        console.error("Error exporting archive:", err);
+      }
+    });
+    
+    /**************************************************
+     * Drill Section: Scheduling & UI
      **************************************************/
     function ensureCardProperties(word) {
       const card = wordData[word];
@@ -316,7 +342,6 @@
       });
     });
     
-    // Start drill on page load if available.
     window.addEventListener("load", () => {
       currentWord = getNextCard();
       if (currentWord) showCurrentCard();

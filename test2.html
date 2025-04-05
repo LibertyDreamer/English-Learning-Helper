@@ -29,7 +29,7 @@
     #topControls input[type="file"] {
       margin-right: 10px;
     }
-    /* Center the word and subtitle */
+    /* Center the word & subtitle */
     #wordSection {
       margin-top: 20px;
       text-align: center;
@@ -39,13 +39,12 @@
       font-weight: bold;
       color: #333;
       margin-bottom: 10px;
-      display: block; /* ensures each appears on its own line */
+      display: block;
     }
     #exampleDisplay {
       font-style: italic;
       margin: 10px 0;
-      min-height: 1.5em; /* keep space even if empty */
-      /* text-align: center is inherited from #wordSection */
+      min-height: 1.5em;
     }
     #videoContainer {
       margin-top: 20px;
@@ -78,7 +77,8 @@
     .rating-btn:hover {
       background: #ddd;
     }
-    #ignoreButton, #repeatButton, #showTextButton {
+    /* Control buttons styling */
+    button.control-btn {
       margin: 5px;
       padding: 8px 12px;
       background: #f5f5f5;
@@ -88,7 +88,7 @@
       transition: background 0.2s;
       font-size: 0.9em;
     }
-    #ignoreButton:hover, #repeatButton:hover, #showTextButton:hover {
+    button.control-btn:hover {
       background: #e5e5e5;
     }
     #saveButton, #loadButton {
@@ -105,6 +105,36 @@
     #saveButton:hover, #loadButton:hover {
       background: #1a66cf;
     }
+    /* Extra info panel styling */
+    #extraInfo {
+      margin-top: 20px;
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      background: #fafafa;
+      display: none;
+    }
+    #contextPanel, #definitionPanel {
+      margin-bottom: 15px;
+    }
+    #contextPanel h3, #definitionPanel h3 {
+      margin-bottom: 8px;
+      border-bottom: 1px solid #ddd;
+      padding-bottom: 4px;
+    }
+    .contextItem {
+      padding: 5px;
+      cursor: pointer;
+      border-radius: 4px;
+      margin-bottom: 4px;
+    }
+    .contextItem:hover {
+      background: #eee;
+    }
+    .contextItem.current {
+      background: #d0eaff;
+      font-weight: bold;
+    }
   </style>
 </head>
 <body>
@@ -118,7 +148,7 @@
       <button id="saveButton" disabled>Save Archive</button>
     </div>
 
-    <!-- Drill display: centered word & subtitle -->
+    <!-- Drill display -->
     <div id="wordSection">
       <span id="currentWord"></span>
       <div id="exampleDisplay"></div>
@@ -129,7 +159,7 @@
       <video id="videoPlayer" controls></video>
     </div>
 
-    <!-- Rating and ignore controls -->
+    <!-- Rating and other controls -->
     <div id="controls">
       <div id="ratingButtons">
         <!-- 10 rating buttons (10%–100%) -->
@@ -144,9 +174,23 @@
         <button class="rating-btn" data-value="90">90%</button>
         <button class="rating-btn" data-value="100">100%</button>
       </div>
-      <button id="ignoreButton" disabled>Ignore</button>
-      <button id="repeatButton" disabled>Repeat</button>
-      <button id="showTextButton" disabled>Show Subtitle</button>
+      <button id="ignoreButton" class="control-btn" disabled>Ignore</button>
+      <button id="repeatButton" class="control-btn" disabled>Repeat</button>
+      <button id="showTextButton" class="control-btn" disabled>Show Subtitle</button>
+      <button id="contextButton" class="control-btn" disabled>More Context</button>
+      <button id="defineButton" class="control-btn" disabled>Define Word</button>
+    </div>
+
+    <!-- Extra information panel -->
+    <div id="extraInfo">
+      <div id="contextPanel" style="display:none">
+        <h3>Context Examples</h3>
+        <div id="contextList"></div>
+      </div>
+      <div id="definitionPanel" style="display:none">
+        <h3>Definition</h3>
+        <div id="definitionContent"></div>
+      </div>
     </div>
   </div>
 
@@ -160,7 +204,9 @@
     let currentExample = null;
     let zipContent = null; // Loaded ZIP content.
     let jsonFileName = null;
-    let textVisible = false; // Whether example text is currently shown.
+    let textVisible = false; // Toggle subtitle visibility.
+    let contextVisible = false; // Toggle context panel.
+    let definitionVisible = false; // Toggle definition panel.
 
     // UI elements.
     const fileInput = document.getElementById('fileInput');
@@ -172,7 +218,14 @@
     const ignoreButton = document.getElementById('ignoreButton');
     const repeatButton = document.getElementById('repeatButton');
     const showTextButton = document.getElementById('showTextButton');
+    const contextButton = document.getElementById('contextButton');
+    const defineButton = document.getElementById('defineButton');
     const ratingButtons = document.querySelectorAll('.rating-btn');
+    const extraInfoDiv = document.getElementById('extraInfo');
+    const contextPanel = document.getElementById('contextPanel');
+    const contextList = document.getElementById('contextList');
+    const definitionPanel = document.getElementById('definitionPanel');
+    const definitionContent = document.getElementById('definitionContent');
 
     // Load Archive handler.
     loadButton.addEventListener('click', async () => {
@@ -224,33 +277,34 @@
       ignoreButton.disabled = false;
       repeatButton.disabled = false;
       showTextButton.disabled = false;
+      contextButton.disabled = false;
+      defineButton.disabled = false;
       
       // Set up rating buttons.
       ratingButtons.forEach(button => {
         button.addEventListener('click', () => {
           const newRating = parseInt(button.getAttribute('data-value'));
-          // Update current example's rating (without adding new fields).
           currentExample.rating = newRating;
           updateWordSummary(currentWordKey);
           chooseNextExample();
         });
       });
 
-      // "Ignore" button
+      // "Ignore" button.
       ignoreButton.addEventListener('click', () => {
         currentExample.ignored = true;
         updateWordSummary(currentWordKey);
         chooseNextExample();
       });
 
-      // "Repeat" button
+      // "Repeat" button.
       repeatButton.addEventListener('click', () => {
         if (!currentExample) return;
         videoPlayer.currentTime = currentExample.start;
         videoPlayer.play();
       });
 
-      // "Show Subtitle" button
+      // "Show Subtitle" button.
       showTextButton.addEventListener('click', () => {
         if (!textVisible) {
           exampleDisplay.textContent = currentExample.text;
@@ -260,6 +314,36 @@
           exampleDisplay.textContent = "";
           textVisible = false;
           showTextButton.textContent = "Show Subtitle";
+        }
+      });
+
+      // "More Context" button.
+      contextButton.addEventListener('click', () => {
+        contextVisible = !contextVisible;
+        if (contextVisible) {
+          contextButton.textContent = "Hide Context";
+          renderContextPanel();
+          extraInfoDiv.style.display = "block";
+          contextPanel.style.display = "block";
+        } else {
+          contextButton.textContent = "More Context";
+          contextPanel.style.display = "none";
+          if (!definitionVisible) extraInfoDiv.style.display = "none";
+        }
+      });
+
+      // "Define Word" button.
+      defineButton.addEventListener('click', async () => {
+        definitionVisible = !definitionVisible;
+        if (definitionVisible) {
+          defineButton.textContent = "Hide Definition";
+          await fetchDefinition(currentWordKey);
+          extraInfoDiv.style.display = "block";
+          definitionPanel.style.display = "block";
+        } else {
+          defineButton.textContent = "Define Word";
+          definitionPanel.style.display = "none";
+          if (!contextVisible) extraInfoDiv.style.display = "none";
         }
       });
 
@@ -276,7 +360,7 @@
           let sum = 0;
           validExamples.forEach(ex => { sum += ex.rating; });
           const avg = validExamples.length ? sum / validExamples.length : 0;
-          // Compute weight: lower average rating => higher chance.
+          // Lower average rating -> higher chance.
           const weight = 1 + (100 - avg);
           availableWords.push({ word, avg, weight, examples: validExamples });
         }
@@ -320,14 +404,22 @@
       updateUI();
     }
 
-    // Update UI to display the current word, reset text hidden, and auto-play the video segment.
+    // Update UI to display the current word, reset toggles, and auto-play the video segment.
     function updateUI() {
       currentWordSpan.textContent = currentWordKey;
       textVisible = false;
       exampleDisplay.textContent = "";
       showTextButton.textContent = "Show Subtitle";
+      // Hide context and definition panels.
+      contextVisible = false;
+      definitionVisible = false;
+      contextButton.textContent = "More Context";
+      defineButton.textContent = "Define Word";
+      contextPanel.style.display = "none";
+      definitionPanel.style.display = "none";
+      extraInfoDiv.style.display = "none";
       
-      // Set up video based on the example's video file.
+      // Set up video.
       const videoFileName = currentExample.video;
       if (videoBlobs[videoFileName]) {
         videoPlayer.src = videoBlobs[videoFileName];
@@ -335,7 +427,6 @@
         videoPlayer.removeAttribute('src');
       }
       videoPlayer.currentTime = currentExample.start;
-      // Automatically play the video segment.
       videoPlayer.play();
     }
 
@@ -346,7 +437,7 @@
       }
     });
 
-    // Update word summary fields based on non-ignored examples.
+    // Update word summary fields.
     function updateWordSummary(wordKey) {
       const details = wordsData[wordKey];
       const validExamples = details.examples.filter(ex => !ex.ignored);
@@ -361,13 +452,57 @@
       }
     }
 
+    // Render the context panel with all examples for the current word.
+    function renderContextPanel() {
+      contextList.innerHTML = "";
+      const examples = wordsData[currentWordKey].examples.filter(ex => !ex.ignored);
+      examples.forEach((ex, index) => {
+        const div = document.createElement("div");
+        div.classList.add("contextItem");
+        if (ex.text === currentExample.text) {
+          div.classList.add("current");
+        }
+        div.textContent = ex.text + " (" + ex.video + " @ " + ex.start + "s)";
+        div.addEventListener('click', () => {
+          // When clicked, update the current example and UI.
+          currentExample = ex;
+          updateUI();
+        });
+        contextList.appendChild(div);
+      });
+    }
+
+    // Fetch definition for the current word from a free dictionary API.
+    async function fetchDefinition(word) {
+      definitionContent.innerHTML = "Loading definition...";
+      try {
+        const response = await fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${word}`);
+        if (!response.ok) {
+          throw new Error("Definition not found.");
+        }
+        const data = await response.json();
+        let html = "";
+        data.forEach(entry => {
+          if (entry.meanings) {
+            entry.meanings.forEach(meaning => {
+              html += `<p><strong>${meaning.partOfSpeech}:</strong></p>`;
+              meaning.definitions.forEach((def, idx) => {
+                html += `<p>${idx + 1}. ${def.definition}</p>`;
+              });
+            });
+          }
+        });
+        definitionContent.innerHTML = html;
+      } catch (error) {
+        definitionContent.innerHTML = "No definition available.";
+      }
+    }
+
     // Save Archive: update the JSON file inside a new ZIP archive and include all original files.
     saveButton.addEventListener('click', async () => {
       const newZip = new JSZip();
-      // Add updated JSON file (using the same filename).
       newZip.file(jsonFileName, JSON.stringify(wordsData, null, 2));
       
-      // Copy over all other files from the original archive.
       const files = Object.keys(zipContent.files);
       for (const fileName of files) {
         if (fileName === jsonFileName) continue;
@@ -378,7 +513,6 @@
         }
       }
       
-      // Generate and download the updated archive.
       newZip.generateAsync({ type: "blob" }).then(blob => {
         const url = URL.createObjectURL(blob);
         const a = document.createElement("a");

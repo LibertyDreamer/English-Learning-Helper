@@ -2,9 +2,7 @@
 <html>
 <head>
   <meta charset="UTF-8">
-  <title>Archive Drill System</title>
-  <!-- Include JSZip from CDN for archive handling -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+  <title>Folder Drill System</title>
   <style>
     body { font-family: sans-serif; padding: 10px; }
     h1, h2 { text-align: center; }
@@ -14,42 +12,31 @@
   </style>
 </head>
 <body>
-  <h1>Archive Drill System</h1>
+  <h1>Folder Drill System</h1>
   
   <!-- Drill Section (always visible at the top) -->
   <section id="drillSection">
     <h2>Drill</h2>
     <div id="drill-card-section">
-      <!-- Word will be shown here -->
       <h3 id="currentWord"></h3>
-      <!-- Initially hidden: Example text -->
       <button id="showTextBtn">Show Example</button>
       <p id="currentExample" style="display:none;"></p>
-      <!-- Button to play video fragment -->
       <button id="playFragmentBtn">Play Video Fragment</button>
-      <!-- Rating buttons for scheduling -->
       <div id="ratingSection">
         <button class="ratingBtn" data-quality="0">Bad</button>
         <button class="ratingBtn" data-quality="3">OK</button>
         <button class="ratingBtn" data-quality="5">Good</button>
       </div>
-      <!-- Skip current word -->
       <button id="ignoreWordBtn">Ignore Word</button>
-      <!-- Video element for playing the fragment -->
       <video id="drillVideo" controls width="600"></video>
     </div>
   </section>
   
-  <!-- Archive Management Section -->
-  <section id="archiveManagement">
-    <h2>Archive Management</h2>
-    <div>
-      <label for="archiveFile">Load Archive (.zip):</label>
-      <input type="file" id="archiveFile" accept=".zip">
-    </div>
-    <div>
-      <button id="exportArchiveBtn">Export Archive</button>
-    </div>
+  <!-- Folder Management Section -->
+  <section id="folderManagement">
+    <h2>Load Folder</h2>
+    <!-- This input lets you select a folder (supported in Chrome and some browsers) -->
+    <input type="file" id="folderInput" webkitdirectory directory>
   </section>
   
   <!-- New Content Section: Add New Video + SRT -->
@@ -71,8 +58,8 @@
     // wordData: key = word; value: { examples: [{ text, video, start, end }], repetition, interval, ease, nextReview, ignored }
     let wordData = {};   
     let words = [];      // Array of word keys
-    let videoFiles = []; // Array of new video File objects
-    let videoArchiveMapping = {}; // Mapping: video file name -> object URL
+    let videoFolderFiles = []; // Array to hold video File objects from folder load.
+    let videoMapping = {};     // Mapping: video file name -> object URL
     let currentExampleObj = null; // Chosen example for the current card
     let currentWord = "";
     
@@ -113,6 +100,44 @@
     }
     
     /**************************************************
+     * Folder Management: Load Folder Instead of Archive
+     **************************************************/
+    document.getElementById("folderInput").addEventListener("change", (e) => {
+      const files = e.target.files;
+      if (!files.length) return;
+      // Loop through all selected files.
+      Array.from(files).forEach(file => {
+        // If the file is named "words.json", load it as our JSON data.
+        if (file.name === "words.json") {
+          const reader = new FileReader();
+          reader.onload = (ev) => {
+            try {
+              wordData = JSON.parse(ev.target.result);
+              words = Object.keys(wordData);
+              console.log("Loaded JSON data from folder.");
+              // Start drill if not already started.
+              if (!currentWord) {
+                currentWord = getNextCard();
+                if (currentWord) showCurrentCard();
+              }
+            } catch (err) {
+              alert("Error parsing words.json: " + err);
+            }
+          };
+          reader.readAsText(file);
+        }
+        // Otherwise, if the file is a video file (check common extensions), add it.
+        else if (/\.(mp4|webm|ogg)$/i.test(file.name)) {
+          // Store the object URL for the video.
+          videoMapping[file.name] = URL.createObjectURL(file);
+          videoFolderFiles.push(file);
+          console.log("Loaded video:", file.name);
+        }
+      });
+      alert("Folder loaded.");
+    });
+    
+    /**************************************************
      * 1) Add New Content (Video + SRT)
      **************************************************/
     document.getElementById("addNewContentBtn").addEventListener("click", () => {
@@ -125,23 +150,21 @@
       const videoFile = videoInput.files[0];
       const srtFile = srtInput.files[0];
       
-      // Add video file if not already loaded
-      if (!videoArchiveMapping[videoFile.name]) {
-        videoFiles.push(videoFile);
-        videoArchiveMapping[videoFile.name] = URL.createObjectURL(videoFile);
+      // Add video file to mapping if not already loaded.
+      if (!videoMapping[videoFile.name]) {
+        videoMapping[videoFile.name] = URL.createObjectURL(videoFile);
+        videoFolderFiles.push(videoFile);
       }
       
       const reader = new FileReader();
       reader.onload = (e) => {
         const srtContent = e.target.result;
         const srtBlocks = parseSRT(srtContent);
-        // For each subtitle block, add new words or append new examples.
         srtBlocks.forEach(block => {
           const wordsInBlock = block.text.toLowerCase().match(/[a-zA-Z]+/g);
           if (wordsInBlock) {
             wordsInBlock.forEach(word => {
               if (!wordData[word]) {
-                // Create new card with an examples array.
                 wordData[word] = {
                   examples: [{
                     text: block.text,
@@ -156,7 +179,6 @@
                   ignored: false
                 };
               } else {
-                // Add new example if not already present.
                 const exists = wordData[word].examples.some(ex => ex.text === block.text && ex.video === videoFile.name);
                 if (!exists) {
                   wordData[word].examples.push({
@@ -172,7 +194,6 @@
         });
         words = Object.keys(wordData);
         alert("New content added from SRT.");
-        // If drill hasn't started, start it now:
         if (!currentWord) {
           currentWord = getNextCard();
           if (currentWord) showCurrentCard();
@@ -182,69 +203,12 @@
     });
     
     /**************************************************
-     * 2) Load Archive from ZIP (JSON + Videos)
+     * 2) (No Export Folder Functionality Provided)
+     * You can implement saving the JSON to a file if needed.
      **************************************************/
-    document.getElementById("archiveFile").addEventListener("change", (e) => {
-      const file = e.target.files[0];
-      if (!file) return;
-      const zip = new JSZip();
-      zip.loadAsync(file).then(zipContent => {
-        return zipContent.file("words.json").async("string").then(jsonStr => {
-          try {
-            wordData = JSON.parse(jsonStr);
-            words = Object.keys(wordData);
-            // Load video files from "videos" folder.
-            const videoFolder = zipContent.folder("videos");
-            if (videoFolder) {
-              videoFolder.forEach((relPath, fileEntry) => {
-                fileEntry.async("blob").then(blob => {
-                  const url = URL.createObjectURL(blob);
-                  videoArchiveMapping[fileEntry.name] = url;
-                });
-              });
-            }
-            alert("Archive loaded.");
-            // Start drill if not already started.
-            if (!currentWord) {
-              currentWord = getNextCard();
-              if (currentWord) showCurrentCard();
-            }
-          } catch (err) {
-            alert("Error parsing archive: " + err);
-          }
-        });
-      }).catch(err => {
-        alert("Error loading archive: " + err);
-      });
-    });
     
     /**************************************************
-     * 3) Export Archive (ZIP: JSON + Videos)
-     **************************************************/
-    document.getElementById("exportArchiveBtn").addEventListener("click", async () => {
-      const zip = new JSZip();
-      zip.file("words.json", JSON.stringify(wordData, null, 2));
-      const videoFolder = zip.folder("videos");
-      if (videoFiles.length === 0) {
-        alert("No new video files loaded.");
-        return;
-      }
-      for (const file of videoFiles) {
-        videoFolder.file(file.name, file);
-      }
-      try {
-        const content = await zip.generateAsync({ type: "blob" });
-        const a = document.createElement("a");
-        a.href = URL.createObjectURL(content);
-        a.download = "archive.zip";
-        a.click();
-      } catch(err) {
-        console.error("Error exporting archive:", err);
-      }
-    });
-    
-    /**************************************************
-     * 4) Drill Section: Scheduling & UI
+     * 3) Drill Section: Scheduling & UI
      **************************************************/
     function ensureCardProperties(word) {
       const card = wordData[word];
@@ -288,11 +252,9 @@
       if (!currentWord) return;
       ensureCardProperties(currentWord);
       document.getElementById("currentWord").textContent = currentWord;
-      // Choose one random example from the card.
       const examples = wordData[currentWord].examples;
       const randomIndex = Math.floor(Math.random() * examples.length);
       currentExampleObj = examples[randomIndex];
-      // Initially hide the example text.
       document.getElementById("currentExample").textContent = currentExampleObj.text;
       document.getElementById("currentExample").style.display = "none";
     }
@@ -310,8 +272,7 @@
     // Play video fragment using the chosen example.
     document.getElementById("playFragmentBtn").addEventListener("click", () => {
       if (!currentWord || !currentExampleObj) return;
-      // Try to get the video URL. (Removed the extra check that caused false alerts.)
-      const videoURL = videoArchiveMapping[currentExampleObj.video];
+      const videoURL = videoMapping[currentExampleObj.video];
       if (!videoURL) {
         alert("Video not available for this card.");
         return;

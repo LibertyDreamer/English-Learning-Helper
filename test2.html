@@ -54,14 +54,20 @@
       margin-left: auto;
       margin-right: auto;
       position: relative;
+      background: #000; /* optional: a background so blank areas don't flash white */
     }
-    video {
+    /* Both video elements inside share these styles */
+    #videoContainer video {
+      position: absolute;
+      top: 0;
+      left: 0;
       width: 100%;
       height: 100%;
       object-fit: contain;
       border: 1px solid #ccc;
       border-radius: 4px;
       outline: none;
+      transition: opacity 0.3s ease;
     }
     #controls {
       margin-top: 20px;
@@ -160,9 +166,10 @@
       <div id="exampleDisplay"></div>
     </div>
 
-    <!-- Video player -->
+    <!-- Video player container -->
     <div id="videoContainer">
-      <video id="videoPlayer" controls></video>
+      <!-- Initially, one video element is present -->
+      <video id="videoPlayer" controls data-video-file=""></video>
     </div>
 
     <!-- Rating and other controls -->
@@ -220,7 +227,7 @@
     const saveButton = document.getElementById('saveButton');
     const currentWordSpan = document.getElementById('currentWord');
     const exampleDisplay = document.getElementById('exampleDisplay');
-    const videoPlayer = document.getElementById('videoPlayer');
+    let videoPlayer = document.getElementById('videoPlayer'); // mutable reference
     const ignoreButton = document.getElementById('ignoreButton');
     const repeatButton = document.getElementById('repeatButton');
     const showTextButton = document.getElementById('showTextButton');
@@ -410,15 +417,15 @@
       updateUI();
     }
 
-    // Update UI to display the current word and auto-play the video segment.
-    // The video element is updated only if the video file changes.
+    // Update UI to display the current word and video.
+    // Uses a two–video swap to avoid showing a blank state.
     function updateUI() {
       currentWordSpan.textContent = currentWordKey;
       textVisible = false;
       exampleDisplay.textContent = "";
       showTextButton.textContent = "Show Subtitle";
       
-      // If context panel is open, refresh its content.
+      // Refresh context panel if open.
       if (contextVisible) {
         renderContextPanel();
         contextButton.textContent = "Hide Context";
@@ -427,13 +434,12 @@
         contextPanel.style.display = "none";
       }
       
-      // If definition panel is open, leave it as is.
+      // Leave definition panel as is if open.
       if (!definitionVisible) {
         defineButton.textContent = "Define Word";
         definitionPanel.style.display = "none";
       }
       
-      // Manage extra info panel display.
       if (!contextVisible && !definitionVisible) {
         extraInfoDiv.style.display = "none";
       } else {
@@ -441,28 +447,54 @@
       }
       
       const videoFileName = currentExample.video;
-      // Only update the src if the video file has changed.
+      const container = document.getElementById('videoContainer');
+      
+      // If the video file is different from what is currently playing, swap videos.
       if (videoPlayer.getAttribute('data-video-file') !== videoFileName) {
-        videoPlayer.setAttribute('data-video-file', videoFileName);
-        if (videoBlobs[videoFileName]) {
-          videoPlayer.src = videoBlobs[videoFileName];
-          videoPlayer.load();
-        } else {
-          videoPlayer.removeAttribute('src');
-        }
+        // Create a new video element for the new video.
+        const newVideo = document.createElement('video');
+        newVideo.controls = true;
+        newVideo.setAttribute('data-video-file', videoFileName);
+        newVideo.style.width = "100%";
+        newVideo.style.height = "100%";
+        newVideo.style.objectFit = "contain";
+        newVideo.style.border = "1px solid #ccc";
+        newVideo.style.borderRadius = "4px";
+        newVideo.style.outline = "none";
+        newVideo.style.position = "absolute";
+        newVideo.style.top = "0";
+        newVideo.style.left = "0";
+        newVideo.style.opacity = 0;
+        
+        newVideo.src = videoBlobs[videoFileName] || "";
+        container.appendChild(newVideo);
+        
+        newVideo.addEventListener('loadeddata', function onLoaded() {
+          // Set the start time and play.
+          newVideo.currentTime = currentExample.start;
+          newVideo.play();
+          // Fade in the new video.
+          newVideo.style.opacity = 1;
+          // Remove the old video element.
+          container.removeChild(videoPlayer);
+          videoPlayer = newVideo;
+          newVideo.removeEventListener('loadeddata', onLoaded);
+        }, { once: true });
+      } else {
+        // If the video file is the same, just update time and play.
+        videoPlayer.currentTime = currentExample.start;
+        videoPlayer.play();
       }
-      videoPlayer.currentTime = currentExample.start;
-      videoPlayer.play();
     }
 
-    // Stop playback when end time is reached.
+    // Pause the video when the current segment ends.
     videoPlayer.addEventListener('timeupdate', () => {
       if (currentExample && videoPlayer.currentTime >= currentExample.end) {
         videoPlayer.pause();
       }
     });
 
-    // Update word summary fields.
+    // Update the summary rating for the word.
     function updateWordSummary(wordKey) {
       const details = wordsData[wordKey];
       const validExamples = details.examples.filter(ex => !ex.ignored);
@@ -489,7 +521,6 @@
         }
         div.textContent = ex.text + " (" + ex.video + " @ " + ex.start + "s)";
         div.addEventListener('click', () => {
-          // When clicked, update the current example and UI.
           currentExample = ex;
           updateUI();
         });
@@ -523,7 +554,7 @@
       }
     }
 
-    // Save Archive: update the JSON file inside a new ZIP archive and include all original files.
+    // Save the updated archive.
     saveButton.addEventListener('click', async () => {
       const newZip = new JSZip();
       newZip.file(jsonFileName, JSON.stringify(wordsData, null, 2));

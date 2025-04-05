@@ -404,20 +404,34 @@
       updateUI();
     }
 
-    // Update UI to display the current word, reset toggles, and auto-play the video segment.
+    // Update UI to display the current word, reset toggles selectively, and auto-play the video segment.
     function updateUI() {
       currentWordSpan.textContent = currentWordKey;
       textVisible = false;
       exampleDisplay.textContent = "";
       showTextButton.textContent = "Show Subtitle";
-      // Hide context and definition panels.
-      contextVisible = false;
-      definitionVisible = false;
-      contextButton.textContent = "More Context";
-      defineButton.textContent = "Define Word";
-      contextPanel.style.display = "none";
-      definitionPanel.style.display = "none";
-      extraInfoDiv.style.display = "none";
+      
+      // If context panel is open, update its content rather than hiding it.
+      if (contextVisible) {
+        renderContextPanel();
+        contextButton.textContent = "Hide Context";
+      } else {
+        contextButton.textContent = "More Context";
+        contextPanel.style.display = "none";
+      }
+      
+      // If definition panel is open, leave it as is.
+      if (!definitionVisible) {
+        defineButton.textContent = "Define Word";
+        definitionPanel.style.display = "none";
+      }
+      
+      // Manage extra info panel display.
+      if (!contextVisible && !definitionVisible) {
+        extraInfoDiv.style.display = "none";
+      } else {
+        extraInfoDiv.style.display = "block";
+      }
       
       // Set up video.
       const videoFileName = currentExample.video;

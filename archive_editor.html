@@ -62,6 +62,16 @@
       editor.setValue(JSON.stringify(archive, null, 2), -1);
     }
 
+    // Check if an example already exists in an array.
+    function exampleExists(exampleArr, newExample) {
+      return exampleArr.some(existing =>
+        existing.text === newExample.text &&
+        existing.video === newExample.video &&
+        existing.start === newExample.start &&
+        existing.end === newExample.end
+      );
+    }
+
     // Revised SRT parsing: splits the text by blank lines (handling CRLF) and extracts only the subtitle text.
     function parseSRT(srtText) {
       // Split by blank lines (supports Windows CRLF or Unix LF)
@@ -107,7 +117,10 @@
             if (!archive[word]) {
               archive[word] = { examples: [], rating: 0, ignored: false };
             }
-            archive[word].examples.push(exampleObj);
+            // Check if the example already exists
+            if (!exampleExists(archive[word].examples, exampleObj)) {
+              archive[word].examples.push(exampleObj);
+            }
           });
         }
       });

@@ -5,11 +5,13 @@ body {
   margin: 0;
   padding: 20px;
 }
+
 h1, h2 {
   text-align: center;
   color: #333;
   margin-bottom: 10px;
 }
+
 section {
   background: #fff;
   border-radius: 8px;
@@ -24,20 +26,46 @@ section {
   display: flex;
   flex-direction: column;
   align-items: center;
+  margin: auto;
 }
+
 #currentWord {
   font-size: 2em;
   margin-bottom: 10px;
   color: #007BFF;
 }
+
 video {
   width: 100%;
+  max-width: 600px; /* video won't exceed 600px */
   border-radius: 8px;
   margin-bottom: 10px;
 }
-p {
-  font-size: 1.1em;
-  color: #555;
+
+/* Controls Row (Repeat, Show Example, Ignore) */
+#controlsRow {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  margin: 15px 0;
+}
+
+/* Rating Buttons */
+#ratingSection {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: center;
+  margin-bottom: 15px;
+}
+
+/* Example Text */
+#currentExample {
+  background: #f8f9fa;
+  border-radius: 4px;
+  padding: 10px;
+  margin: 15px 0;
+  max-width: 600px;
   text-align: center;
 }
 
@@ -47,23 +75,20 @@ button {
   color: #fff;
   border: none;
   padding: 10px 20px;
-  margin: 5px;
   border-radius: 4px;
   cursor: pointer;
   transition: background 0.3s ease;
+  font-size: 1rem;
 }
+
 button:hover {
   background: #0056b3;
 }
-#ratingSection {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  margin-top: 10px;
-}
+
 #ratingSection button {
   background: #28a745;
 }
+
 #ratingSection button:hover {
   background: #218838;
 }

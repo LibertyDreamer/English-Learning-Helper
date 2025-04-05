@@ -15,61 +15,93 @@
   <!-- Include JSZip library -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
   <script>
-    // Global JSON archive object
+    // Global JSON archive object that will be structured as:
+    // {
+    //   "word": {
+    //     "examples": [ {text, video, start, end}, ... ],
+    //     "rating": 0,
+    //     "ignored": false
+    //   },
+    //   ...
+    // }
     let archive = {};
 
-    // Parse the SRT file content into an array of subtitle objects
+    // Parse the SRT file content into subtitle blocks
     function parseSRT(srtText) {
-      const blocks = srtText.trim().split(/\n\n+/);
-      const subtitles = blocks.map(block => {
+      // Split the SRT file into blocks by blank lines
+      const blocks = srtText.trim().split(/\n\s*\n/);
+      let subtitles = [];
+      blocks.forEach(block => {
         const lines = block.split('\n');
-        if (lines.length < 3) return null;
-        // First line is the index, second is the time range
+        if (lines.length < 3) return; // not enough lines for a valid subtitle block
+
+        // Extract time information from the second line
         const timeMatch = lines[1].match(/(\d{2}:\d{2}:\d{2},\d{3})\s*-->\s*(\d{2}:\d{2}:\d{2},\d{3})/);
-        if (!timeMatch) return null;
+        if (!timeMatch) return;
         const start = toSeconds(timeMatch[1]);
         const end = toSeconds(timeMatch[2]);
-        // Remaining lines are the subtitle text
+
+        // Combine the remaining lines as the subtitle text
         const text = lines.slice(2).join(' ');
-        return { start, end, text };
-      }).filter(item => item !== null);
+        subtitles.push({ start, end, text });
+      });
       return subtitles;
     }
 
-    // Convert SRT time (hh:mm:ss,ms) to seconds (as a float)
+    // Convert time in SRT format (hh:mm:ss,ms) to seconds (as a float)
     function toSeconds(timeStr) {
       const parts = timeStr.split(/[:,]/);
-      return parseInt(parts[0], 10) * 3600 +
-             parseInt(parts[1], 10) * 60 +
-             parseInt(parts[2], 10) +
-             parseInt(parts[3], 10) / 1000;
+      return (+parts[0]) * 3600 + (+parts[1]) * 60 + (+parts[2]) + (+parts[3]) / 1000;
     }
 
-    // Update the archive JSON with subtitle examples from the parsed SRT
+    // Update the JSON archive using the subtitles and video file name.
     function updateArchive(subtitles, videoFileName) {
       subtitles.forEach(sub => {
-        // Normalize text: remove punctuation and convert to lower case,
-        // then split the text into individual words.
-        const words = sub.text.replace(/[^\w\s]/g, '').toLowerCase().split(/\s+/);
-        words.forEach(word => {
-          if (word) {
+        // Build the example object for this subtitle block
+        const exampleObj = {
+          text: sub.text,
+          video: videoFileName,
+          start: sub.start,
+          end: sub.end
+        };
+
+        // Extract words from the text for the keys.
+        // Convert to lowercase and extract words (letters, digits, and underscores)
+        const words = sub.text.toLowerCase().match(/\b\w+\b/g);
+        if (words) {
+          // Use a Set to avoid adding the same subtitle example multiple times for a single word.
+          const uniqueWords = Array.from(new Set(words));
+          uniqueWords.forEach(word => {
             if (!archive[word]) {
-              // If the word doesn't exist, create a new entry.
               archive[word] = {
                 examples: [],
                 rating: 0,
                 ignored: false
               };
             }
-            // Add the subtitle block as a new example for this word.
-            archive[word].examples.push({
-              text: sub.text,
-              video: videoFileName,
-              start: sub.start,
-              end: sub.end
-            });
-          }
-        });
+            archive[word].examples.push(exampleObj);
+          });
+        }
+      });
+    }
+
+    // Create a ZIP archive containing the video, SRT, and the JSON archive
+    function createZipArchive(videoFile, srtFile, archiveJSON) {
+      const zip = new JSZip();
+      // Add the video and SRT files as-is
+      zip.file(videoFile.name, videoFile);
+      zip.file(srtFile.name, srtFile);
+      // Add the JSON archive file (formatted with indentation)
+      zip.file("archive.json", JSON.stringify(archiveJSON, null, 2));
+
+      // Generate the ZIP file and create a download link
+      zip.generateAsync({ type: "blob" })
+      .then(function(content) {
+        const downloadLink = document.getElementById('downloadLink');
+        downloadLink.href = URL.createObjectURL(content);
+        downloadLink.download = "archive.zip";
+        downloadLink.style.display = "block";
+        downloadLink.innerText = "Download Archive";
       });
     }
 
@@ -92,33 +124,12 @@
         const srtText = e.target.result;
         const subtitles = parseSRT(srtText);
         updateArchive(subtitles, videoFile.name);
-        alert("Archive updated! Check the console for details.");
-        console.log(archive);
-        // After updating the archive, create a downloadable ZIP file
+        console.log("Generated Archive:", archive);
+        // Create a downloadable ZIP containing the video, SRT, and JSON archive
         createZipArchive(videoFile, srtFile, archive);
       };
       reader.readAsText(srtFile);
     });
-
-    // Create a ZIP archive containing the video, SRT, and JSON archive
-    function createZipArchive(videoFile, srtFile, archiveJSON) {
-      const zip = new JSZip();
-      // Add the video and SRT files
-      zip.file(videoFile.name, videoFile);
-      zip.file(srtFile.name, srtFile);
-      // Add the JSON archive file
-      zip.file("archive.json", JSON.stringify(archiveJSON, null, 2));
-
-      // Generate the ZIP and create a download link
-      zip.generateAsync({ type: "blob" })
-      .then(function(content) {
-        const downloadLink = document.getElementById('downloadLink');
-        downloadLink.href = URL.createObjectURL(content);
-        downloadLink.download = "archive.zip";
-        downloadLink.style.display = "block";
-        downloadLink.innerText = "Download Archive";
-      });
-    }
   </script>
 </body>
 </html>

@@ -2,63 +2,21 @@
 <html>
 <head>
   <meta charset="UTF-8">
-  <title>Archive &amp; Drill System</title>
-  <!-- Include JSZip from CDN for archive handling -->
+  <title>Simple Archive & Drill</title>
+  <!-- JSZip for archive handling -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
   <style>
-    /* ---------- Common Styles ---------- */
-    body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background: #f0f2f5;
-      margin: 0;
-      padding: 20px;
-      color: #333;
-    }
-    h1, h2, h3 {
-      text-align: center;
-      color: #2c3e50;
-    }
-    section {
-      margin-bottom: 40px;
-      padding: 20px;
-      border: 1px solid #ddd;
-      border-radius: 8px;
-      background: #fff;
-    }
-    input, button, label, p {
-      margin: 5px;
-    }
-    video {
-      display: block;
-      margin: 10px auto;
-    }
-    /* ---------- Drill Card Styles ---------- */
-    #drill-card-section {
-      text-align: center;
-    }
-    #currentWord {
-      font-size: 2em;
-      margin-bottom: 10px;
-      cursor: pointer;
-    }
-    #currentExample {
-      font-size: 1.2em;
-      margin-bottom: 15px;
-    }
-    #ratingSection button {
-      margin: 0 5px;
-    }
+    body { font-family: sans-serif; padding: 10px; }
+    h1, h2 { text-align: center; }
+    section { border: 1px solid #ccc; padding: 10px; margin: 10px; }
+    button, input { margin: 5px; }
+    video { display: block; margin: 10px auto; }
   </style>
 </head>
 <body>
-  <h1>Archive &amp; Drill System</h1>
+  <h1>Simple Archive & Drill</h1>
   
-  <!-- ===========================
-       Archive Management Section
-       - Load an archive (ZIP file)
-       - Add new content (video + SRT)
-       - Export current archive
-  ============================ -->
+  <!-- Archive Management Section -->
   <section id="archiveManagement">
     <h2>Archive Management</h2>
     <div>
@@ -80,9 +38,7 @@
     </div>
   </section>
   
-  <!-- ===========================
-       Drill Section
-  ============================ -->
+  <!-- Drill Section -->
   <section id="drillSection">
     <h2>Drill</h2>
     <div id="drill-card-section">
@@ -99,26 +55,19 @@
     </div>
   </section>
   
-  <!-- ===========================
-       Scripts: Functionality Code
-  ============================ -->
   <script>
-    /**************************************************
-     * Global Variables
-     **************************************************/
+    // Global variables
     let wordData = {};   // { word: { example, video, start, end, repetition, interval, ease, nextReview, ignored } }
     let words = [];      // Array of word keys
     let videoFiles = []; // Array of new video File objects
     let videoArchiveMapping = {}; // Mapping: video file name -> object URL
 
-    /**************************************************
-     * Utility: SRT Parsing
-     **************************************************/
+    // --- Utility Functions ---
     function parseSRT(srtString) {
       const blocks = srtString.split(/\r?\n\r?\n/);
-      const results = [];
-      for (const rawBlock of blocks) {
-        const lines = rawBlock.split(/\r?\n/).map(line => line.trim()).filter(line => line);
+      let results = [];
+      for (let block of blocks) {
+        const lines = block.split(/\r?\n/).map(l => l.trim()).filter(l => l);
         if (lines.length < 2) continue;
         let timeLine = '';
         let textLines = [];
@@ -147,20 +96,18 @@
       return (parseInt(hh) * 3600) + (parseInt(mm) * 60) + parseInt(ss) + (parseInt(ms) / 1000);
     }
     
-    /**************************************************
-     * 1) Add New Content (Video + SRT)
-     **************************************************/
+    // --- Add New Content (Video + SRT) ---
     document.getElementById("addNewContentBtn").addEventListener("click", () => {
       const videoInput = document.getElementById("newVideo");
       const srtInput = document.getElementById("newSRT");
       if (videoInput.files.length === 0 || srtInput.files.length === 0) {
-        alert("Please select both a video and an SRT file.");
+        alert("Select both a video and an SRT file.");
         return;
       }
       const videoFile = videoInput.files[0];
       const srtFile = srtInput.files[0];
       
-      // Add video file to our archive if not already added.
+      // Add video file if not already loaded
       if (!videoArchiveMapping[videoFile.name]) {
         videoFiles.push(videoFile);
         videoArchiveMapping[videoFile.name] = URL.createObjectURL(videoFile);
@@ -170,14 +117,12 @@
       reader.onload = (e) => {
         const srtContent = e.target.result;
         const srtBlocks = parseSRT(srtContent);
-        // For each subtitle block, extract words and add new cards.
+        // For each subtitle block, add each new word as a card if not already present.
         srtBlocks.forEach(block => {
-          // Extract words (letters only, case-insensitive)
           const wordsInBlock = block.text.toLowerCase().match(/[a-zA-Z]+/g);
           if (wordsInBlock) {
             wordsInBlock.forEach(word => {
               if (!wordData[word]) {
-                // Create new card with this word.
                 wordData[word] = {
                   example: block.text,
                   video: videoFile.name,
@@ -193,39 +138,33 @@
             });
           }
         });
-        // Update word list.
         words = Object.keys(wordData);
-        alert("New content added from SRT.");
+        alert("New content added.");
       };
       reader.readAsText(srtFile);
     });
     
-    /**************************************************
-     * 2) Load Archive from ZIP (JSON + Videos)
-     **************************************************/
+    // --- Load Archive (ZIP file) ---
     document.getElementById("archiveFile").addEventListener("change", (e) => {
       const file = e.target.files[0];
       if (!file) return;
       const zip = new JSZip();
-      zip.loadAsync(file).then((zipContent) => {
-        // Load words.json from the root of the archive.
-        return zipContent.file("words.json").async("string").then((jsonStr) => {
+      zip.loadAsync(file).then(zipContent => {
+        return zipContent.file("words.json").async("string").then(jsonStr => {
           try {
             wordData = JSON.parse(jsonStr);
             words = Object.keys(wordData);
-            // Load video files from the "videos" folder.
+            // Load video files from "videos" folder.
             const videoFolder = zipContent.folder("videos");
             if (videoFolder) {
-              videoFolder.forEach((relativePath, fileEntry) => {
+              videoFolder.forEach((relPath, fileEntry) => {
                 fileEntry.async("blob").then(blob => {
-                  // Create an object URL from the blob.
                   const url = URL.createObjectURL(blob);
                   videoArchiveMapping[fileEntry.name] = url;
-                  // (Optional) You might want to store these blobs in an array if needed.
                 });
               });
             }
-            alert("Archive loaded successfully.");
+            alert("Archive loaded.");
           } catch (err) {
             alert("Error parsing archive: " + err);
           }
@@ -235,14 +174,11 @@
       });
     });
     
-    /**************************************************
-     * 3) Export Archive: Bundle JSON & Videos into ZIP
-     **************************************************/
+    // --- Export Archive (ZIP file) ---
     document.getElementById("exportArchiveBtn").addEventListener("click", async () => {
       const zip = new JSZip();
       zip.file("words.json", JSON.stringify(wordData, null, 2));
       const videoFolder = zip.folder("videos");
-      // Include new video files (if any) from our videoFiles array.
       if (videoFiles.length === 0) {
         alert("No new video files loaded.");
         return;
@@ -252,21 +188,16 @@
       }
       try {
         const content = await zip.generateAsync({ type: "blob" });
-        const archiveName = "archive.zip";
         const a = document.createElement("a");
         a.href = URL.createObjectURL(content);
-        a.download = archiveName;
-        document.body.appendChild(a);
+        a.download = "archive.zip";
         a.click();
-        a.remove();
-      } catch (err) {
-        console.error("Error generating archive:", err);
+      } catch(err) {
+        console.error("Error exporting archive:", err);
       }
     });
     
-    /**************************************************
-     * 4) Drill Section: Scheduling & UI
-     **************************************************/
+    // --- Drill Section Scheduling & UI ---
     function ensureCardProperties(word) {
       const card = wordData[word];
       if (card.repetition === undefined) card.repetition = 0;
@@ -276,7 +207,7 @@
       if (card.ignored === undefined) card.ignored = false;
     }
     
-    // SM-2 scheduling update (quality: 0 = Again, 3 = Hard, 5 = Easy)
+    // SM-2 scheduling update: quality 0 = Again, 3 = Hard, 5 = Easy.
     function updateCard(word, quality) {
       ensureCardProperties(word);
       let card = wordData[word];
@@ -297,11 +228,11 @@
     
     function getNextCard() {
       const now = Date.now();
-      const dueCards = words.filter(w => !wordData[w].ignored && (wordData[w].nextReview || 0) <= now);
-      if (dueCards.length > 0) return dueCards[Math.floor(Math.random() * dueCards.length)];
+      const dueCards = words.filter(w => !wordData[w].ignored && (wordData[w].nextReview <= now));
+      if (dueCards.length > 0) return dueCards[Math.floor(Math.random()*dueCards.length)];
       const notIgnored = words.filter(w => !wordData[w].ignored);
       if (notIgnored.length === 0) return null;
-      notIgnored.sort((a, b) => (wordData[a].nextReview || Infinity) - (wordData[b].nextReview || Infinity));
+      notIgnored.sort((a,b) => (wordData[a].nextReview || Infinity) - (wordData[b].nextReview || Infinity));
       return notIgnored[0];
     }
     
@@ -328,32 +259,19 @@
       if (!currentWord) return;
       const card = wordData[currentWord];
       if (!card.video || !videoArchiveMapping[card.video]) {
-        alert("Video file not available for this card.");
+        alert("Video not available for this card.");
         return;
       }
       const drillVideo = document.getElementById("drillVideo");
       drillVideo.src = videoArchiveMapping[card.video];
       drillVideo.currentTime = card.start;
       drillVideo.play();
-      // Stop playback after reaching the card's end time.
-      let checkInterval = setInterval(() => {
+      const checkInterval = setInterval(() => {
         if (drillVideo.currentTime >= card.end) {
           drillVideo.pause();
           clearInterval(checkInterval);
         }
       }, 100);
-    });
-    
-    // Clicking on the current word copies the word and example to clipboard, then opens ChatGPT.
-    document.getElementById("currentWord").addEventListener("click", () => {
-      if (!currentWord) return;
-      const card = wordData[currentWord];
-      const textToCopy = currentWord + "\n" + card.example;
-      navigator.clipboard.writeText(textToCopy).then(() => {
-        window.open("https://chat.openai.com/", "_blank");
-      }).catch(err => {
-        console.error("Failed to copy text:", err);
-      });
     });
     
     document.getElementById("ignoreWordBtn").addEventListener("click", () => {
@@ -377,7 +295,6 @@
       });
     });
     
-    // Initialize drill on window load.
     window.addEventListener("load", () => {
       currentWord = getNextCard();
       if (currentWord) showCurrentCard();

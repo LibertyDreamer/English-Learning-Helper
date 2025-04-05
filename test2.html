@@ -5,7 +5,6 @@
   <title>Zip Archive Drill System</title>
   <!-- Include JSZip for archive handling -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-  <!-- Link to your external CSS -->
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -22,10 +21,9 @@
       <div id="controlsRow">
         <button id="repeatFragmentBtn">Repeat Fragment</button>
         <button id="showTextBtn">Show Example</button>
-        <button id="ignoreWordBtn">Ignore Word</button>
       </div>
       
-      <!-- Rating Buttons -->
+      <!-- Rating Buttons (in one row) -->
       <div id="ratingSection">
         <button class="ratingBtn" data-rating="0">0%</button>
         <button class="ratingBtn" data-rating="10">10%</button>
@@ -38,6 +36,11 @@
         <button class="ratingBtn" data-rating="80">80%</button>
         <button class="ratingBtn" data-rating="90">90%</button>
         <button class="ratingBtn" data-rating="100">100%</button>
+      </div>
+      
+      <!-- Ignore Word Button (moved to its own row) -->
+      <div id="ignoreWordRow">
+        <button id="ignoreWordBtn">Ignore Word</button>
       </div>
       
       <!-- Example Text -->
@@ -69,7 +72,6 @@
     </div>
   </section>
   
-  <!-- Your external JavaScript file -->
   <script src="script.js"></script>
 </body>
 </html>

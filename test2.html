@@ -70,28 +70,13 @@
     /**************************************************
      * Global Variables
      **************************************************/
-    // wordData: { word: { examples: [{ text, video, start, end }], nextReview, ignored } }
+    // wordData: { word: { examples: [{ text, video, start, end }], rating, ignored } }
     let wordData = {};   
     let words = [];      // Array of word keys
     let videoFiles = []; // Array of new video File objects (for export)
     let videoMapping = {}; // Mapping: video file name -> object URL
     let currentExampleObj = null; // Chosen example for the current card
     let currentWord = "";
-    
-    // Mapping percent rating to interval in days.
-    const ratingToInterval = {
-      0: 1,
-      10: 1,
-      20: 1,
-      30: 2,
-      40: 3,
-      50: 4,
-      60: 6,
-      70: 9,
-      80: 14,
-      90: 21,
-      100: 30
-    };
     
     /**************************************************
      * Utility: SRT Parsing
@@ -164,7 +149,8 @@
                     start: block.start,
                     end: block.end
                   }],
-                  nextReview: Date.now(),
+                  // Default rating is 0, so new words appear often.
+                  rating: 0,
                   ignored: false
                 };
               } else {
@@ -254,35 +240,38 @@
     });
     
     /**************************************************
-     * Drill Section: Scheduling & UI
+     * Drill Section: UI and Weighted Selection
      **************************************************/
-    function ensureCardProperties(word) {
-      const card = wordData[word];
-      if (card.nextReview === undefined) card.nextReview = Date.now();
-      if (card.ignored === undefined) card.ignored = false;
-    }
-    
-    // Update card scheduling based on percent rating.
+    // Remove scheduling – simply update the word's rating.
     function updateCard(word, rating) {
-      ensureCardProperties(word);
-      const now = Date.now();
-      let days = ratingToInterval[rating] || 1;
-      wordData[word].nextReview = now + days * 86400000;
+      wordData[word].rating = rating;
     }
     
+    // Select the next card using weighted random selection.
+    // Words with lower ratings (e.g., 0, 10, 20) receive a higher weight.
     function getNextCard() {
-      const now = Date.now();
-      const dueCards = words.filter(w => !wordData[w].ignored && (wordData[w].nextReview <= now));
-      if (dueCards.length > 0) return dueCards[Math.floor(Math.random() * dueCards.length)];
-      const notIgnored = words.filter(w => !wordData[w].ignored);
-      if (notIgnored.length === 0) return null;
-      notIgnored.sort((a, b) => (wordData[a].nextReview || Infinity) - (wordData[b].nextReview || Infinity));
-      return notIgnored[0];
+      const availableWords = words.filter(w => !wordData[w].ignored);
+      if (availableWords.length === 0) return null;
+      let totalWeight = 0;
+      const weightedWords = [];
+      availableWords.forEach(word => {
+        let r = wordData[word].rating;
+        if (r === undefined) { r = 0; }
+        // Lower ratings result in higher weight.
+        const weight = 101 - r; // For example, rating 0 gives 101; rating 100 gives 1.
+        totalWeight += weight;
+        weightedWords.push({ word, weight });
+      });
+      let rand = Math.random() * totalWeight;
+      for (let i = 0; i < weightedWords.length; i++) {
+        rand -= weightedWords[i].weight;
+        if (rand <= 0) return weightedWords[i].word;
+      }
+      return weightedWords[weightedWords.length - 1].word;
     }
     
     function showCurrentCard() {
       if (!currentWord) return;
-      ensureCardProperties(currentWord);
       document.getElementById("currentWord").textContent = currentWord;
       const examples = wordData[currentWord].examples;
       const randomIndex = Math.floor(Math.random() * examples.length);

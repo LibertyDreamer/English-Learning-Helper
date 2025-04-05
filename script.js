@@ -128,7 +128,7 @@ document.getElementById("archiveFile").addEventListener("change", (e) => {
           videoFolder.forEach((relPath, fileEntry) => {
             let promise = fileEntry.async("blob").then(blob => {
               const url = URL.createObjectURL(blob);
-              // Extract the base file name in case the path is included.
+              // Extract the base file name in case there's a path.
               const parts = fileEntry.name.split("/");
               const baseName = parts[parts.length - 1];
               videoMapping[baseName] = url;
@@ -201,7 +201,7 @@ function getNextCard() {
     let r = wordData[word].rating;
     if (r === undefined) { r = 0; }
     // Lower ratings yield higher weight.
-    const weight = 101 - r; // e.g., rating 0 gives 101; rating 100 gives 1.
+    const weight = 101 - r; // e.g., rating 0 => 101; rating 100 => 1
     totalWeight += weight;
     weightedWords.push({ word, weight });
   });
@@ -290,6 +290,7 @@ document.getElementById("repeatFragmentBtn").addEventListener("click", () => {
   autoPlayVideoFragment();
 });
 
+// Initialize on page load.
 window.addEventListener("load", () => {
   currentWord = getNextCard();
   if (currentWord) showCurrentCard();

@@ -50,14 +50,12 @@ video {
   margin: 15px 0;
 }
 
-/* Rating Buttons (all in one row) */
+/* Rating Buttons: all in one row using CSS Grid */
 #ratingSection {
-  display: flex;
-  flex-wrap: nowrap;
+  display: grid;
+  grid-template-columns: repeat(11, 1fr);
   gap: 10px;
-  justify-content: center;
   margin-bottom: 15px;
-  overflow-x: auto;
   width: 100%;
   max-width: 600px;
 }

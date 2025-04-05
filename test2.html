@@ -29,20 +29,23 @@
     #topControls input[type="file"] {
       margin-right: 10px;
     }
+    /* Center the word and subtitle */
     #wordSection {
       margin-top: 20px;
+      text-align: center;
     }
     #currentWord {
       font-size: 1.3em;
       font-weight: bold;
-      display: inline-block;
-      margin-bottom: 10px;
       color: #333;
+      margin-bottom: 10px;
+      display: block; /* ensures each appears on its own line */
     }
     #exampleDisplay {
       font-style: italic;
       margin: 10px 0;
       min-height: 1.5em; /* keep space even if empty */
+      /* text-align: center is inherited from #wordSection */
     }
     #videoContainer {
       margin-top: 20px;
@@ -115,9 +118,9 @@
       <button id="saveButton" disabled>Save Archive</button>
     </div>
 
-    <!-- Drill display -->
+    <!-- Drill display: centered word & subtitle -->
     <div id="wordSection">
-      <div><span id="currentWord"></span></div>
+      <span id="currentWord"></span>
       <div id="exampleDisplay"></div>
     </div>
 

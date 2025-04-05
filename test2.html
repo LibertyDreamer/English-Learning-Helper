@@ -5,6 +5,7 @@
   <title>Zip Archive Drill System</title>
   <!-- Include JSZip for archive handling -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+  <!-- Link to your external CSS -->
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -16,10 +17,15 @@
     <div id="drill-card-section">
       <h3 id="currentWord"></h3>
       <video id="drillVideo" controls></video>
-      <!-- Repeat Fragment Button -->
-      <button id="repeatFragmentBtn">Repeat Fragment</button>
-      <button id="showTextBtn">Show Example</button>
-      <p id="currentExample" style="display: none;"></p>
+      
+      <!-- Controls Row -->
+      <div id="controlsRow">
+        <button id="repeatFragmentBtn">Repeat Fragment</button>
+        <button id="showTextBtn">Show Example</button>
+        <button id="ignoreWordBtn">Ignore Word</button>
+      </div>
+      
+      <!-- Rating Buttons -->
       <div id="ratingSection">
         <button class="ratingBtn" data-rating="0">0%</button>
         <button class="ratingBtn" data-rating="10">10%</button>
@@ -33,7 +39,9 @@
         <button class="ratingBtn" data-rating="90">90%</button>
         <button class="ratingBtn" data-rating="100">100%</button>
       </div>
-      <button id="ignoreWordBtn">Ignore Word</button>
+      
+      <!-- Example Text -->
+      <p id="currentExample" style="display: none;"></p>
     </div>
   </section>
   
@@ -61,6 +69,7 @@
     </div>
   </section>
   
+  <!-- Your external JavaScript file -->
   <script src="script.js"></script>
 </body>
 </html>

@@ -25,12 +25,12 @@ section {
   font-family: monospace;
 }
 
-#fileList {
+ul {
   list-style: none;
   padding: 0;
 }
 
-#fileList li {
+ul li {
   padding: 5px;
   border-bottom: 1px solid #ddd;
 }

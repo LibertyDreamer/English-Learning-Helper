@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Video Fragment Viewer</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+    }
+    video {
+      width: 80%;
+      margin-top: 20px;
+      display: block;
+    }
+  </style>
+</head>
+<body>
+
+<h1>Video Fragment Viewer</h1>
+
+<input type="file" id="videoFile" accept="video/*">
+<input type="file" id="srtFile" accept=".srt">
+<br><br>
+
+<input type="text" id="phraseInput" placeholder="Enter phrase here" style="width: 300px;">
+<button onclick="findAndShow()">Find and Play</button>
+
+<p id="times"></p>
+
+<video id="video" controls></video>
+
+<script>
+  let video = document.getElementById('video');
+  let srtContent = '';
+  let fragmentStart = 0;
+  let fragmentEnd = 0;
+
+  document.getElementById('videoFile').addEventListener('change', function(event) {
+    let file = event.target.files[0];
+    if (file) {
+      video.src = URL.createObjectURL(file);
+    }
+  });
+
+  document.getElementById('srtFile').addEventListener('change', function(event) {
+    let file = event.target.files[0];
+    if (file) {
+      let reader = new FileReader();
+      reader.onload = function(e) {
+        srtContent = e.target.result;
+      };
+      reader.readAsText(file);
+    }
+  });
+
+  function srtTimeToSeconds(srtTime) {
+    let [hours, minutes, rest] = srtTime.split(':');
+    let [seconds, milliseconds] = rest.split(',');
+    return (+hours) * 3600 + (+minutes) * 60 + (+seconds) + (+milliseconds) / 1000;
+  }
+
+  function findAndShow() {
+    let phrase = document.getElementById('phraseInput').value.trim();
+    if (!phrase || !srtContent) {
+      alert('Please load SRT and enter a phrase.');
+      return;
+    }
+
+    let blocks = srtContent.split('\n\n');
+    let found = false;
+
+    for (let block of blocks) {
+      let lines = block.split('\n');
+      if (lines.length >= 3) {
+        let timeLine = lines[1];
+        let textLines = lines.slice(2).join(' ');
+        if (textLines.includes(phrase)) {
+          let [startTime, endTime] = timeLine.split(' --> ');
+          fragmentStart = srtTimeToSeconds(startTime.trim());
+          fragmentEnd = srtTimeToSeconds(endTime.trim()) + 1;  // 👈 Add +1 second for smooth ending
+
+          video.currentTime = fragmentStart;
+          video.play();
+
+          document.getElementById('times').innerText =
+            `Fragment Start: ${fragmentStart.toFixed(2)}s, End: ${fragmentEnd.toFixed(2)}s (+1s added)`;
+
+          found = true;
+          break;
+        }
+      }
+    }
+
+    if (!found) {
+      alert('Phrase not found in SRT.');
+    }
+  }
+
+  video.addEventListener('timeupdate', function() {
+    // Only auto-pause when playing fragment
+    if (fragmentEnd > 0 && !video.paused && video.currentTime >= fragmentEnd) {
+      video.pause();
+    }
+  });
+</script>
+
+</body>
+</html>

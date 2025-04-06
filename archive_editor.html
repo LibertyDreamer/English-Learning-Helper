@@ -123,23 +123,25 @@
     }
 
     // Update the archive JSON using the subtitle data and video file name.
-    // Each example now gets its own "rating" and "ignored" fields.
+    // For each subtitle, add its full text as an example for every word it contains.
     function updateArchiveWithSubtitles(subtitles, videoFileName) {
       subtitles.forEach(sub => {
+        // Use the full subtitle text as the example.
+        const fullPhrase = sub.text.trim();
         const exampleObj = {
-          text: sub.text,
+          text: fullPhrase,
           video: videoFileName,
           start: sub.start,
           end: sub.end,
-          rating: 0,      // new per-example rating field
-          ignored: false  // new per-example ignored field
+          rating: 0,
+          ignored: false
         };
-        const words = sub.text.toLowerCase().match(/\b\w+\b/g);
+        // Extract individual words (in lower case) from the full phrase for indexing.
+        const words = fullPhrase.toLowerCase().match(/\b\w+\b/g);
         if (words) {
           const uniqueWords = Array.from(new Set(words));
           uniqueWords.forEach(word => {
             if (!archive[word]) {
-              // Initialize the word with an empty examples array and summary fields.
               archive[word] = { examples: [], rating: 0, ignored: false };
             }
             if (!exampleExists(archive[word].examples, exampleObj)) {

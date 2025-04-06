@@ -14,24 +14,14 @@
     import * as webllm from "https://esm.run/@mlc-ai/web-llm";
 
     async function main() {
-      // Use a supported model identifier
-      const selectedModel = "Llama-3.1-8B-Instruct-q4f32_1-MLC";
+      import { MLCEngine } from "@mlc-ai/web-llm";
 
-      // Initialize the engine with a progress callback
-     import { CreateMLCEngine } from "@mlc-ai/web-llm";
+      // This is a synchronous call that returns immediately
+      const engine = new MLCEngine({
+        initProgressCallback: initProgressCallback
+      });
 
-// Callback function to update model loading progress
-const initProgressCallback = (initProgress) => {
-  console.log(initProgress);
-}
-const selectedModel = "Llama-3.1-8B-Instruct-q4f32_1-MLC";
-
-const engine = await CreateMLCEngine(
-  selectedModel,
-  { initProgressCallback: initProgressCallback }, // engineConfig
-);
-
-      // Ensure the model is properly initialized
+      // This is an asynchronous call and can take a long time to finish
       await engine.reload(selectedModel);
 
       document.getElementById('ask').onclick = async () => {

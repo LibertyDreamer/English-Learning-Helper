@@ -2,22 +2,20 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Local In-Browser Neural TTS</title>
+  <title>Hugging Face TTS Demo</title>
   <style>
     body {
       font-family: sans-serif;
-      padding: 20px;
-      max-width: 800px;
-      margin: auto;
+      margin: 20px;
     }
     textarea {
       width: 100%;
-      height: 100px;
+      height: 80px;
       font-size: 1em;
     }
     button {
-      font-size: 1.2em;
       margin-top: 10px;
+      font-size: 1.1em;
       padding: 10px 20px;
     }
     #status {
@@ -27,64 +25,53 @@
   </style>
 </head>
 <body>
-  <h1>Local In-Browser Neural TTS</h1>
-  <p>
-    Enter your text below and click <b>Speak</b> to generate speech—all running completely in your browser!
-  </p>
-  <textarea id="inputText" placeholder="Enter text to speak...">Hello, world!</textarea>
-  <br>
+  <h1>Text-to-Speech using Transformers.js</h1>
+  <textarea id="inputText">Hello, this is a demo using jsDelivr!</textarea><br>
   <button id="speakBtn">Speak</button>
   <div id="status">Loading TTS model...</div>
 
-  <!-- This script uses Hugging Face Transformers.js (which leverages WebGPU/WASM) -->
+  <!-- Import Transformers.js from jsDelivr -->
   <script type="module">
+    // Import the pipeline function from the jsDelivr CDN
     import { pipeline } from 'https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.4.2';
 
     const statusDiv = document.getElementById('status');
-    let tts;
+    let ttsPipeline;
 
-    // Load the TTS model (this downloads the model files from Hugging Face on first load)
-    async function loadModel() {
-      try {
-        statusDiv.textContent = 'Loading TTS model...';
-        // The pipeline below uses the 'Xenova/mms-tts-eng' model.
-        tts = await pipeline('text-to-speech', 'Xenova/mms-tts-eng', { quantized: false });
-        statusDiv.textContent = 'Model loaded! Enter text and click Speak.';
-      } catch (err) {
-        statusDiv.textContent = 'Error loading model: ' + err.message;
-        console.error(err);
-      }
-    }
+    // Top-level await loads the model (make sure you're using a modern browser)
+    ttsPipeline = await pipeline('text-to-speech', 'Xenova/mms-tts-eng', { quantized: false });
+    statusDiv.textContent = 'Model loaded! Enter text and click Speak.';
 
-    loadModel();
-
-    // When the user clicks the Speak button, generate and play speech.
-    document.getElementById('speakBtn').onclick = async () => {
-      if (!tts) return;
-      const text = document.getElementById('inputText').value.trim();
-      if (!text) {
+    // When the user clicks the Speak button...
+    document.getElementById('speakBtn').addEventListener('click', async () => {
+      const inputText = document.getElementById('inputText').value.trim();
+      if (!inputText) {
         statusDiv.textContent = 'Please enter some text.';
         return;
       }
       statusDiv.textContent = 'Generating speech...';
+
       try {
-        // Synthesize the speech; result.audio is a Float32Array, and result.sampling_rate is the sample rate.
-        const result = await tts(text);
-        // Play the audio using the Web Audio API
+        // Synthesize speech from the text. The result is expected to be an object
+        // containing a Float32Array (audio samples) and the sampling_rate.
+        const result = await ttsPipeline(inputText);
+
+        // Create an audio context and buffer to play the generated speech.
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         const audioBuffer = audioCtx.createBuffer(1, result.audio.length, result.sampling_rate);
         audioBuffer.copyToChannel(result.audio, 0);
+
         const source = audioCtx.createBufferSource();
         source.buffer = audioBuffer;
         source.connect(audioCtx.destination);
         source.start();
-        statusDiv.textContent = 'Playing audio.';
+
+        statusDiv.textContent = 'Playing audio...';
       } catch (err) {
-        statusDiv.textContent = 'Error generating speech: ' + err.message;
         console.error(err);
+        statusDiv.textContent = 'Error generating speech: ' + err.message;
       }
-    };
+    });
   </script>
 </body>
 </html>
-

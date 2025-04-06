@@ -11,11 +11,11 @@
   <p id="output"></p>
 
   <script type="module">
-    import { ChatWorkerClient } from 'https://cdn.jsdelivr.net/npm/@mlc-ai/web-llm@0.9.8/dist/index.js';
+    import { ChatWorkerClient } from 'https://cdn.jsdelivr.net/npm/@mlc-ai/web-llm/dist/index.js';
 
     async function main() {
       const client = new ChatWorkerClient();
-      await client.reload('RedPajama-INCITE-Chat-3B-v1-q4f32_1'); // Smaller model available right now
+      await client.reload('RedPajama-INCITE-Chat-3B-v1-q4f32_1'); // Ready-to-go model
 
       document.getElementById('ask').onclick = async () => {
         const inputText = document.getElementById('input').value;

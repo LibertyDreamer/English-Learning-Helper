@@ -1,123 +1,55 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Neural Network Text-to-Speech</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      margin: 20px;
-    }
-    .hidden {
-      display: none;
-    }
-    textarea {
-      width: 100%;
-      font-size: 1em;
-    }
-    button {
-      padding: 10px 20px;
-      font-size: 1em;
-      margin-top: 10px;
-    }
-    #download-status {
-      margin-top: 10px;
-      color: #555;
-    }
-  </style>
+  <meta charset="UTF-8" />
+  <title>Browser TTS Demo</title>
 </head>
 <body>
-  <h1>Neural Network Text-to-Speech</h1>
+  <h1>In-Browser Text-to-Speech Demo</h1>
+  <p>Type text and click <b>Speak</b>:</p>
+  <textarea id="textInput" rows="4" cols="60">Hello, this is a local TTS test.</textarea><br>
+  <button id="speakBtn">🔊 Speak</button>
+  <p id="status"></p>
 
-  <!-- Model selection -->
-  <div>
-    <label for="model-selection">Select TTS Model: </label>
-    <select id="model-selection">
-      <option value="VITS-4GB">VITS-4GB</option>
-      <!-- You can add more model options if available -->
-    </select>
-  </div>
-
-  <!-- Text input -->
-  <div style="margin-top:10px;">
-    <label for="input-text">Enter Text:</label><br>
-    <textarea id="input-text" rows="4" placeholder="Type your text here..."></textarea>
-  </div>
-
-  <!-- Speak button -->
-  <div>
-    <button id="speak-btn">Speak</button>
-  </div>
-
-  <!-- Status display -->
-  <div id="download-status" class="hidden"></div>
-
-  <!-- Audio output -->
-  <div style="margin-top:10px;">
-    <audio id="audio-output" controls></audio>
-  </div>
-
-  <!-- JavaScript module -->
+  <!-- Load Transformers.js from CDN -->
   <script type="module">
-    // Import the hypothetical TTS engine
-    import * as webtts from "https://esm.run/@mlc-ai/web-tts";
+    import { pipeline } from 'https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.4.2';
 
-    // Assuming the module has a similar prebuiltAppConfig structure as web-llm:
-    const availableModels = webtts.prebuiltAppConfig.model_list.map(m => m.model_id);
-    console.log("Available TTS Models:", availableModels);
+    // Prepare the text-to-speech pipeline with an English voice model
+    let tts;
+    (async () => {
+      document.getElementById('status').textContent = 'Loading TTS model (please wait)...';
+      // Load the TTS pipeline (uses ONNX model, will download on first load)
+      tts = await pipeline('text-to-speech', 'Xenova/mms-tts-eng', { quantized: false });
+      document.getElementById('status').textContent = 'Model loaded. Ready!';
+    })();
 
-    // Set the default model from the dropdown
-    let selectedModel = document.getElementById("model-selection").value;
-
-    // Create the TTS engine instance (hypothetical MLCTTSEngine)
-    const engine = new webtts.MLCTTSEngine();
-
-    // Set a callback to report download/initialization progress
-    engine.setInitProgressCallback(report => {
-      console.log("Initialization progress:", report.progress);
-      const status = document.getElementById("download-status");
-      status.textContent = report.text;
-      status.classList.remove("hidden");
-    });
-
-    // Function to initialize the TTS engine
-    async function initializeEngine() {
-      selectedModel = document.getElementById("model-selection").value;
-      await engine.initialize(selectedModel);
-      document.getElementById("download-status").classList.add("hidden");
-      console.log("Engine initialized with model:", selectedModel);
-    }
-
-    // Initialize engine on page load
-    initializeEngine();
-
-    // Function to synthesize speech from text
-    async function generateSpeech(text) {
+    // Click handler for the Speak button
+    document.getElementById('speakBtn').onclick = async () => {
+      if (!tts) return;
+      const text = document.getElementById('textInput').value.trim();
+      if (!text) return;
+      document.getElementById('status').textContent = 'Generating speech...';
       try {
-        // Synthesize returns an ArrayBuffer of audio data (e.g., WAV)
-        const audioBuffer = await engine.synthesize(text);
-        // Convert the ArrayBuffer into a Blob and create an object URL for the audio element
-        const blob = new Blob([audioBuffer], { type: "audio/wav" });
-        const url = URL.createObjectURL(blob);
-        const audioElement = document.getElementById("audio-output");
-        audioElement.src = url;
-        audioElement.play();
-      } catch (error) {
-        console.error("Error during synthesis:", error);
+        // Synthesize speech from text
+        const result = await tts(text);
+        // result.audio is a Float32Array of PCM audio, result.sampling_rate is the sample rate (16000 Hz for this model)
+        const audioData = result.audio;
+        const sampleRate = result.sampling_rate;
+        // Play the audio using Web Audio API
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        const audioBuffer = audioCtx.createBuffer(1, audioData.length, sampleRate);
+        audioBuffer.getChannelData(0).set(audioData);
+        const source = audioCtx.createBufferSource();
+        source.buffer = audioBuffer;
+        source.connect(audioCtx.destination);
+        source.start();
+        document.getElementById('status').textContent = '✅ Playback success.';
+      } catch (err) {
+        console.error(err);
+        document.getElementById('status').textContent = '❌ Error: ' + err.message;
       }
-    }
-
-    // When the user clicks the Speak button, generate the speech
-    document.getElementById("speak-btn").addEventListener("click", async () => {
-      const text = document.getElementById("input-text").value;
-      if (text.trim() === "") {
-        alert("Please enter some text!");
-        return;
-      }
-      // Reinitialize the engine if needed (e.g., if model selection changed)
-      await initializeEngine();
-      generateSpeech(text);
-    });
+    };
   </script>
 </body>
 </html>

@@ -38,7 +38,7 @@
     const statusDiv = document.getElementById('status');
 
     // Top-level await loads the model (make sure you're using a modern browser)
-    const pipe = await pipeline('text-to-speech', 'Xenova/mms-tts-eng');
+    //const pipe = await pipeline('text-to-speech', 'Xenova/mms-tts-eng');
     statusDiv.textContent = 'Model loaded! Enter text and click Speak.';
 
     // When the user clicks the Speak button...
@@ -53,7 +53,7 @@
       try {
         // Synthesize speech from the text. The result is expected to be an object
         // containing a Float32Array (audio samples) and the sampling_rate.
-        const result = await pipe(inputText);
+        const result = 'Hello'//await pipe(inputText);
 
         // Create an audio context and buffer to play the generated speech.
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();

@@ -1,238 +1,104 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <title>Chatbot + Neural TTS</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <style>
-    body, html {
-      font-family: Arial, sans-serif;
-      padding: 10px 20px;
-    }
-    .download-container {
-      display: flex;
-      justify-content: space-between;
-      margin-bottom: 20px;
-    }
-    #download-status {
-      border: solid 1px black;
-      box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-      padding: 10px;
-    }
-    .chat-container {
-      height: 400px;
-      width: 100%;
-      border: 2px solid black;
-      display: flex;
-      flex-direction: column;
-    }
-    .chat-box {
-      overflow-y: scroll;
-      background-color: #c3c3c3;
-      border: 1px solid #ccc;
-      padding: 5px;
-      flex: 1 1;
-    }
-    .chat-stats {
-      background-color: #d3eceb;
-      flex: 0 0;
-      padding: 10px;
-      font-size: 0.75rem;
-    }
-    .message-container {
-      width: 100%;
-      display: flex;
-    }
-    .message {
-      padding: 10px;
-      margin: 10px 0;
-      border-radius: 10px;
-      width: fit-content;
-    }
-    .message-container.user {
-      justify-content: end;
-    }
-    .message-container.assistant {
-      justify-content: start;
-    }
-    .message-container.user .message {
-      background: #007bff;
-      color: #fff;
-    }
-    .message-container.assistant .message {
-      background: #f1f0f0;
-      color: #333;
-    }
-    .chat-input-container {
-      min-height: 40px;
-      flex: 0 0;
-      display: flex;
-    }
-    #user-input {
-      width: 70%;
-      padding: 10px;
-      border: 1px solid #ccc;
-    }
-    button {
-      width: 25%;
-      padding: 10px;
-      border: none;
-      background-color: #007bff;
-      color: white;
-      cursor: pointer;
-    }
-    button:disabled {
-      background-color: lightgray;
-      cursor: not-allowed;
-    }
-    button:hover:not(:disabled) {
-      background-color: #0056b3;
-    }
-    .hidden {
-      display: none;
-    }
-  </style>
-</head>
-
-<body>
-  <p>Step 1: Initialize WebLLM and Download Model</p>
-  <div class="download-container">
-    <select id="model-selection"></select>
-    <button id="download">Download</button>
-  </div>
-  <p id="download-status" class="hidden"></p>
-
-  <p>Step 2: Chat</p>
-  <div class="chat-container">
-    <div id="chat-box" class="chat-box"></div>
-    <div id="chat-stats" class="chat-stats hidden"></div>
-    <div class="chat-input-container">
-      <input type="text" id="user-input" placeholder="Type a message..." />
-      <button id="send" disabled>Send</button>
-    </div>
-  </div>
-
-  <script type="module">
-    import * as webllm from "https://esm.run/@mlc-ai/web-llm";
-    import { TTS } from "https://cdn.jsdelivr.net/gh/coqui-ai/TTS@main/js/lib/tts.min.js";
-
-    /*************** WebLLM Chatbot ***************/
-    const messages = [
-      { role: "system", content: "You are a helpful AI agent helping users." }
-    ];
-    const availableModels = webllm.prebuiltAppConfig.model_list.map(m => m.model_id);
-    let selectedModel = "Llama-3-8B-Instruct-q4f32_1-MLC";
-
-    const engine = new webllm.MLCEngine();
-    engine.setInitProgressCallback(report => {
-      console.log("initialize", report.progress);
-      document.getElementById("download-status").textContent = report.text;
-    });
-
-    async function initializeWebLLMEngine() {
-      document.getElementById("download-status").classList.remove("hidden");
-      selectedModel = document.getElementById("model-selection").value;
-      await engine.reload(selectedModel, { temperature: 1.0, top_p: 1 });
-      document.getElementById("send").disabled = false;
-    }
-
-    async function streamingGenerating(messages, onUpdate, onFinish, onError) {
-      try {
-        let curMessage = "";
-        let usage;
-        const completion = await engine.chat.completions.create({
-          stream: true,
-          messages,
-          stream_options: { include_usage: true },
-        });
-        for await (const chunk of completion) {
-          const curDelta = chunk.choices[0]?.delta.content;
-          if (curDelta) {
-            curMessage += curDelta;
-          }
-          if (chunk.usage) {
-            usage = chunk.usage;
-          }
-          onUpdate(curMessage);
-        }
-        const finalMessage = await engine.getMessage();
-        onFinish(finalMessage, usage);
-      } catch (err) {
-        onError(err);
+  <head>
+    <meta charset="UTF-8" />
+    <title>Neural TTS Demo</title>
+    <style>
+      .hidden {
+        display: none;
       }
-    }
+      body {
+        font-family: Arial, sans-serif;
+        margin: 2rem;
+      }
+      textarea {
+        width: 100%;
+        max-width: 500px;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Neural Network Text-to-Speech</h1>
+    <p id="download-status" class="hidden"></p>
 
-    function onMessageSend() {
-      const input = document.getElementById("user-input").value.trim();
-      if (input.length === 0) return;
+    <!-- Select a model (if multiple models are available) -->
+    <label for="model-selection">Choose TTS model:</label>
+    <select id="model-selection">
+      <option value="TTS-Model-1">TTS-Model-1</option>
+      <option value="TTS-Model-2">TTS-Model-2</option>
+    </select>
+    <br /><br />
 
-      const userMessage = { role: "user", content: input };
-      messages.push(userMessage);
-      appendMessage(userMessage);
+    <!-- Input text for synthesis -->
+    <textarea id="input-text" placeholder="Type text to synthesize..." rows="4"></textarea>
+    <br /><br />
 
-      document.getElementById("send").disabled = true;
-      document.getElementById("user-input").value = "";
-      document.getElementById("user-input").setAttribute("placeholder", "Generating...");
+    <!-- Button to start text-to-speech -->
+    <button id="speak-btn">Speak</button>
 
-      const aiMessage = { role: "assistant", content: "typing..." };
-      appendMessage(aiMessage);
+    <!-- Module script that loads the neural TTS engine -->
+    <script type="module">
+      // Import our hypothetical text-to-speech module
+      import * as webtts from "https://esm.run/@mlc-ai/web-tts";
 
-      streamingGenerating(
-        messages,
-        updateLastMessage,
-        (finalMessage, usage) => {
-          updateLastMessage(finalMessage);
-          tts.speak(finalMessage.content);  // 🔥 Speak with neural TTS here
-          document.getElementById("send").disabled = false;
-          document.getElementById("chat-stats").classList.remove("hidden");
-          document.getElementById("chat-stats").textContent =
-            `prompt_tokens: ${usage.prompt_tokens}, ` +
-            `completion_tokens: ${usage.completion_tokens}, ` +
-            `prefill: ${usage.extra.prefill_tokens_per_s.toFixed(4)} tokens/sec, ` +
-            `decoding: ${usage.extra.decode_tokens_per_s.toFixed(4)} tokens/sec`;
-        },
-        console.error
-      );
-    }
+      // Get DOM elements
+      const downloadStatusEl = document.getElementById("download-status");
+      const modelSelectionEl = document.getElementById("model-selection");
+      const inputTextEl = document.getElementById("input-text");
+      const speakBtn = document.getElementById("speak-btn");
 
-    function appendMessage(message) {
-      const chatBox = document.getElementById("chat-box");
-      const container = document.createElement("div");
-      container.classList.add("message-container");
-      const newMessage = document.createElement("div");
-      newMessage.classList.add("message");
-      newMessage.textContent = message.content;
+      // Set default model from the select element
+      let selectedModel = modelSelectionEl.value;
 
-      if (message.role === "user") {
-        container.classList.add("user");
-      } else {
-        container.classList.add("assistant");
+      // Create the TTS engine instance
+      const engine = new webtts.TTSEngine();
+
+      // Provide progress updates during initialization (model downloading, etc.)
+      engine.setInitProgressCallback(report => {
+          console.log("Initialization progress:", report.progress);
+          downloadStatusEl.textContent = report.text;
+      });
+
+      // Initialize the engine and load the selected model
+      async function initializeEngine() {
+          downloadStatusEl.classList.remove("hidden");
+          selectedModel = modelSelectionEl.value;
+          // Load the chosen model; this could download and initialize the neural network locally
+          await engine.loadModel(selectedModel);
+          downloadStatusEl.classList.add("hidden");
       }
 
-      container.appendChild(newMessage);
-      chatBox.appendChild(container);
-      chatBox.scrollTop = chatBox.scrollHeight;
-    }
+      // When the model selection changes, reinitialize the engine
+      modelSelectionEl.addEventListener("change", async () => {
+          selectedModel = modelSelectionEl.value;
+          await initializeEngine();
+      });
 
-    function updateLastMessage(content) {
-      const messageDoms = document.getElementById("chat-box").querySelectorAll(".message");
-      const lastMessageDom = messageDoms[messageDoms.length - 1];
-      lastMessageDom.textContent = content;
-    }
+      // Handle button click to synthesize text
+      speakBtn.addEventListener("click", async () => {
+          const text = inputTextEl.value.trim();
+          if (!text) {
+              alert("Please enter some text.");
+              return;
+          }
+          try {
+              // Synthesize speech and receive an ArrayBuffer containing the audio data (e.g., in WAV format)
+              const audioData = await engine.synthesize(text);
+              // Play the audio using the Web Audio API
+              const audioCtx = new AudioContext();
+              // decodeAudioData returns a promise in modern browsers
+              const audioBuffer = await audioCtx.decodeAudioData(audioData);
+              const source = audioCtx.createBufferSource();
+              source.buffer = audioBuffer;
+              source.connect(audioCtx.destination);
+              source.start();
+          } catch (error) {
+              console.error("Error during synthesis:", error);
+          }
+      });
 
-    availableModels.forEach((modelId) => {
-      const option = document.createElement("option");
-      option.value = modelId;
-      option.textContent = modelId;
-      document.getElementById("model-selection").appendChild(option);
-    });
-    document.getElementById("model-selection").value = selectedModel;
-    document.getElementById("download").addEventListener("click", initializeWebLLMEngine);
-    document.getElementById("send").addEventListener("click", onMessageSend);
-
-    /*************** Neural TTS ***************/
-    const tts = new TTS();
-    await tts.init();  // Load TTS model at startup
-  </script>
-</body>
+      // Initialize the TTS engine on page load
+      initializeEngine();
+    </script>
+  </body>
 </html>

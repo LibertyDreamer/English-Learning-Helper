@@ -11,11 +11,11 @@
   <p id="output"></p>
 
   <script type="module">
-    import { CreateMLCEngine } from 'https://esm.run/@mlc-ai/web-llm@0.2.78';
+    import * as webllm from "https://esm.run/@mlc-ai/web-llm";
 
     async function main() {
       // Use a supported model identifier
-      const selectedModel = 'phi-2-q4f16_1';
+      const selectedModel = "Llama-3.1-8B-Instruct-q4f32_1-MLC";
 
       // Initialize the engine with a progress callback
       const engine = await CreateMLCEngine(selectedModel, {

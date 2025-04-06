@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Neural Network Text-to-Speech</title>
+  <title>Neural TTS AI Demo (WebGPU)</title>
   <style>
     body {
       font-family: sans-serif;
@@ -52,11 +52,6 @@
     button:hover {
       background: #1a66cf;
     }
-    select {
-      padding: 8px;
-      margin-bottom: 20px;
-      font-size: 1em;
-    }
     .center {
       text-align: center;
     }
@@ -64,91 +59,94 @@
 </head>
 <body>
   <div class="container">
-    <h1>Neural Network Text-to-Speech</h1>
-    <div id="status" class="center">Initializing engine...</div>
-    
-    <div class="center">
-      <label for="model-select">Select TTS Model:</label>
-      <select id="model-select">
-        <option value="TTS-Model-1">TTS-Model-1</option>
-        <option value="TTS-Model-2">TTS-Model-2</option>
-      </select>
-    </div>
-    
+    <h1>Neural TTS AI Demo (WebGPU)</h1>
+    <div id="status" class="center">Loading TTS model using WebGPU backend...</div>
     <textarea id="text-input" placeholder="Enter text to speak..."></textarea>
-    
     <div class="center">
       <button id="speak-button">Speak</button>
     </div>
   </div>
 
-  <script type="module">
-    // Import the hypothetical neural TTS module.
-    import * as webtts from "https://esm.run/@mlc-ai/web-tts";
+  <!-- Include ONNX Runtime Web from CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/onnxruntime-web/dist/ort.min.js"></script>
+  <script>
+    // URL to your ONNX TTS model.
+    // Replace this with the actual URL where your model is hosted.
+    const modelUrl = 'model.onnx';
 
-    // Get UI elements.
-    const statusEl = document.getElementById("status");
-    const modelSelect = document.getElementById("model-select");
-    const textInput = document.getElementById("text-input");
-    const speakButton = document.getElementById("speak-button");
+    let session;
+    const statusEl = document.getElementById('status');
+    const speakButton = document.getElementById('speak-button');
+    const textInput = document.getElementById('text-input');
 
-    // Set the default model.
-    let selectedModel = modelSelect.value;
-
-    // Create a TTS engine instance.
-    const engine = new webtts.TTSEngine();
-
-    // Update status during initialization.
-    engine.setInitProgressCallback(report => {
-      console.log("Initialization progress:", report.progress);
-      statusEl.textContent = report.text;
-    });
-
-    // Initialize the engine and load the selected model.
-    async function initializeEngine() {
-      statusEl.textContent = "Initializing engine...";
-      selectedModel = modelSelect.value;
+    // Initialize the ONNX Runtime Web session, using WebGPU if available.
+    async function initTTS() {
       try {
-        await engine.loadModel(selectedModel);
-        statusEl.textContent = "Engine initialized. Ready to speak!";
-      } catch (err) {
-        console.error("Error initializing engine:", err);
-        statusEl.textContent = "Error initializing engine.";
+        // Attempt to use the WebGPU execution provider.
+        session = await ort.InferenceSession.create(modelUrl, { executionProviders: ['webgpu'] });
+        statusEl.textContent = 'TTS model loaded using WebGPU. Enter text and click Speak.';
+      } catch (e) {
+        console.error('Failed to load TTS model with WebGPU:', e);
+        statusEl.textContent = 'WebGPU not available. Loading TTS model using CPU backend...';
+        // Fallback to the default CPU backend.
+        session = await ort.InferenceSession.create(modelUrl);
+        statusEl.textContent = 'TTS model loaded using CPU. Enter text and click Speak.';
       }
     }
 
-    // Reinitialize engine when model selection changes.
-    modelSelect.addEventListener("change", async () => {
-      selectedModel = modelSelect.value;
-      await initializeEngine();
-    });
+    // Dummy tokenizer: converts text into an array of char codes.
+    // Replace this with a proper tokenizer for your model.
+    function tokenize(text) {
+      return new Int32Array(text.split('').map(ch => ch.charCodeAt(0)));
+    }
+
+    // Synthesize speech using the ONNX model.
+    // Assumes:
+    //  - The model accepts an input tensor named 'input_ids' with shape [1, sequence_length]
+    //  - The model outputs a tensor named 'audio' containing audio samples as a Float32Array.
+    async function synthesize(text) {
+      const tokens = tokenize(text);
+      const inputTensor = new ort.Tensor('int32', tokens, [1, tokens.length]);
+      const feeds = { 'input_ids': inputTensor };
+      const results = await session.run(feeds);
+      const audioData = results.audio.data; // Expected output: Float32Array of audio samples.
+      return audioData;
+    }
+
+    // Play the audio samples using the Web Audio API.
+    async function playAudio(audioData) {
+      const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      // Set the sample rate to match your model's output (example: 22050 Hz)
+      const sampleRate = 22050;
+      const audioBuffer = audioCtx.createBuffer(1, audioData.length, sampleRate);
+      audioBuffer.copyToChannel(audioData, 0);
+      const source = audioCtx.createBufferSource();
+      source.buffer = audioBuffer;
+      source.connect(audioCtx.destination);
+      source.start();
+    }
 
     // Handle the Speak button click.
-    speakButton.addEventListener("click", async () => {
+    speakButton.addEventListener('click', async () => {
       const text = textInput.value.trim();
       if (!text) {
-        alert("Please enter some text.");
+        alert('Please enter some text.');
         return;
       }
+      statusEl.textContent = 'Synthesizing speech...';
       try {
-        // Synthesize speech and get audio data (ArrayBuffer format is assumed).
-        const audioData = await engine.synthesize(text);
-        
-        // Play the audio using the Web Audio API.
-        const audioCtx = new AudioContext();
-        const audioBuffer = await audioCtx.decodeAudioData(audioData);
-        const source = audioCtx.createBufferSource();
-        source.buffer = audioBuffer;
-        source.connect(audioCtx.destination);
-        source.start();
-      } catch (error) {
-        console.error("Error synthesizing speech:", error);
-        statusEl.textContent = "Error synthesizing speech.";
+        const audioData = await synthesize(text);
+        statusEl.textContent = 'Playing audio...';
+        await playAudio(audioData);
+        statusEl.textContent = 'Done.';
+      } catch (e) {
+        console.error('Error synthesizing speech:', e);
+        statusEl.textContent = 'Error synthesizing speech.';
       }
     });
 
-    // Initialize the TTS engine on page load.
-    initializeEngine();
+    // Initialize the TTS system on page load.
+    initTTS();
   </script>
 </body>
 </html>

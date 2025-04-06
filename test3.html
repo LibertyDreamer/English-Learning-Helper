@@ -14,7 +14,8 @@
     import { CreateMLCEngine } from 'https://esm.run/@mlc-ai/web-llm@0.2.78';
 
     async function main() {
-      const engine = await CreateMLCEngine('phi-2-q4f16_1');  // ✅ real available model!
+      // Load a real working model!
+      const engine = await CreateMLCEngine('phi-2-q4f16_1');
 
       document.getElementById('ask').onclick = async () => {
         const inputText = document.getElementById('input').value;
@@ -22,9 +23,11 @@
 
         outputEl.innerText = "Thinking...";
 
+        // Custom smart prompt
         const prompt = `Explain the word "${inputText}" simply like a friendly English teacher. Provide a definition and an easy example sentence.`;
+
         const messages = [
-          { role: "system", content: "You are a helpful AI assistant." },
+          { role: "system", content: "You are a helpful AI assistant who explains English words clearly." },
           { role: "user", content: prompt },
         ];
 

@@ -11,24 +11,25 @@
   <p id="output"></p>
 
   <script type="module">
-    import { ChatWorkerClient } from 'https://cdn.jsdelivr.net/npm/@mlc-ai/web-llm/dist/index.js';
+    import { CreateMLCEngine } from 'https://esm.run/@mlc-ai/web-llm@0.2.78';
 
     async function main() {
-      const client = new ChatWorkerClient();
-      await client.reload('RedPajama-INCITE-Chat-3B-v1-q4f32_1'); // Ready-to-go model
+      const engine = await CreateMLCEngine('RedPajama-INCITE-Chat-3B-v1-q4f32_1');
 
       document.getElementById('ask').onclick = async () => {
         const inputText = document.getElementById('input').value;
         const outputEl = document.getElementById('output');
-        
+
         outputEl.innerText = "Thinking...";
-        
-        const prompt = `Explain the word "${inputText}" simply like a friendly English teacher. Give a definition and an easy example sentence.`;
-        await client.chat.completion(inputText => {
-          outputEl.innerText = inputText;
-        }, [
-          { role: 'user', content: prompt }
-        ]);
+
+        const prompt = `Explain the word "${inputText}" simply like a friendly English teacher. Provide a definition and an easy example sentence.`;
+        const messages = [
+          { role: "system", content: "You are a helpful AI assistant." },
+          { role: "user", content: prompt },
+        ];
+
+        const reply = await engine.chat.completions.create({ messages });
+        outputEl.innerText = reply.choices[0].message.content;
       };
     }
 

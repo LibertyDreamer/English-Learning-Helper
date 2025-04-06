@@ -11,35 +11,34 @@
   <p id="output"></p>
 
   <script type="module">
-    import * as webllm from "@mlc-ai/web-llm";
+    import { CreateMLCEngine } from 'https://esm.run/@mlc-ai/web-llm@0.2.78';
 
     async function main() {
-      // Load a real working model!
-      import { CreateMLCEngine } from "@mlc-ai/web-llm";
+      // Use a supported model identifier
+      const selectedModel = 'phi-2-q4f16_1';
 
-// Callback function to update model loading progress
-const initProgressCallback = (initProgress) => {
-  console.log(initProgress);
-}
-const selectedModel = "Llama-3.1-8B-Instruct-q4f32_1-MLC";
+      // Initialize the engine with a progress callback
+      const engine = await CreateMLCEngine(selectedModel, {
+        initProgressCallback: (progress) => {
+          console.log('Model loading progress:', progress);
+        },
+      });
 
-const engine = await CreateMLCEngine(
-  selectedModel,
-  { initProgressCallback: initProgressCallback }, // engineConfig
-);
+      // Ensure the model is properly initialized
+      await engine.reload(selectedModel);
 
       document.getElementById('ask').onclick = async () => {
         const inputText = document.getElementById('input').value;
         const outputEl = document.getElementById('output');
 
-        outputEl.innerText = "Thinking...";
+        outputEl.innerText = 'Thinking...';
 
-        // Custom smart prompt
+        // Custom prompt for explanation
         const prompt = `Explain the word "${inputText}" simply like a friendly English teacher. Provide a definition and an easy example sentence.`;
 
         const messages = [
-          { role: "system", content: "You are a helpful AI assistant who explains English words clearly." },
-          { role: "user", content: prompt },
+          { role: 'system', content: 'You are a helpful AI assistant who explains English words clearly.' },
+          { role: 'user', content: prompt },
         ];
 
         const reply = await engine.chat.completions.create({ messages });

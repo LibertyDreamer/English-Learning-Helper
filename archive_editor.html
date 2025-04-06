@@ -13,7 +13,7 @@
 <body>
   <h1>Video & SRT Archive Manager</h1>
 
-  <!-- Archive Section: One button to either load an existing archive or create a new one -->
+  <!-- Archive Section -->
   <section id="archive-management">
     <h2>Open Archive</h2>
     <p>Choose an archive ZIP file (or leave empty to create a new archive):</p>
@@ -41,13 +41,13 @@
     <button id="generateArchiveButton">Generate Archive</button>
   </section>
 
-  <!-- Include external libraries: JSZip and Ace Editor -->
+  <!-- External Libraries: JSZip and Ace Editor -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.4.14/ace.js"></script>
   <script>
     // Global variables
-    let archive = {};          // Archive JSON: { word: { examples: [{text, video, start, end, rating, ignored}, ...], rating: <summary>, ignored: <summary> } }
-    let storedFiles = {};      // Stored files: { filename: Blob } for video/SRT files
+    let archive = {};  // Archive JSON: { word: { examples: [{text, video, start, end, rating, ignored}, ...], rating: <summary>, ignored: <summary> } }
+    let storedFiles = {};  // Stored files: { filename: Blob }
 
     // Initialize Ace Editor for JSON editing
     let editor = ace.edit("jsonEditor");
@@ -55,7 +55,6 @@
     editor.setTheme("ace/theme/github");
     editor.setValue(JSON.stringify(archive, null, 2), -1);
 
-    // Update the Ace Editor with the current archive JSON.
     function updateEditor() {
       editor.setValue(JSON.stringify(archive, null, 2), -1);
     }
@@ -85,7 +84,7 @@
       );
     }
 
-    // Recalculate the summary rating and ignored for a given word.
+    // Recalculate summary rating and ignored flag for a given word.
     function recalcWordSummary(wordKey) {
       const ex = archive[wordKey].examples;
       if (ex.length === 0) {
@@ -94,18 +93,17 @@
       } else {
         const sum = ex.reduce((acc, cur) => acc + (cur.rating || 0), 0);
         archive[wordKey].rating = sum / ex.length;
-        // Summary "ignored": true only if every example is ignored.
         archive[wordKey].ignored = ex.every(cur => cur.ignored);
       }
     }
 
-    // Parse the SRT file into subtitle blocks—ignoring the index and time lines.
+    // Parse the SRT file into subtitle blocks.
     function parseSRT(srtText) {
       const blocks = srtText.trim().split(/\r?\n\r?\n/);
       let subtitles = [];
       blocks.forEach(block => {
         const lines = block.split(/\r?\n/);
-        if (lines.length < 3) return; // Must have at least index, time, and text
+        if (lines.length < 3) return; // Must have index, time, and text.
         const timeMatch = lines[1].match(/(\d{2}:\d{2}:\d{2},\d{3})\s*-->\s*(\d{2}:\d{2}:\d{2},\d{3})/);
         if (!timeMatch) return;
         const start = toSeconds(timeMatch[1]);
@@ -122,49 +120,72 @@
       return (+parts[0]) * 3600 + (+parts[1]) * 60 + (+parts[2]) + (+parts[3]) / 1000;
     }
 
-    // Update the archive JSON using the subtitle data and video file name.
-    // For each subtitle, add its full text as an example for every word it contains.
-    function updateArchiveWithSubtitles(subtitles, videoFileName) {
-  subtitles.forEach(sub => {
-    const fullPhrase = sub.text.trim();
-    // Split the subtitle text into sentences ending with ., ? or !
-    let sentences = fullPhrase.match(/[^.!?]+[.!?]+/g);
-    // If no sentence boundaries are found, use the entire text.
-    if (!sentences) {
-      sentences = [fullPhrase];
-    }
-    sentences.forEach(sentence => {
-      const sentenceText = sentence.trim();
-      if (sentenceText) {
-        const exampleObj = {
-          text: sentenceText,
-          video: videoFileName,
-          start: sub.start,
-          end: sub.end,
-          rating: 0,
-          ignored: false
-        };
-        // Extract individual words from the sentence for indexing.
-        const words = sentenceText.toLowerCase().match(/\b\w+\b/g);
-        if (words) {
-          const uniqueWords = Array.from(new Set(words));
-          uniqueWords.forEach(word => {
-            if (!archive[word]) {
-              archive[word] = { examples: [], rating: 0, ignored: false };
-            }
-            if (!exampleExists(archive[word].examples, exampleObj)) {
-              archive[word].examples.push(exampleObj);
-              recalcWordSummary(word);
-            }
-          });
+    // --- NEW: Merge consecutive subtitle blocks if the current one doesn't end with punctuation.
+    function mergeSubtitles(subtitles) {
+      let merged = [];
+      let current = null;
+      subtitles.forEach(sub => {
+        if (!current) {
+          current = { ...sub };
+        } else {
+          // If current text doesn't end with . or ? or !, merge with next.
+          if (!/[.!?]\s*$/.test(current.text)) {
+            current.text += " " + sub.text.trim();
+            current.end = sub.end;  // Update end time.
+          } else {
+            merged.push(current);
+            current = { ...sub };
+          }
         }
+      });
+      if (current) {
+        merged.push(current);
       }
-    });
-  });
-}
+      return merged;
+    }
 
+    // Update the archive JSON using the subtitle data and video file name.
+    // For each merged subtitle, split into complete sentences if possible.
+    function updateArchiveWithSubtitles(subtitles, videoFileName) {
+      subtitles.forEach(sub => {
+        const mergedText = sub.text.trim();
+        // Try splitting into sentences ending with ., ? or !
+        let sentences = mergedText.match(/[^.!?]+[.!?]+/g);
+        // If no complete sentence is detected, use the entire merged text.
+        if (!sentences) {
+          sentences = [mergedText];
+        }
+        sentences.forEach(sentence => {
+          const sentenceText = sentence.trim();
+          if (sentenceText) {
+            const exampleObj = {
+              text: sentenceText,
+              video: videoFileName,
+              start: sub.start,
+              end: sub.end,
+              rating: 0,
+              ignored: false
+            };
+            // Index the example by individual words.
+            const words = sentenceText.toLowerCase().match(/\b\w+\b/g);
+            if (words) {
+              const uniqueWords = Array.from(new Set(words));
+              uniqueWords.forEach(word => {
+                if (!archive[word]) {
+                  archive[word] = { examples: [], rating: 0, ignored: false };
+                }
+                if (!exampleExists(archive[word].examples, exampleObj)) {
+                  archive[word].examples.push(exampleObj);
+                  recalcWordSummary(word);
+                }
+              });
+            }
+          }
+        });
+      });
+    }
 
-    // Open Archive button: if a file is chosen, load it; otherwise, create a new archive.
+    // Open Archive button: load an existing archive or create a new one.
     document.getElementById('openArchiveButton').addEventListener('click', () => {
       const fileInput = document.getElementById('archiveInput');
       if (fileInput.files.length > 0) {
@@ -201,7 +222,6 @@
           });
         });
       } else {
-        // No file chosen—create a new archive.
         archive = {};
         storedFiles = {};
         updateEditor();
@@ -222,7 +242,9 @@
       const reader = new FileReader();
       reader.onload = function(e) {
         const srtText = e.target.result;
-        const subtitles = parseSRT(srtText);
+        let subtitles = parseSRT(srtText);
+        // Merge consecutive subtitles that seem to be parts of the same phrase.
+        subtitles = mergeSubtitles(subtitles);
         updateArchiveWithSubtitles(subtitles, videoFile.name);
         storedFiles[videoFile.name] = videoFile;
         storedFiles[srtFile.name] = srtFile;
@@ -232,7 +254,7 @@
       reader.readAsText(srtFile);
     });
 
-    // Generate and automatically trigger the download of the ZIP archive.
+    // Generate and trigger the download of the ZIP archive.
     function generateZipArchive() {
       const zip = new JSZip();
       Object.keys(storedFiles).forEach(filename => {

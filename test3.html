@@ -14,7 +14,7 @@
     import { CreateMLCEngine } from 'https://esm.run/@mlc-ai/web-llm@0.2.78';
 
     async function main() {
-      const engine = await CreateMLCEngine('RedPajama-INCITE-Chat-3B-v1-q4f32_1');
+      const engine = await CreateMLCEngine('phi-2-q4f16_1');  // ✅ real available model!
 
       document.getElementById('ask').onclick = async () => {
         const inputText = document.getElementById('input').value;

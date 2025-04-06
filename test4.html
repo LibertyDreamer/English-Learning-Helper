@@ -33,13 +33,12 @@
   <!-- Import Transformers.js from jsDelivr -->
   <script type="module">
     // Import the pipeline function from the jsDelivr CDN
-    // import { pipeline } from 'https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.4.2';
+    import { pipeline } from 'https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.4.2';
 
     const statusDiv = document.getElementById('status');
-    let ttsPipeline;
 
     // Top-level await loads the model (make sure you're using a modern browser)
-    ttsPipeline = await pipeline('text-to-speech', 'Xenova/mms-tts-eng', { quantized: false });
+    const pipe = await pipeline('text-to-speech', 'Xenova/mms-tts-eng');
     statusDiv.textContent = 'Model loaded! Enter text and click Speak.';
 
     // When the user clicks the Speak button...
@@ -54,7 +53,7 @@
       try {
         // Synthesize speech from the text. The result is expected to be an object
         // containing a Float32Array (audio samples) and the sampling_rate.
-        const result = await ttsPipeline(inputText);
+        const result = await pipe(inputText);
 
         // Create an audio context and buffer to play the generated speech.
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();

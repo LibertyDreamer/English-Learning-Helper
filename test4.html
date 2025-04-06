@@ -1,104 +1,154 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <title>Neural TTS Demo</title>
-    <style>
-      .hidden {
-        display: none;
-      }
-      body {
-        font-family: Arial, sans-serif;
-        margin: 2rem;
-      }
-      textarea {
-        width: 100%;
-        max-width: 500px;
-      }
-    </style>
-  </head>
-  <body>
+<head>
+  <meta charset="UTF-8">
+  <title>Neural Network Text-to-Speech</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      margin: 0;
+      padding: 0;
+      background: #f0f2f5;
+    }
+    .container {
+      max-width: 720px;
+      margin: 40px auto;
+      background: #fff;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+    h1 {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+    #status {
+      text-align: center;
+      margin-bottom: 20px;
+      color: #555;
+    }
+    textarea {
+      width: 100%;
+      max-width: 600px;
+      height: 100px;
+      display: block;
+      margin: 0 auto 20px auto;
+      padding: 10px;
+      font-size: 1em;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+    }
+    button {
+      display: inline-block;
+      padding: 10px 20px;
+      background: #2b7ceb;
+      color: #fff;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 1em;
+      transition: background 0.2s;
+    }
+    button:hover {
+      background: #1a66cf;
+    }
+    select {
+      padding: 8px;
+      margin-bottom: 20px;
+      font-size: 1em;
+    }
+    .center {
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
     <h1>Neural Network Text-to-Speech</h1>
-    <p id="download-status" class="hidden"></p>
+    <div id="status" class="center">Initializing engine...</div>
+    
+    <div class="center">
+      <label for="model-select">Select TTS Model:</label>
+      <select id="model-select">
+        <option value="TTS-Model-1">TTS-Model-1</option>
+        <option value="TTS-Model-2">TTS-Model-2</option>
+      </select>
+    </div>
+    
+    <textarea id="text-input" placeholder="Enter text to speak..."></textarea>
+    
+    <div class="center">
+      <button id="speak-button">Speak</button>
+    </div>
+  </div>
 
-    <!-- Select a model (if multiple models are available) -->
-    <label for="model-selection">Choose TTS model:</label>
-    <select id="model-selection">
-      <option value="TTS-Model-1">TTS-Model-1</option>
-      <option value="TTS-Model-2">TTS-Model-2</option>
-    </select>
-    <br /><br />
+  <script type="module">
+    // Import the hypothetical neural TTS module.
+    import * as webtts from "https://esm.run/@mlc-ai/web-tts";
 
-    <!-- Input text for synthesis -->
-    <textarea id="input-text" placeholder="Type text to synthesize..." rows="4"></textarea>
-    <br /><br />
+    // Get UI elements.
+    const statusEl = document.getElementById("status");
+    const modelSelect = document.getElementById("model-select");
+    const textInput = document.getElementById("text-input");
+    const speakButton = document.getElementById("speak-button");
 
-    <!-- Button to start text-to-speech -->
-    <button id="speak-btn">Speak</button>
+    // Set the default model.
+    let selectedModel = modelSelect.value;
 
-    <!-- Module script that loads the neural TTS engine -->
-    <script type="module">
-      // Import our hypothetical text-to-speech module
-      import * as webtts from "https://esm.run/@mlc-ai/web-tts";
+    // Create a TTS engine instance.
+    const engine = new webtts.TTSEngine();
 
-      // Get DOM elements
-      const downloadStatusEl = document.getElementById("download-status");
-      const modelSelectionEl = document.getElementById("model-selection");
-      const inputTextEl = document.getElementById("input-text");
-      const speakBtn = document.getElementById("speak-btn");
+    // Update status during initialization.
+    engine.setInitProgressCallback(report => {
+      console.log("Initialization progress:", report.progress);
+      statusEl.textContent = report.text;
+    });
 
-      // Set default model from the select element
-      let selectedModel = modelSelectionEl.value;
-
-      // Create the TTS engine instance
-      const engine = new webtts.TTSEngine();
-
-      // Provide progress updates during initialization (model downloading, etc.)
-      engine.setInitProgressCallback(report => {
-          console.log("Initialization progress:", report.progress);
-          downloadStatusEl.textContent = report.text;
-      });
-
-      // Initialize the engine and load the selected model
-      async function initializeEngine() {
-          downloadStatusEl.classList.remove("hidden");
-          selectedModel = modelSelectionEl.value;
-          // Load the chosen model; this could download and initialize the neural network locally
-          await engine.loadModel(selectedModel);
-          downloadStatusEl.classList.add("hidden");
+    // Initialize the engine and load the selected model.
+    async function initializeEngine() {
+      statusEl.textContent = "Initializing engine...";
+      selectedModel = modelSelect.value;
+      try {
+        await engine.loadModel(selectedModel);
+        statusEl.textContent = "Engine initialized. Ready to speak!";
+      } catch (err) {
+        console.error("Error initializing engine:", err);
+        statusEl.textContent = "Error initializing engine.";
       }
+    }
 
-      // When the model selection changes, reinitialize the engine
-      modelSelectionEl.addEventListener("change", async () => {
-          selectedModel = modelSelectionEl.value;
-          await initializeEngine();
-      });
+    // Reinitialize engine when model selection changes.
+    modelSelect.addEventListener("change", async () => {
+      selectedModel = modelSelect.value;
+      await initializeEngine();
+    });
 
-      // Handle button click to synthesize text
-      speakBtn.addEventListener("click", async () => {
-          const text = inputTextEl.value.trim();
-          if (!text) {
-              alert("Please enter some text.");
-              return;
-          }
-          try {
-              // Synthesize speech and receive an ArrayBuffer containing the audio data (e.g., in WAV format)
-              const audioData = await engine.synthesize(text);
-              // Play the audio using the Web Audio API
-              const audioCtx = new AudioContext();
-              // decodeAudioData returns a promise in modern browsers
-              const audioBuffer = await audioCtx.decodeAudioData(audioData);
-              const source = audioCtx.createBufferSource();
-              source.buffer = audioBuffer;
-              source.connect(audioCtx.destination);
-              source.start();
-          } catch (error) {
-              console.error("Error during synthesis:", error);
-          }
-      });
+    // Handle the Speak button click.
+    speakButton.addEventListener("click", async () => {
+      const text = textInput.value.trim();
+      if (!text) {
+        alert("Please enter some text.");
+        return;
+      }
+      try {
+        // Synthesize speech and get audio data (ArrayBuffer format is assumed).
+        const audioData = await engine.synthesize(text);
+        
+        // Play the audio using the Web Audio API.
+        const audioCtx = new AudioContext();
+        const audioBuffer = await audioCtx.decodeAudioData(audioData);
+        const source = audioCtx.createBufferSource();
+        source.buffer = audioBuffer;
+        source.connect(audioCtx.destination);
+        source.start();
+      } catch (error) {
+        console.error("Error synthesizing speech:", error);
+        statusEl.textContent = "Error synthesizing speech.";
+      }
+    });
 
-      // Initialize the TTS engine on page load
-      initializeEngine();
-    </script>
-  </body>
+    // Initialize the TTS engine on page load.
+    initializeEngine();
+  </script>
+</body>
 </html>

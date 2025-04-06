@@ -18,11 +18,18 @@
       const selectedModel = "Llama-3.1-8B-Instruct-q4f32_1-MLC";
 
       // Initialize the engine with a progress callback
-      const engine = await CreateMLCEngine(selectedModel, {
-        initProgressCallback: (progress) => {
-          console.log('Model loading progress:', progress);
-        },
-      });
+     import { CreateMLCEngine } from "@mlc-ai/web-llm";
+
+// Callback function to update model loading progress
+const initProgressCallback = (initProgress) => {
+  console.log(initProgress);
+}
+const selectedModel = "Llama-3.1-8B-Instruct-q4f32_1-MLC";
+
+const engine = await CreateMLCEngine(
+  selectedModel,
+  { initProgressCallback: initProgressCallback }, // engineConfig
+);
 
       // Ensure the model is properly initialized
       await engine.reload(selectedModel);

@@ -11,11 +11,22 @@
   <p id="output"></p>
 
   <script type="module">
-    import { CreateMLCEngine } from 'https://esm.run/@mlc-ai/web-llm@0.2.78';
+    import * as webllm from "@mlc-ai/web-llm";
 
     async function main() {
       // Load a real working model!
-      const engine = await CreateMLCEngine('phi-2-q4f16_1');
+      import { CreateMLCEngine } from "@mlc-ai/web-llm";
+
+// Callback function to update model loading progress
+const initProgressCallback = (initProgress) => {
+  console.log(initProgress);
+}
+const selectedModel = "Llama-3.1-8B-Instruct-q4f32_1-MLC";
+
+const engine = await CreateMLCEngine(
+  selectedModel,
+  { initProgressCallback: initProgressCallback }, // engineConfig
+);
 
       document.getElementById('ask').onclick = async () => {
         const inputText = document.getElementById('input').value;

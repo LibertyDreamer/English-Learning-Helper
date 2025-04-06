@@ -125,19 +125,27 @@
     // Update the archive JSON using the subtitle data and video file name.
     // For each subtitle, add its full text as an example for every word it contains.
     function updateArchiveWithSubtitles(subtitles, videoFileName) {
-      subtitles.forEach(sub => {
-        // Use the full subtitle text as the example.
-        const fullPhrase = sub.text.trim();
+  subtitles.forEach(sub => {
+    const fullPhrase = sub.text.trim();
+    // Split the subtitle text into sentences ending with ., ? or !
+    let sentences = fullPhrase.match(/[^.!?]+[.!?]+/g);
+    // If no sentence boundaries are found, use the entire text.
+    if (!sentences) {
+      sentences = [fullPhrase];
+    }
+    sentences.forEach(sentence => {
+      const sentenceText = sentence.trim();
+      if (sentenceText) {
         const exampleObj = {
-          text: fullPhrase,
+          text: sentenceText,
           video: videoFileName,
           start: sub.start,
           end: sub.end,
           rating: 0,
           ignored: false
         };
-        // Extract individual words (in lower case) from the full phrase for indexing.
-        const words = fullPhrase.toLowerCase().match(/\b\w+\b/g);
+        // Extract individual words from the sentence for indexing.
+        const words = sentenceText.toLowerCase().match(/\b\w+\b/g);
         if (words) {
           const uniqueWords = Array.from(new Set(words));
           uniqueWords.forEach(word => {
@@ -150,8 +158,11 @@
             }
           });
         }
-      });
-    }
+      }
+    });
+  });
+}
+
 
     // Open Archive button: if a file is chosen, load it; otherwise, create a new archive.
     document.getElementById('openArchiveButton').addEventListener('click', () => {

@@ -180,8 +180,8 @@
         <button class="rating-btn" data-value="90">90%</button>
         <button class="rating-btn" data-value="100">100%</button>
       </div>
-      <button id="ignoreButton" class="control-btn" disabled>Ignore</button>
-      <!-- New "Ignore Fully" button -->
+      <!-- Removed Ignore button -->
+      <!-- "Ignore Fully" now sets each example's rating to 100 -->
       <button id="ignoreFullyButton" class="control-btn" disabled>Ignore Fully</button>
       <button id="repeatButton" class="control-btn" disabled>Repeat</button>
       <button id="showTextButton" class="control-btn" disabled>Show Subtitle</button>
@@ -223,14 +223,12 @@
     const currentWordSpan = document.getElementById('currentWord');
     const exampleDisplay = document.getElementById('exampleDisplay');
     const videoPlayer = document.getElementById('videoPlayer');
-    const ignoreButton = document.getElementById('ignoreButton');
+    const ignoreFullyButton = document.getElementById('ignoreFullyButton');
+    const ratingButtons = document.querySelectorAll('.rating-btn');
     const repeatButton = document.getElementById('repeatButton');
     const showTextButton = document.getElementById('showTextButton');
     const contextButton = document.getElementById('contextButton');
     const defineButton = document.getElementById('defineButton');
-    // New "Ignore Fully" button element.
-    const ignoreFullyButton = document.getElementById('ignoreFullyButton');
-    const ratingButtons = document.querySelectorAll('.rating-btn');
     const extraInfoDiv = document.getElementById('extraInfo');
     const contextPanel = document.getElementById('contextPanel');
     const contextList = document.getElementById('contextList');
@@ -284,8 +282,6 @@
 
       // Enable controls.
       saveButton.disabled = false;
-      ignoreButton.disabled = false;
-      // Enable the new "Ignore Fully" button.
       ignoreFullyButton.disabled = false;
       repeatButton.disabled = false;
       showTextButton.disabled = false;
@@ -302,19 +298,11 @@
         });
       });
 
-      // "Ignore" button.
-      ignoreButton.addEventListener('click', () => {
-        currentExample.ignored = true;
-        updateWordSummary(currentWordKey);
-        chooseNextExample();
-      });
-
-      // New "Ignore Fully" button event.
+      // "Ignore Fully" button: now sets every example's rating to 100.
       ignoreFullyButton.addEventListener('click', () => {
-        // Mark every example of the current word as ignored.
         const details = wordsData[currentWordKey];
         details.examples.forEach(ex => {
-          ex.ignored = true;
+          ex.rating = 100;
         });
         updateWordSummary(currentWordKey);
         chooseNextExample();
@@ -377,8 +365,8 @@
     function chooseNextExample() {
       const availableWords = [];
       for (const [word, details] of Object.entries(wordsData)) {
-        // Only consider examples that are not ignored.
-        const validExamples = details.examples.filter(ex => !ex.ignored);
+        // Use all examples (no ignore filtering).
+        const validExamples = details.examples;
         if (validExamples.length > 0) {
           let sum = 0;
           validExamples.forEach(ex => { sum += ex.rating; });
@@ -389,7 +377,7 @@
         }
       }
       if (availableWords.length === 0) {
-        alert("No available examples to drill. All examples might be ignored.");
+        alert("No available examples to drill.");
         return;
       }
       // Weighted random pick among words.
@@ -479,25 +467,18 @@
       }
     });
 
-    // Update word summary fields.
+    // Update word summary dynamically.
     function updateWordSummary(wordKey) {
       const details = wordsData[wordKey];
-      const validExamples = details.examples.filter(ex => !ex.ignored);
-      if (validExamples.length > 0) {
-        let sum = 0;
-        validExamples.forEach(ex => { sum += ex.rating; });
-        details.rating = sum / validExamples.length;
-        details.ignored = false;
-      } else {
-        details.rating = 0;
-        details.ignored = true;
-      }
+      let sum = 0;
+      details.examples.forEach(ex => { sum += ex.rating; });
+      details.rating = sum / details.examples.length;
     }
 
     // Render the context panel with all examples for the current word.
     function renderContextPanel() {
       contextList.innerHTML = "";
-      const examples = wordsData[currentWordKey].examples.filter(ex => !ex.ignored);
+      const examples = wordsData[currentWordKey].examples;
       examples.forEach((ex) => {
         const div = document.createElement("div");
         div.classList.add("contextItem");

@@ -10,22 +10,18 @@
     input, button { margin: 5px 0; }
     /* Styles for the word list */
     #wordListContainer {
-  border: 1px solid #ccc;
-  padding: 10px;
-  margin-top: 20px;
-  min-height: 1000px; /* ensures it is at least 400px tall */
-  overflow-y: auto;
-}
-
+      border: 1px solid #ccc;
+      padding: 10px;
+      margin-top: 20px;
+      min-height: 1000px; /* ensures it is at least 400px tall */
+      overflow-y: auto;
+    }
     .word-item {
       display: inline-block;
       margin: 5px;
       padding: 5px 10px;
       border: 1px solid #aaa;
-      cursor: pointer;
-    }
-    .word-item.ignored {
-      background-color: #fdd;
+      cursor: default;
     }
   </style>
 </head>
@@ -71,7 +67,7 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.4.14/ace.js"></script>
   <script>
     // Global variables
-    let archive = {};  // Archive JSON: { word: { examples: [{text, video, start, end, rating, ignored}, ...], rating: <summary>, ignored: <summary> } }
+    let archive = {};  // Archive JSON: { word: { examples: [{text, video, start, end, rating}, ...] } }
     let storedFiles = {};  // Stored files: { filename: Blob }
 
     // Initialize Ace Editor for JSON editing
@@ -102,7 +98,7 @@
       }, 500);
     });
 
-    // Check if an example already exists in an array (ignoring rating/ignored fields).
+    // Check if an example already exists in an array (ignoring rating differences).
     function exampleExists(exampleArr, newExample) {
       return exampleArr.some(existing =>
         existing.text === newExample.text &&
@@ -110,19 +106,6 @@
         existing.start === newExample.start &&
         existing.end === newExample.end
       );
-    }
-
-    // Recalculate summary rating and ignored flag for a given word.
-    function recalcWordSummary(wordKey) {
-      const ex = archive[wordKey].examples;
-      if (ex.length === 0) {
-        archive[wordKey].rating = 0;
-        archive[wordKey].ignored = false;
-      } else {
-        const sum = ex.reduce((acc, cur) => acc + (cur.rating || 0), 0);
-        archive[wordKey].rating = sum / ex.length;
-        archive[wordKey].ignored = ex.every(cur => cur.ignored);
-      }
     }
 
     // Parse the SRT file into subtitle blocks.
@@ -156,7 +139,7 @@
         if (!current) {
           current = { ...sub };
         } else {
-          // If current text doesn't end with . or ? or !, merge with next.
+          // If current text doesn't end with ., ? or !, merge with next.
           if (!/[.!?]\s*$/.test(current.text)) {
             current.text += " " + sub.text.trim();
             current.end = sub.end;  // Update end time.
@@ -191,8 +174,7 @@
               video: videoFileName,
               start: sub.start,
               end: sub.end,
-              rating: 0,
-              ignored: false
+              rating: 0
             };
             // Index the example by individual words.
             const words = sentenceText.toLowerCase().match(/\b\w+\b/g);
@@ -200,11 +182,10 @@
               const uniqueWords = Array.from(new Set(words));
               uniqueWords.forEach(word => {
                 if (!archive[word]) {
-                  archive[word] = { examples: [], rating: 0, ignored: false };
+                  archive[word] = { examples: [] };
                 }
                 if (!exampleExists(archive[word].examples, exampleObj)) {
                   archive[word].examples.push(exampleObj);
-                  recalcWordSummary(word);
                 }
               });
             }
@@ -213,27 +194,27 @@
       });
     }
 
-    // Function to update the word list display.
+    // Function to update the word list display with a color gradient based on average rating.
     function updateWordList() {
       const container = document.getElementById("wordListContainer");
       container.innerHTML = "";
       Object.keys(archive).forEach(word => {
         const span = document.createElement("span");
         span.classList.add("word-item");
-        if (archive[word].ignored) {
-          span.classList.add("ignored");
+        
+        // Compute average rating for the word
+        const examples = archive[word].examples;
+        let avgRating = 0;
+        if (examples.length > 0) {
+          avgRating = examples.reduce((acc, cur) => acc + (cur.rating || 0), 0) / examples.length;
         }
+        // Map avgRating (0-100) to a color from red (0) to green (100)
+        const factor = Math.max(0, Math.min(1, avgRating / 100));
+        const red = Math.round(255 * (1 - factor));
+        const green = Math.round(255 * factor);
+        span.style.backgroundColor = `rgb(${red}, ${green}, 0)`;
+
         span.textContent = word;
-        span.addEventListener("click", function() {
-          // Toggle the ignored status on click for the word and all its examples.
-          const newIgnored = !archive[word].ignored;
-          archive[word].examples.forEach(example => {
-            example.ignored = newIgnored;
-          });
-          archive[word].ignored = newIgnored;
-          updateEditor();
-          updateWordList();
-        });
         container.appendChild(span);
       });
     }

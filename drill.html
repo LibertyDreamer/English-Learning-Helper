@@ -181,6 +181,8 @@
         <button class="rating-btn" data-value="100">100%</button>
       </div>
       <button id="ignoreButton" class="control-btn" disabled>Ignore</button>
+      <!-- New "Ignore Fully" button -->
+      <button id="ignoreFullyButton" class="control-btn" disabled>Ignore Fully</button>
       <button id="repeatButton" class="control-btn" disabled>Repeat</button>
       <button id="showTextButton" class="control-btn" disabled>Show Subtitle</button>
       <button id="contextButton" class="control-btn" disabled>More Context</button>
@@ -226,6 +228,8 @@
     const showTextButton = document.getElementById('showTextButton');
     const contextButton = document.getElementById('contextButton');
     const defineButton = document.getElementById('defineButton');
+    // New "Ignore Fully" button element.
+    const ignoreFullyButton = document.getElementById('ignoreFullyButton');
     const ratingButtons = document.querySelectorAll('.rating-btn');
     const extraInfoDiv = document.getElementById('extraInfo');
     const contextPanel = document.getElementById('contextPanel');
@@ -281,6 +285,8 @@
       // Enable controls.
       saveButton.disabled = false;
       ignoreButton.disabled = false;
+      // Enable the new "Ignore Fully" button.
+      ignoreFullyButton.disabled = false;
       repeatButton.disabled = false;
       showTextButton.disabled = false;
       contextButton.disabled = false;
@@ -299,6 +305,17 @@
       // "Ignore" button.
       ignoreButton.addEventListener('click', () => {
         currentExample.ignored = true;
+        updateWordSummary(currentWordKey);
+        chooseNextExample();
+      });
+
+      // New "Ignore Fully" button event.
+      ignoreFullyButton.addEventListener('click', () => {
+        // Mark every example of the current word as ignored.
+        const details = wordsData[currentWordKey];
+        details.examples.forEach(ex => {
+          ex.ignored = true;
+        });
         updateWordSummary(currentWordKey);
         chooseNextExample();
       });

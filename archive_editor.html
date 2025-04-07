@@ -8,6 +8,24 @@
     section { margin-bottom: 30px; }
     h2 { margin-bottom: 10px; }
     input, button { margin: 5px 0; }
+    /* Styles for the word list */
+    #wordListContainer {
+      border: 1px solid #ccc;
+      padding: 10px;
+      margin-top: 20px;
+      max-height: 200px;
+      overflow-y: auto;
+    }
+    .word-item {
+      display: inline-block;
+      margin: 5px;
+      padding: 5px 10px;
+      border: 1px solid #aaa;
+      cursor: pointer;
+    }
+    .word-item.ignored {
+      background-color: #fdd;
+    }
   </style>
 </head>
 <body>
@@ -40,6 +58,12 @@
     <h2>Generate & Download Archive</h2>
     <button id="generateArchiveButton">Generate Archive</button>
   </section>
+  
+  <!-- Word List Section: Always visible -->
+  <section id="word-list-section">
+    <h2>Word List</h2>
+    <div id="wordListContainer"></div>
+  </section>
 
   <!-- External Libraries: JSZip and Ace Editor -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
@@ -55,8 +79,10 @@
     editor.setTheme("ace/theme/github");
     editor.setValue(JSON.stringify(archive, null, 2), -1);
 
+    // Update Ace Editor and Word List
     function updateEditor() {
       editor.setValue(JSON.stringify(archive, null, 2), -1);
+      updateWordList();
     }
 
     // Auto-save JSON changes after 500ms of inactivity.
@@ -67,6 +93,7 @@
         try {
           const newJson = JSON.parse(editor.getValue());
           archive = newJson;
+          updateWordList();
           console.log("JSON auto-saved.");
         } catch(e) {
           console.error("Invalid JSON:", e.message);
@@ -182,6 +209,27 @@
             }
           }
         });
+      });
+    }
+
+    // Function to update the word list display.
+    function updateWordList() {
+      const container = document.getElementById("wordListContainer");
+      container.innerHTML = "";
+      Object.keys(archive).forEach(word => {
+        const span = document.createElement("span");
+        span.classList.add("word-item");
+        if (archive[word].ignored) {
+          span.classList.add("ignored");
+        }
+        span.textContent = word;
+        span.addEventListener("click", function() {
+          // Toggle the ignored status on click
+          archive[word].ignored = !archive[word].ignored;
+          updateEditor();
+          updateWordList();
+        });
+        container.appendChild(span);
       });
     }
 

@@ -194,30 +194,41 @@
       });
     }
 
-    // Function to update the word list display with a color gradient based on average rating.
-    function updateWordList() {
-      const container = document.getElementById("wordListContainer");
-      container.innerHTML = "";
-      Object.keys(archive).forEach(word => {
-        const span = document.createElement("span");
-        span.classList.add("word-item");
-        
-        // Compute average rating for the word
-        const examples = archive[word].examples;
-        let avgRating = 0;
-        if (examples.length > 0) {
-          avgRating = examples.reduce((acc, cur) => acc + (cur.rating || 0), 0) / examples.length;
-        }
-        // Map avgRating (0-100) to a color from red (0) to green (100)
-        const factor = Math.max(0, Math.min(1, avgRating / 100));
-        const red = Math.round(255 * (1 - factor));
-        const green = Math.round(255 * factor);
-        span.style.backgroundColor = `rgb(${red}, ${green}, 0)`;
-
-        span.textContent = word;
-        container.appendChild(span);
-      });
+// Function to update the word list display with a color gradient based on average rating.
+// Clicking a word increases the rating of every example for that word by 10 (cycling from 100 back to 0).
+function updateWordList() {
+  const container = document.getElementById("wordListContainer");
+  container.innerHTML = "";
+  Object.keys(archive).forEach(word => {
+    const span = document.createElement("span");
+    span.classList.add("word-item");
+    
+    // Compute average rating for the word
+    const examples = archive[word].examples;
+    let avgRating = 0;
+    if (examples.length > 0) {
+      avgRating = examples.reduce((acc, cur) => acc + (cur.rating || 0), 0) / examples.length;
     }
+    // Map avgRating (0-100) to a color from red (0) to green (100)
+    const factor = Math.max(0, Math.min(1, avgRating / 100));
+    const red = Math.round(255 * (1 - factor));
+    const green = Math.round(255 * factor);
+    span.style.backgroundColor = `rgb(${red}, ${green}, 0)`;
+
+    span.textContent = word;
+    
+    // Clicking the word increases the rating of all its examples by 10, looping from 100 back to 0.
+    span.addEventListener("click", function() {
+      archive[word].examples.forEach(example => {
+        example.rating = (example.rating + 10) % 110;
+      });
+      updateEditor();
+      updateWordList();
+    });
+    
+    container.appendChild(span);
+  });
+}
 
     // Open Archive button: load an existing archive or create a new one.
     document.getElementById('openArchiveButton').addEventListener('click', () => {

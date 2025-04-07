@@ -224,8 +224,12 @@
         }
         span.textContent = word;
         span.addEventListener("click", function() {
-          // Toggle the ignored status on click
-          archive[word].ignored = !archive[word].ignored;
+          // Toggle the ignored status on click for the word and all its examples.
+          const newIgnored = !archive[word].ignored;
+          archive[word].examples.forEach(example => {
+            example.ignored = newIgnored;
+          });
+          archive[word].ignored = newIgnored;
           updateEditor();
           updateWordList();
         });

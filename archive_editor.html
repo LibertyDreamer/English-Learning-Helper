@@ -21,7 +21,7 @@
       margin: 5px;
       padding: 5px 10px;
       border: 1px solid #aaa;
-      cursor: default;
+      cursor: pointer;
     }
   </style>
 </head>
@@ -131,7 +131,7 @@
       return (+parts[0]) * 3600 + (+parts[1]) * 60 + (+parts[2]) + (+parts[3]) / 1000;
     }
 
-    // --- NEW: Merge consecutive subtitle blocks if the current one doesn't end with punctuation.
+    // Merge consecutive subtitle blocks if the current one doesn't end with punctuation.
     function mergeSubtitles(subtitles) {
       let merged = [];
       let current = null;
@@ -194,41 +194,43 @@
       });
     }
 
-// Function to update the word list display with a color gradient based on average rating.
-// Clicking a word increases the rating of every example for that word by 10 (cycling from 100 back to 0).
-function updateWordList() {
-  const container = document.getElementById("wordListContainer");
-  container.innerHTML = "";
-  Object.keys(archive).forEach(word => {
-    const span = document.createElement("span");
-    span.classList.add("word-item");
-    
-    // Compute average rating for the word
-    const examples = archive[word].examples;
-    let avgRating = 0;
-    if (examples.length > 0) {
-      avgRating = examples.reduce((acc, cur) => acc + (cur.rating || 0), 0) / examples.length;
-    }
-    // Map avgRating (0-100) to a color from red (0) to green (100)
-    const factor = Math.max(0, Math.min(1, avgRating / 100));
-    const red = Math.round(255 * (1 - factor));
-    const green = Math.round(255 * factor);
-    span.style.backgroundColor = `rgb(${red}, ${green}, 0)`;
+    // Function to update the word list display with a color gradient based on average rating.
+    // Clicking a word toggles the rating of every example for that word between 0 (red) and 100 (green).
+    function updateWordList() {
+      const container = document.getElementById("wordListContainer");
+      container.innerHTML = "";
+      Object.keys(archive).forEach(word => {
+        const span = document.createElement("span");
+        span.classList.add("word-item");
+        
+        // Compute average rating for the word
+        const examples = archive[word].examples;
+        let avgRating = 0;
+        if (examples.length > 0) {
+          avgRating = examples.reduce((acc, cur) => acc + (cur.rating || 0), 0) / examples.length;
+        }
+        // Map avgRating (0-100) to a color from red (0) to green (100)
+        const factor = Math.max(0, Math.min(1, avgRating / 100));
+        const red = Math.round(255 * (1 - factor));
+        const green = Math.round(255 * factor);
+        span.style.backgroundColor = `rgb(${red}, ${green}, 0)`;
 
-    span.textContent = word;
-    
-    // Clicking the word increases the rating of all its examples by 10, looping from 100 back to 0.
-    span.addEventListener("click", function() {
-      archive[word].examples.forEach(example => {
-        example.rating = (example.rating + 10) % 110;
+        span.textContent = word;
+        
+        // Clicking the word toggles the rating between 0 and 100.
+        span.addEventListener("click", function() {
+          // Decide newRating based on the current average (treat 0 as red, 100 as green)
+          let newRating = Math.round(avgRating) === 0 ? 100 : 0;
+          archive[word].examples.forEach(example => {
+            example.rating = newRating;
+          });
+          updateEditor();
+          updateWordList();
+        });
+        
+        container.appendChild(span);
       });
-      updateEditor();
-      updateWordList();
-    });
-    
-    container.appendChild(span);
-  });
-}
+    }
 
     // Open Archive button: load an existing archive or create a new one.
     document.getElementById('openArchiveButton').addEventListener('click', () => {

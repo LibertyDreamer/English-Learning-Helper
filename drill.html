@@ -215,6 +215,7 @@
     let textVisible = false; // Toggle subtitle visibility.
     let contextVisible = false; // Toggle context panel.
     let definitionVisible = false; // Toggle definition panel.
+    let isRepeating = false; // New: Toggle for repeat/stop functionality.
 
     // UI elements.
     const fileInput = document.getElementById('fileInput');
@@ -308,11 +309,19 @@
         chooseNextExample();
       });
 
-      // "Repeat" button.
+      // "Repeat/Stop" button toggling repeat functionality.
       repeatButton.addEventListener('click', () => {
         if (!currentExample) return;
-        videoPlayer.currentTime = currentExample.start;
-        videoPlayer.play();
+        if (!isRepeating) {
+          isRepeating = true;
+          repeatButton.textContent = "Stop";
+          videoPlayer.currentTime = currentExample.start;
+          videoPlayer.play();
+        } else {
+          isRepeating = false;
+          repeatButton.textContent = "Repeat";
+          videoPlayer.pause();
+        }
       });
 
       // "Show Subtitle" button.
@@ -460,10 +469,15 @@
       videoPlayer.play();
     }
 
-    // Stop playback when end time is reached.
+    // Stop playback when end time is reached or loop if repeating.
     videoPlayer.addEventListener('timeupdate', () => {
       if (currentExample && videoPlayer.currentTime >= currentExample.end) {
-        videoPlayer.pause();
+        if (isRepeating) {
+          videoPlayer.currentTime = currentExample.start;
+          videoPlayer.play();
+        } else {
+          videoPlayer.pause();
+        }
       }
     });
 
